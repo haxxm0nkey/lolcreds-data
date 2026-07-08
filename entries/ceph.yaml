@@ -1,0 +1,73 @@
+id: ceph
+name: Ceph
+category: cloud
+vendor: Ceph
+author: haxxm0nkey
+
+credentials:
+
+  - id: cephx-keyring
+    name: CephX Client Keyring
+    description: >
+      Ceph users authenticate with secret keys stored in keyrings. Ceph
+      documents that clients specify a user name and a keyring containing the
+      secret key, and that client.admin is assumed if no user is specified.
+    type: secret_value
+    nature: [generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - pattern: 'key\s*=\s*[A-Za-z0-9+/=]{20,}'
+        detail: Ceph keyring secret key assignment
+    location:
+      - type: config_file
+        path: /etc/ceph/*.keyring, ceph.client.*.keyring
+        detail: Ceph client keyring files containing user names and secret keys
+      - type: environment
+        path: CEPH_ARGS
+        detail: can specify user and keyring arguments for Ceph clients
+      - type: secret_store
+        detail: Kubernetes Secrets, Rook secrets, cloud secret managers, and deployment vaults
+      - type: source_code
+        detail: accidentally committed keyrings, test clusters, and deployment manifests
+      - type: artifact
+        detail: host backups, VM images, and container images containing /etc/ceph
+      - type: logs
+        detail: command history, debugging output, and CI traces
+    notes: >
+      Keyrings are bearer-like secrets for Ceph capabilities. client.admin keys
+      are highly privileged.
+
+  - id: radosgw-s3-key
+    name: RADOS Gateway S3 Access / Secret Key
+    description: >
+      Ceph Object Gateway users can have S3-style access keys and secret keys.
+      These credentials authenticate S3 clients to RGW and are managed as Ceph
+      object gateway user credentials.
+    type: api_key
+    nature: [generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - pattern: 'AKIA[0-9A-Z]{16}'
+        detail: S3-style access key pattern; RGW access keys can also be opaque deployment-specific strings
+    location:
+      - type: config_file
+        detail: s3 client config, rclone config, application .env files, and deployment manifests
+      - type: environment
+        path: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, RGW_ACCESS_KEY, RGW_SECRET_KEY
+      - type: secret_store
+        detail: Kubernetes Secrets, cloud secret managers, CI/CD variables, and object-store vault entries
+      - type: source_code
+        detail: S3 client scripts, tests, and accidentally committed configs
+      - type: logs
+        detail: S3 client debug logs and CI output
+      - type: http_header
+        path: Authorization
+        detail: S3 Signature authentication headers derived from access and secret keys
+    notes: >
+      RGW key blast radius depends on the user's bucket and capability grants.
+
+references:
+  - type: docs
+    url: https://docs.ceph.com/en/latest/rados/operations/user-management/
+  - type: docs
+    url: https://docs.ceph.com/en/latest/rados/configuration/ceph-conf/

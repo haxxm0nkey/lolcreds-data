@@ -1,0 +1,98 @@
+id: apc-network-management-card
+name: APC Network Management Cards
+category: network
+vendor: Schneider Electric / APC
+author: haxxm0nkey
+credentials:
+- id: default-apc
+  name: Default apc Account
+  description: APC Network Management Cards for UPS/PDU devices have a documented default
+    administrator account for initial web/Telnet/SSH access that must be changed during installation.
+  type: username_password
+  nature:
+  - static_default
+  - user_defined
+  sensitivity: secret
+  default:
+    username: apc
+    password: apc
+  location:
+  - type: public_interface
+    path: NMC web UI, SSH, Telnet, FTP/SCP, SNMP, and serial console
+  - type: config_file
+    detail: NMC configuration exports, config.ini, and fleet management templates
+  - type: artifact
+    detail: UPS/PDU configuration backups, support files, and deployment worksheets
+  notes: apc/apc is a well-known initial credential for many APC NMC generations; newer firmware/policies
+    may require password changes or unique credentials.
+- id: local-user-password
+  name: Local NMC User Password
+  description: APC NMC cards maintain local administrator/device/read-only users for management
+    interfaces and automation.
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: ^\s*(userName|password|Authentication Phrase|Privacy Phrase)\s*=\s*.+$
+    detail: APC config.ini style user/password or SNMP phrase setting
+  location:
+  - type: config_file
+    path: config.ini
+    detail: exported Network Management Card configuration including user and authentication
+      settings
+  - type: public_interface
+    path: web UI, CLI over SSH/Telnet/serial, FTP/SCP, and management APIs
+  - type: secret_store
+    detail: datacenter password vaults and UPS/PDU management platforms
+  - type: logs
+    detail: event logs, syslog, and management access traces
+- id: snmpv1-v3-secrets
+  name: SNMP Community / SNMPv3 Auth and Privacy Secrets
+  description: APC NMC devices expose monitoring and control over SNMP. Community strings
+    and SNMPv3 auth/privacy phrases are management credentials.
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: config_file
+    path: config.ini
+    detail: SNMPv1/v2 community names and SNMPv3 authentication/privacy phrases
+  - type: public_interface
+    path: SNMP management service
+  - type: source_code
+    detail: monitoring configs, NMS exports, and automation scripts
+  - type: secret_store
+    detail: NMS credential stores and password vaults
+  - type: logs
+    detail: SNMP traps, syslog, and NMS debug logs
+- id: radius-ldap-tacacs-and-tls-secrets
+  name: RADIUS/LDAP/TACACS+ and TLS Secrets
+  description: APC NMC configurations may contain RADIUS shared secrets, LDAP bind credentials,
+    TACACS+ secrets, email/SMTP credentials, and HTTPS/SSH certificate or host key material.
+  type: secret_value
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - pattern: '-----BEGIN (RSA |EC |ENCRYPTED |)PRIVATE KEY-----'
+    detail: private key material for NMC HTTPS certificate or SSH host/client key context
+  location:
+  - type: config_file
+    path: config.ini, ssl/ssh certificate exports
+    detail: remote authentication, SMTP, TLS, and SSH settings
+  - type: secret_store
+    detail: certificate stores, password vaults, and datacenter management secrets
+  - type: artifact
+    detail: configuration backups and firmware migration bundles
+  - type: logs
+    detail: remote auth, SMTP, syslog, and TLS/SSH debug output
+references:
+- type: docs
+  url: https://www.apc.com/us/en/faqs/FA156075/
+- type: docs
+  url: https://www.apc.com/us/en/faqs/FA156163/
+- type: docs
+  url: https://download.schneider-electric.com/files?p_Doc_Ref=SPD_CCON-AYCEFJ_EN

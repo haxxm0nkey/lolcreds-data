@@ -1,0 +1,99 @@
+id: apache-cassandra
+name: Apache Cassandra
+category: database
+vendor: Apache Software Foundation
+author: haxxm0nkey
+
+credentials:
+
+  - id: password-authenticator-role
+    name: PasswordAuthenticator Role Password
+    description: >
+      Cassandra can authenticate users with PasswordAuthenticator, which relies
+      on username/password pairs. Cassandra documents that PasswordAuthenticator
+      stores usernames and hashed passwords in the system_auth.roles table.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: 'CREATE\s+ROLE\s+\S+\s+WITH\s+PASSWORD\s*=\s*''[^''\r\n]+'''
+        detail: Cassandra CQL role password assignment; the password itself has no Cassandra-specific shape
+      - pattern: 'ALTER\s+ROLE\s+\S+\s+WITH\s+PASSWORD\s*=\s*''[^''\r\n]+'''
+        detail: Cassandra CQL role password change statement
+    location:
+      - type: database
+        path: system_auth.roles
+        detail: Cassandra system_auth table storing role names and hashed passwords
+      - type: config_file
+        detail: application config, cassandra driver config, .env files, and deployment manifests
+      - type: environment
+        path: CASSANDRA_USERNAME, CASSANDRA_PASSWORD
+      - type: secret_store
+        detail: Kubernetes Secrets, cloud secret managers, CI/CD variables, and password vault entries
+      - type: source_code
+        detail: application connection config, migration scripts, tests, and accidentally committed credentials
+      - type: logs
+        detail: failed authentication traces, driver debug logs, and CI output
+      - type: public_interface
+        path: tcp/9042
+        detail: Cassandra native transport login endpoint
+    notes: >
+      Cassandra does not have to use password authentication; AllowAllAuthenticator
+      disables authentication. Role password exposure matters when
+      PasswordAuthenticator is enabled.
+
+  - id: cassandra-yaml-auth-disabled
+    name: AllowAllAuthenticator / AllowAllAuthorizer Configuration
+    description: >
+      Cassandra configuration supports authenticator and authorizer backends.
+      Cassandra documents AllowAllAuthenticator as performing no checks and
+      AllowAllAuthorizer as allowing any action to any user.
+    type: other
+    nature: [user_defined]
+    sensitivity: context_dependent
+    looks_like:
+      - pattern: 'authenticator:\s*(?:AllowAllAuthenticator|org\.apache\.cassandra\.auth\.AllowAllAuthenticator)'
+        detail: cassandra.yaml setting that disables authentication checks
+      - pattern: 'authorizer:\s*(?:AllowAllAuthorizer|org\.apache\.cassandra\.auth\.AllowAllAuthorizer)'
+        detail: cassandra.yaml setting that disables authorization checks
+    location:
+      - type: config_file
+        path: cassandra.yaml
+        detail: Cassandra server configuration controlling authentication and authorization backends
+      - type: source_code
+        detail: Helm charts, container images, Ansible roles, and committed Cassandra configs
+      - type: image
+        detail: VM or container images containing insecure cassandra.yaml settings
+    notes: >
+      These settings are not credentials, but they create unauthenticated or
+      over-permissive database access for reachable clients.
+
+  - id: tls-keystore-password
+    name: TLS Keystore / Truststore Password
+    description: >
+      Cassandra supports node-to-node and client encryption using Java keystores
+      and truststores. Cassandra configuration references keystores, truststores,
+      and their passwords for encrypted transport.
+    type: password
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '(?:keystore_password|truststore_password):\s*[^\s]+'
+        detail: Cassandra YAML keystore or truststore password assignment
+    location:
+      - type: config_file
+        path: cassandra.yaml
+        detail: server_encryption_options and client_encryption_options keystore/truststore passwords
+      - type: secret_store
+        detail: Kubernetes Secrets, Java keystore stores, cloud secret managers, and deployment vaults
+      - type: source_code
+        detail: Helm values, Docker Compose files, Ansible inventories, and committed TLS config
+      - type: logs
+        detail: startup logs and troubleshooting output that include TLS option dumps
+    notes: >
+      Keystore and truststore passwords protect private keys and trust material
+      used by Cassandra transport security.
+
+references:
+  - type: docs
+    url: https://cassandra.apache.org/doc/latest/cassandra/managing/configuration/cass_yaml_file.html

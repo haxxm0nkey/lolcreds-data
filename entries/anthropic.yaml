@@ -1,0 +1,71 @@
+id: anthropic
+name: Anthropic Claude API
+category: ai_api
+vendor: Anthropic
+author: haxxm0nkey
+
+credentials:
+
+  - id: api-key
+    name: API Key
+    description: >
+      Anthropic Claude API requests authenticate with an API key from the
+      Anthropic Console. Anthropic documents x-api-key as the API-key header
+      and also supports Authorization bearer tokens for short-lived workload
+      identity access tokens.
+    type: api_key
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - example: 'sk-ant-api03-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'sk-ant-api[0-9]{2}-[A-Za-z0-9_\-]{20,}'
+        detail: Anthropic Console API key form commonly seen for Claude API keys
+    location:
+      - type: environment
+        path: ANTHROPIC_API_KEY
+      - type: http_header
+        path: x-api-key
+        detail: Anthropic API key header
+      - type: source_code
+        detail: application config, scripts, notebooks, examples, committed .env files
+      - type: config_file
+        detail: .env, local shell profiles, deployment manifests, server config
+      - type: secret_store
+        detail: CI/CD variables, cloud secret managers, platform environment stores
+      - type: logs
+        detail: HTTP client debug logs that include x-api-key or Authorization headers
+    notes: >
+      API keys and short-lived workload identity bearer tokens are different
+      credential types. API keys are long-lived bearer secrets from Console;
+      workload identity bearer tokens are obtained through the OAuth token
+      endpoint and should be triaged by their identity provider and lifetime.
+
+  - id: workload-identity-bearer-token
+    name: Workload Identity Bearer Token
+    description: >
+      Anthropic supports Authorization: Bearer tokens for Workload Identity
+      Federation. These are short-lived access tokens obtained from the
+      Anthropic OAuth token endpoint rather than static Console API keys.
+    type: token
+    nature: [generated_on_install]
+    sensitivity: secret
+    location:
+      - type: http_header
+        path: Authorization
+        detail: Bearer token used for Anthropic Workload Identity Federation requests
+      - type: logs
+        detail: workload identity exchange logs and HTTP client debug output
+      - type: environment
+        detail: temporary environment variables used by workloads
+      - type: secret_store
+        detail: workload runtime token caches and orchestration platforms
+    notes: >
+      These tokens are intentionally short-lived and opaque. Exposure still
+      matters during the token lifetime, and the upstream identity federation
+      rule should be reviewed if tokens appear outside the intended workload.
+
+references:
+  - type: docs
+    url: https://docs.anthropic.com/en/api/getting-started
+  - type: docs
+    url: https://docs.anthropic.com/en/api/admin-api/apikeys/get-api-key

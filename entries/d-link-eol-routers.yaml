@@ -1,0 +1,292 @@
+id: d-link-eol-routers
+name: D-Link DIR-605L / DIR-600L / DIR-456U EOL Routers
+category: network
+vendor: D-Link
+author: haxxm0nkey
+
+credentials:
+  - id: web-admin-password
+    name: Web Administration Password
+    description: >
+      D-Link DIR-series routers expose a browser-based administration interface
+      for configuring Internet, wireless, firewall, and management settings. The
+      administrator credential protects the router web UI and management flows;
+      it is deployment-specific and should be changed from any initial setup
+      value. Treat credentials recovered from configuration backups or device
+      storage as sensitive administrative credentials.
+    type: username_password
+    nature: [generated_on_install, user_defined]
+    sensitivity: secret
+    location:
+      - type: public_interface
+        path: http://192.168.0.1/
+        detail: Local router web administration interface commonly used by D-Link DIR routers
+      - type: public_interface
+        path: http://dlinkrouter.local/
+        detail: Local setup and management hostname used by supported D-Link router firmware
+      - type: config_file
+        detail: Router configuration exports, nvram/config partitions, and web-management account settings
+      - type: secret_store
+        detail: Password managers, deployment records, ISP/customer handoff notes, and asset-management vaults
+      - type: image
+        detail: Firmware images or extracted filesystem/config partitions containing account defaults or hashes
+      - type: logs
+        detail: Setup logs, browser autofill stores, helpdesk notes, and support bundles may expose admin credentials
+    notes: >
+      Do not infer a universal D-Link admin default from examples or old manuals.
+      Model, hardware revision, firmware build, region, ISP customization, and
+      prior setup can change the effective web-admin credential.
+
+  - id: wireless-pre-shared-key
+    name: Wireless WPA/WPA2 Pre-Shared Key
+    description: >
+      These routers store wireless network names and WPA/WPA2 pre-shared keys
+      for the LAN WLAN. The Wi-Fi password may be user-defined during setup,
+      printed on a device label for some hardware/ISP variants, or preserved in
+      configuration backups and support bundles.
+    type: password
+    nature: [generated_on_install, user_defined]
+    sensitivity: secret
+    location:
+      - type: public_interface
+        path: Wireless / Wi-Fi setup page
+        detail: Router web UI pages that display or update SSID and WPA/WPA2 key material
+      - type: config_file
+        detail: Router configuration backup files and wireless configuration stored in nvram/config partitions
+      - type: image
+        detail: Factory firmware or extracted device filesystems containing wireless default-generation artifacts
+      - type: secret_store
+        detail: Password managers, asset inventories, ISP install records, and endpoint Wi-Fi profiles
+      - type: logs
+        detail: Support bundles, screenshots, setup logs, and helpdesk tickets can expose Wi-Fi keys
+    notes: >
+      Only record a literal Wi-Fi default when it is tied to a specific device
+      label, firmware build, ISP image, or vendor/advisory source. Do not
+      generalize examples across D-Link models.
+
+  - id: wan-isp-credentials
+    name: WAN / ISP Access Credentials
+    description: >
+      D-Link router configurations can contain credentials used for WAN access,
+      including PPPoE/PPTP/L2TP usernames and passwords supplied by an ISP or
+      administrator. Exposure of these values can allow account misuse or
+      unauthorized network access depending on provider controls.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    location:
+      - type: public_interface
+        path: Internet / WAN setup page
+        detail: Router web UI pages for PPPoE, PPTP, L2TP, or ISP-specific WAN authentication
+      - type: config_file
+        detail: Router configuration backup files and WAN configuration stored in nvram/config partitions
+      - type: secret_store
+        detail: ISP customer records, installation notes, password managers, and network asset vaults
+      - type: logs
+        detail: PPP/authentication troubleshooting logs, support bundles, screenshots, and helpdesk notes
+    notes: >
+      These are customer/ISP-defined credentials, not static product defaults.
+      They are included because router backup files and management interfaces are
+      common places to encounter operational credentials during assessment.
+
+  - id: remote-management-service-secret
+    name: Remote Management / Cloud Service Secret
+    description: >
+      Some D-Link DIR firmware families support remote-management or cloud
+      management features. Associated tokens, account passwords, device pairing
+      secrets, or service credentials may be present in configuration exports,
+      firmware filesystems, application state, or support records when those
+      features are enabled.
+    type: secret_value
+    nature: [generated_on_install, user_defined]
+    sensitivity: secret
+    location:
+      - type: public_interface
+        path: Remote management / cloud management setup pages
+        detail: Router web UI or companion-app flows for enabling remote administration
+      - type: config_file
+        detail: Router configuration backups, nvram/config partitions, and cloud-management settings
+      - type: secret_store
+        detail: Password managers, D-Link/cloud account records, mobile OS credential stores, and MDM backups
+      - type: image
+        detail: Firmware images and extracted filesystems containing service endpoints or fallback secrets
+      - type: logs
+        detail: Pairing logs, mobile app diagnostics, support bundles, and cloud troubleshooting records
+    notes: >
+      Include concrete token formats or literal defaults only when a vendor doc,
+      firmware finding, CVE, or advisory identifies them for a specific model and
+      build.
+
+  - id: dir-605l-a1-telnet-backdoor
+    name: DIR-605L A1 Hardcoded Telnet Backdoor
+    description: >
+      D-Link DIR-605L hardware revision A1 starts a telnet daemon at boot via
+      /bin/telnetd.sh using a hardcoded username and password read from
+      /etc/alpha_config/image_sign. Successful authentication grants a root
+      shell with full administrative control on the EOL device.
+    type: username_password
+    nature: [static_default, undocumented]
+    sensitivity: secret
+    default:
+      username: Alphanetworks
+      password: wrgn35_dlwbr_dir605l
+    looks_like:
+      - example: 'Alphanetworks:wrgn35_dlwbr_dir605l'
+        pattern: 'Alphanetworks:wrgn35_dlwbr_dir605l'
+    location:
+      - type: config_file
+        path: /etc/alpha_config/image_sign
+        detail: Firmware file containing the static password used by telnetd startup
+      - type: config_file
+        path: /bin/telnetd.sh
+        detail: Boot/startup script that launches telnetd with the hardcoded credential
+      - type: public_interface
+        path: telnet
+        detail: Telnet login grants root shell after successful authentication
+      - type: image
+        detail: EOL DIR-605L A1 firmware image containing the backdoor files
+    notes: >
+      Tracked as CVE-2026-42372. The device is End-of-Life and is not expected
+      to receive patches.
+
+  - id: dir-605l-b2-telnet-backdoor
+    name: DIR-605L B2 Hardcoded Telnet Backdoor
+    description: >
+      D-Link DIR-605L hardware revision B2 starts a telnet daemon at boot via
+      /bin/telnetd.sh using a hardcoded username and password read from
+      /etc/alpha_config/image_sign. Successful authentication grants a root
+      shell with full administrative control on the EOL device.
+    type: username_password
+    nature: [static_default, undocumented]
+    sensitivity: secret
+    default:
+      username: Alphanetworks
+      password: wrgn76_dlwbr_dir605L
+    looks_like:
+      - example: 'Alphanetworks:wrgn76_dlwbr_dir605L'
+        pattern: 'Alphanetworks:wrgn76_dlwbr_dir605L'
+    location:
+      - type: config_file
+        path: /etc/alpha_config/image_sign
+        detail: Firmware file containing the static password used by telnetd startup
+      - type: config_file
+        path: /bin/telnetd.sh
+        detail: Boot/startup script that launches telnetd with the hardcoded credential
+      - type: public_interface
+        path: telnet
+        detail: Telnet login grants root shell after successful authentication
+      - type: image
+        detail: EOL DIR-605L B2 firmware image containing the backdoor files
+    notes: >
+      Tracked as CVE-2026-42373. The device is End-of-Life and is not expected
+      to receive patches.
+
+  - id: dir-600l-b1-telnet-backdoor
+    name: DIR-600L B1 Hardcoded Telnet Backdoor
+    description: >
+      D-Link DIR-600L hardware revision B1 starts a telnet daemon at boot via
+      /bin/telnetd.sh using a hardcoded username and password read from
+      /etc/alpha_config/image_sign. Successful authentication grants a root
+      shell with full administrative control on the EOL device.
+    type: username_password
+    nature: [static_default, undocumented]
+    sensitivity: secret
+    default:
+      username: Alphanetworks
+      password: wrgn61_dlwbr_dir600L
+    looks_like:
+      - example: 'Alphanetworks:wrgn61_dlwbr_dir600L'
+        pattern: 'Alphanetworks:wrgn61_dlwbr_dir600L'
+    location:
+      - type: config_file
+        path: /etc/alpha_config/image_sign
+        detail: Firmware file containing the static password used by telnetd startup
+      - type: config_file
+        path: /bin/telnetd.sh
+        detail: Boot/startup script that launches telnetd with the hardcoded credential
+      - type: public_interface
+        path: telnet
+        detail: Telnet login grants root shell after successful authentication
+      - type: image
+        detail: EOL DIR-600L B1 firmware image containing the backdoor files
+    notes: >
+      Tracked as CVE-2026-42374. The device is End-of-Life and is not expected
+      to receive patches.
+
+  - id: dir-600l-a1-telnet-backdoor
+    name: DIR-600L A1 Hardcoded Telnet Backdoor
+    description: >
+      D-Link DIR-600L hardware revision A1 starts a telnet daemon at boot via
+      /bin/telnetd.sh using a hardcoded username and password read from
+      /etc/alpha_config/image_sign. Successful authentication grants a root
+      shell with full administrative control on the EOL device.
+    type: username_password
+    nature: [static_default, undocumented]
+    sensitivity: secret
+    default:
+      username: Alphanetworks
+      password: wrgn35_dlwbr_dir600l
+    looks_like:
+      - example: 'Alphanetworks:wrgn35_dlwbr_dir600l'
+        pattern: 'Alphanetworks:wrgn35_dlwbr_dir600l'
+    location:
+      - type: config_file
+        path: /etc/alpha_config/image_sign
+        detail: Firmware file containing the static password used by telnetd startup
+      - type: config_file
+        path: /bin/telnetd.sh
+        detail: Boot/startup script that launches telnetd with the hardcoded credential
+      - type: public_interface
+        path: telnet
+        detail: Telnet login grants root shell after successful authentication
+      - type: image
+        detail: EOL DIR-600L A1 firmware image containing the backdoor files
+    notes: >
+      Tracked as CVE-2026-42375. The device is End-of-Life and is not expected
+      to receive patches.
+
+  - id: dir-456u-a1-telnet-backdoor
+    name: DIR-456U A1 Hardcoded Telnet Backdoor
+    description: >
+      D-Link DIR-456U hardware revision A1 starts a telnet daemon at boot via
+      /etc/init0.d/S80telnetd.sh using a hardcoded username and password read
+      from /etc/config/image_sign. Successful authentication grants a root shell
+      with full administrative control on the EOL device.
+    type: username_password
+    nature: [static_default, undocumented]
+    sensitivity: secret
+    default:
+      username: Alphanetworks
+      password: whdrv01_dlob_dir456U
+    looks_like:
+      - example: 'Alphanetworks:whdrv01_dlob_dir456U'
+        pattern: 'Alphanetworks:whdrv01_dlob_dir456U'
+    location:
+      - type: config_file
+        path: /etc/config/image_sign
+        detail: Firmware file containing the static password used by telnetd startup
+      - type: config_file
+        path: /etc/init0.d/S80telnetd.sh
+        detail: Boot/startup script that launches telnetd with the hardcoded credential
+      - type: public_interface
+        path: telnet
+        detail: Telnet login grants root shell after successful authentication
+      - type: image
+        detail: EOL DIR-456U A1 firmware image containing the backdoor files
+    notes: >
+      Tracked as CVE-2026-42376. The device is End-of-Life and is not expected
+      to receive patches.
+
+references:
+  - type: docs
+    url: https://support.dlink.com/ProductInfo.aspx?m=DIR-605L
+  - type: cve
+    url: https://nvd.nist.gov/vuln/detail/CVE-2026-42372
+  - type: cve
+    url: https://nvd.nist.gov/vuln/detail/CVE-2026-42373
+  - type: cve
+    url: https://nvd.nist.gov/vuln/detail/CVE-2026-42374
+  - type: cve
+    url: https://nvd.nist.gov/vuln/detail/CVE-2026-42375
+  - type: cve
+    url: https://nvd.nist.gov/vuln/detail/CVE-2026-42376

@@ -1,0 +1,117 @@
+id: apache-airflow
+name: Apache Airflow
+category: ci_cd
+vendor: Apache Software Foundation
+author: haxxm0nkey
+
+credentials:
+
+  - id: fernet-key
+    name: Fernet Key
+    description: >
+      Airflow encrypts sensitive connection and variable values at rest with a
+      fernet key. Airflow security documentation covers encryption at rest and
+      secrets backends for workload secrets.
+    type: secret_value
+    nature: [generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - pattern: '[A-Za-z0-9_\-]{43}='
+        detail: Fernet key shape commonly used by Airflow for encrypted metastore secrets
+    location:
+      - type: config_file
+        path: airflow.cfg
+        detail: Airflow core fernet_key setting
+      - type: environment
+        path: AIRFLOW__CORE__FERNET_KEY
+      - type: secret_store
+        detail: Kubernetes Secrets, Helm secrets, cloud secret managers, and Airflow secrets backends
+      - type: source_code
+        detail: committed airflow.cfg, Helm values, Docker Compose files, and test configs
+      - type: logs
+        detail: startup logs and support bundles
+    notes: >
+      A leaked fernet key plus Airflow metadata database access can decrypt
+      stored connection passwords and variable values.
+
+  - id: webserver-secret-key
+    name: Webserver Secret Key
+    description: >
+      Airflow webserver uses a secret key for signing web sessions and CSRF
+      state. Deployments commonly set this through airflow.cfg or environment
+      variables.
+    type: secret_value
+    nature: [generated_on_install]
+    sensitivity: secret
+    location:
+      - type: config_file
+        path: airflow.cfg, webserver_config.py
+        detail: Airflow webserver secret_key and web UI security configuration
+      - type: environment
+        path: AIRFLOW__WEBSERVER__SECRET_KEY
+      - type: secret_store
+        detail: Kubernetes Secrets, Helm secrets, and cloud secret managers
+      - type: source_code
+        detail: committed configs and deployment manifests
+    notes: >
+      Webserver secret-key rotation invalidates sessions and protects signed UI
+      state.
+
+  - id: connection-secret
+    name: Connection / Variable Secret
+    description: >
+      Airflow stores credentials for external systems as Connections and
+      Variables in the metastore, environment variables, or configured secrets
+      backends. Airflow documents the secrets search path and external secrets
+      backends.
+    type: secret_value
+    nature: [user_defined]
+    sensitivity: secret
+    location:
+      - type: database
+        detail: Airflow metadata database storing encrypted connection and variable values
+      - type: environment
+        path: AIRFLOW_CONN_*, AIRFLOW_VAR_*
+      - type: secret_store
+        detail: HashiCorp Vault, AWS Secrets Manager, GCP Secret Manager, Azure Key Vault, Kubernetes Secrets, and custom backends
+      - type: config_file
+        detail: DAG configs, local secrets files, airflow.cfg, and Helm values
+      - type: source_code
+        detail: DAG repositories, tests, and committed connection URIs
+      - type: logs
+        detail: task logs, connection debugging, and scheduler/webserver output
+    notes: >
+      Airflow connection secrets may be cloud keys, database passwords, SSH keys,
+      API tokens, and other downstream credentials used by DAGs.
+
+  - id: admin-user-password
+    name: Web UI User Password
+    description: >
+      Airflow web UI users authenticate through the configured auth manager or
+      webserver auth backend. Local user credentials are deployment-specific and
+      often provisioned by CLI, Helm chart, or secrets backend.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    location:
+      - type: database
+        detail: Airflow metadata database user tables for local auth configurations
+      - type: public_interface
+        path: Airflow webserver UI and API
+      - type: environment
+        path: AIRFLOW_WWW_USER_USERNAME, AIRFLOW_WWW_USER_PASSWORD
+      - type: secret_store
+        detail: Helm secrets, Kubernetes Secrets, password vaults, and identity-provider secrets
+      - type: source_code
+        detail: Docker Compose files, Helm values, and local dev configs
+      - type: logs
+        detail: setup output and authentication traces
+    notes: >
+      There is no universal Airflow administrator password; it is created during
+      deployment or managed by the configured identity provider.
+
+references:
+  - type: docs
+    url: https://airflow.apache.org/docs/apache-airflow/stable/security/secrets/secrets-backend/index.html
+  - type: docs
+    url: https://airflow.apache.org/docs/apache-airflow/stable/security/secrets/fernet.html

@@ -1,0 +1,319 @@
+id: cisco-ios
+name: Cisco IOS
+category: network
+vendor: Cisco
+author: haxxm0nkey
+
+credentials:
+
+  - id: enable-secret
+    name: Enable Secret / Enable Password
+    description: >
+      Privileged EXEC access on Cisco IOS is protected with an enable secret
+      or the older enable password. Cisco recommends enable secret instead
+      of enable password because enable password uses weak reversible
+      protection when service password-encryption is enabled.
+    type: password
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '^enable secret (5|8|9) [^\r\n]+$'
+        detail: >
+          hashed privileged-mode password in IOS configuration; type 5, 8,
+          or 9 identifies the stored hash format (MD5, PBKDF2-SHA256,
+          scrypt respectively)
+      - pattern: '^enable password (0|7)? ?[^\r\n]+$'
+        detail: >
+          older enable password form; type 0 is plaintext and type 7 is
+          Cisco's reversible password encoding
+    location:
+      - type: config_file
+        detail: >
+          IOS device configuration (running-config, startup-config) visible
+          via `show running-config`
+      - type: build_artifact
+        detail: configuration backups, TFTP archives, RANCID / Oxidized output
+    notes: >
+      If no enable secret or enable password is set, IOS falls back to the
+      line password to authorize entry into privileged EXEC. Combined with a
+      vty line configured with `privilege level 15` or a line password used
+      for authentication, this fallback is how many devices historically
+      ended up granting privileged access from a remote session — the line
+      password effectively becomes the enable credential.
+
+  - id: local-user-credential
+    name: Local Username Password / Secret
+    description: >
+      Cisco IOS local users are configured with username statements that
+      include either a password or a secret. These accounts are commonly
+      used for console, SSH, Telnet, and fallback AAA authentication.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '^username \S+ secret (5|8|9) [^\r\n]+$'
+        detail: >
+          local user with a hashed secret in IOS configuration; the username
+          is the token after `username` and the hash is the credential value
+      - pattern: '^username \S+ password (0|7)? ?[^\r\n]+$'
+        detail: >
+          local user with plaintext or type 7 encoded password in IOS
+          configuration; type 7 is reversible, not a cryptographic hash
+    location:
+      - type: config_file
+        detail: username lines in the IOS device configuration
+      - type: source_code
+        detail: golden configs, network automation templates, lab snippets
+      - type: build_artifact
+        detail: router and switch configuration backups
+    notes: >
+      Cisco examples often use placeholder usernames and passwords such as
+      cisco/cisco when demonstrating SSH configuration. Those are examples,
+      not product defaults, and should not be treated as shipped credentials.
+      Certain Cisco platforms do document Day 0 provisioning usernames used
+      by their initial-config flow (for example, some Catalyst 9K and ISR
+      models); those are platform-specific and belong in per-model entries
+      rather than being generalized here.
+
+  - id: line-password
+    name: Console / VTY Line Password
+    description: >
+      IOS line configuration can protect console, AUX, and virtual terminal
+      access with a line password. The password appears under line con, line
+      aux, or line vty configuration blocks.
+    type: password
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '^\s*password (0|7)? ?[^\r\n]+$'
+        detail: >
+          line password inside a `line con`, `line aux`, or `line vty`
+          block; surrounding configuration context identifies which line
+          uses it
+    location:
+      - type: config_file
+        detail: line con / line aux / line vty blocks in the IOS configuration
+      - type: build_artifact
+        detail: archived IOS configurations and device replacement configs
+    notes: >
+      Line passwords are still encountered in legacy Telnet and console
+      configurations. When service password-encryption is enabled, IOS
+      stores many of these values as type 7 strings, which Cisco describes
+      as suitable only against casual observation. See enable-secret above
+      for how a line password can double as the enable credential when no
+      enable secret is set.
+
+  - id: snmp-community-string
+    name: SNMP Community String
+    description: >
+      SNMPv1 and SNMPv2c on Cisco IOS use community strings as shared
+      secrets for read-only or read-write management access. The community
+      string is configured with snmp-server community.
+    type: secret_value
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '^snmp-server community \S+ (RO|RW)( .*)?$'
+        detail: >
+          IOS SNMP community configuration; the token after `community` is
+          the shared secret and RO/RW indicates read-only or read-write
+          access
+    location:
+      - type: config_file
+        detail: snmp-server community lines in the IOS configuration
+      - type: source_code
+        detail: network monitoring templates and bootstrap configs
+      - type: build_artifact
+        detail: configuration repositories and NMS discovery exports
+    notes: >
+      Cisco's hardening guide shows `snmp-server community READONLY RO` and
+      `READWRITE RW` only as explanatory examples and tells operators to
+      choose strong strings for production. A read-write community can
+      modify device state through SNMP where write access is permitted.
+
+  - id: snmpv3-user-secrets
+    name: SNMPv3 User Auth / Privacy Secrets
+    description: >
+      Cisco IOS SNMPv3 users can be configured with authentication and
+      privacy secrets for authenticated and encrypted SNMP management. These
+      secrets are per-SNMP-user credentials stored in the IOS configuration.
+    type: secret_value
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '^snmp-server user \S+ \S+ v3 (auth|encrypted|priv).*$'
+        detail: >
+          SNMPv3 user configuration line; auth and priv parameters carry
+          authentication and privacy secret material or derived localized keys
+      - pattern: '(auth (md5|sha|sha-256|sha-384|sha-512) \S+|priv (des|3des|aes) \S+)'
+        detail: >
+          SNMPv3 auth/privacy fragments inside an IOS configuration line;
+          exact syntax varies by platform and release
+    location:
+      - type: config_file
+        detail: snmp-server user lines in the IOS running-config or startup-config
+      - type: source_code
+        detail: network monitoring templates and SNMP bootstrap configs
+      - type: build_artifact
+        detail: configuration repositories and NMS discovery exports
+    notes: >
+      SNMPv3 is the hardened replacement for SNMP community strings, but the
+      configured auth and privacy secrets are still credentials. A leaked
+      SNMPv3 user with authPriv can provide authenticated management access
+      within the views and ACLs assigned to that user.
+
+  - id: aaa-shared-secret
+    name: TACACS+ / RADIUS Shared Secret
+    description: >
+      Cisco IOS AAA clients share secrets with TACACS+ and RADIUS servers.
+      The shared secret appears in TACACS+ or RADIUS server configuration
+      and protects communication between the network device and AAA server.
+    type: secret_value
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '^tacacs-server key (0|7)? ?[^\r\n]+$'
+        detail: >
+          legacy global TACACS+ shared key line; type 7 indicates Cisco's
+          reversible password encoding
+      - pattern: '^radius-server key (0|7)? ?[^\r\n]+$'
+        detail: >
+          legacy global RADIUS shared key line; type 7 indicates Cisco's
+          reversible password encoding
+      - pattern: '^\s*key (0|7)? ?[^\r\n]+$'
+        detail: >
+          AAA server-group or per-server key line; surrounding tacacs or
+          radius server context identifies the protocol and server
+    location:
+      - type: config_file
+        detail: >
+          tacacs-server, radius-server, aaa server, or server-private blocks
+          in the IOS configuration
+      - type: source_code
+        detail: AAA templates, device bootstrap scripts, network-as-code repos
+      - type: build_artifact
+        detail: configuration backups and migration bundles
+    notes: >
+      The device-local key is not a user login password, but it is
+      sufficient to impersonate or tamper with AAA communication in the
+      relevant trust path. It commonly appears in reusable templates
+      because every device in a fleet often shares the same TACACS+ or
+      RADIUS key.
+
+  - id: routing-and-ipsec-keys
+    name: Routing Protocol & IPsec Pre-Shared Keys
+    description: >
+      Cisco IOS stores shared secrets used to authenticate routing-protocol
+      peers (EIGRP / OSPF / BGP / RIPv2 MD5 authentication keys) and IPsec
+      peers (isakmp / IKEv2 pre-shared keys) directly in the configuration.
+      These are per-peer secrets, not user login credentials, but they
+      leak from the same config-file storage as the rest of this entry.
+    type: secret_value
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '^\s*key-string (0|7)? ?[^\r\n]+$'
+        detail: >
+          key-chain entry used by EIGRP, RIPv2, and other routing
+          protocols; found inside a `key chain … / key N / key-string`
+          block
+      - pattern: '^\s*(message-digest-key|authentication-key)\s+\d+\s+md5\s+(0|7)?\s?[^\r\n]+$'
+        detail: >
+          OSPF or interface-level MD5 authentication key; the numeric key-id
+          is followed by the shared secret
+      - pattern: '^\s*neighbor \S+ password (0|7)? ?[^\r\n]+$'
+        detail: BGP peer MD5 authentication password under `router bgp`
+      - pattern: '^crypto isakmp key (0|6)? ?\S+ address \S+'
+        detail: >
+          IKEv1 pre-shared key; type 6 indicates AES-encrypted storage
+          using the master key configured by `key config-key`
+      - pattern: '^\s*pre-shared-key (local|remote)? ?(0|6)? ?[^\r\n]+$'
+        detail: IKEv2 keyring entry
+    location:
+      - type: config_file
+        detail: >
+          `key chain`, `router ospf` / interface authentication, `router bgp`
+          neighbor blocks, `crypto isakmp` / `crypto ikev2 keyring` blocks
+      - type: build_artifact
+        detail: config backups, network-as-code repositories, HA replacement configs
+    notes: >
+      The trust boundary differs from AAA: a leaked routing-protocol key
+      lets an attacker inject or accept routes with the affected peer(s),
+      and a leaked IPsec PSK lets an attacker impersonate one end of the
+      tunnel. Type 6 encoding (AES) is only as strong as the master key,
+      which is stored on the device — losing the running-config generally
+      means losing both.
+
+  - id: type-6-master-key-and-encrypted-secrets
+    name: Type 6 Master Key / AES-Encrypted Secrets
+    description: >
+      Cisco IOS can store certain pre-shared keys and passwords using type 6
+      AES encryption. The encryption depends on the master key configured by
+      key config-key password-encrypt; losing both the configuration and the
+      master key exposes the protected secrets.
+    type: secret_value
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '^key config-key password-encrypt [^\r\n]+$'
+        detail: >
+          IOS master key command for type 6 password encryption; the value is
+          the key protecting type 6 secrets
+      - pattern: '\b6 [A-Fa-f0-9]{16,}\b'
+        detail: >
+          type 6 AES-encrypted secret value in IOS configuration; command
+          context identifies whether it protects an IKE PSK, password, or
+          other supported secret
+    location:
+      - type: config_file
+        detail: IOS running-config or startup-config containing type 6 secrets and key config-key
+      - type: build_artifact
+        detail: configuration backups, network-as-code repositories, and HA replacement configs
+    notes: >
+      Type 6 is stronger than type 7, but it is still configuration-bound
+      secret storage. Backups that include both encrypted type 6 values and
+      the configured master key should be treated as containing recoverable
+      plaintext credentials.
+
+  - id: type-7-encoded-secret
+    name: Type 7 Encoded Secret
+    description: >
+      Cisco IOS type 7 is the reversible encoding produced by `service
+      password-encryption` for passwords, CHAP secrets, and similar data
+      saved in the configuration. Cisco states that the algorithm is a
+      simple Vigenere cipher and is not designed to protect configuration
+      files against serious analysis.
+    type: secret_value
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '(password|key|community|key-string) 7 [0-9A-Fa-f]{4,}'
+        detail: >
+          the "7" here is Cisco's type indicator, not the value; the hex
+          string that follows is the reversible-encoded secret. Anchoring
+          on known commands avoids false positives against type-5/8/9 hash
+          lines and other config material.
+    location:
+      - type: config_file
+        detail: any IOS command storing a type 7 password or key
+      - type: build_artifact
+        detail: config backups, audit exports, and archived `show tech` output
+    notes: >
+      Treat type 7 values as recoverable plaintext — public tools decode
+      them in a single step. The command context is required to tell
+      whether the value is a line password, user password, SNMP community,
+      AAA key, routing-protocol key, or another shared secret. A single
+      leaked config typically yields multiple type 7 values across
+      different commands.
+
+references:
+  - type: docs
+    url: https://sec.cloudapps.cisco.com/security/center/resources/framework_password_management.html
+  - type: docs
+    url: https://sec.cloudapps.cisco.com/security/center/resources/securing_ios_devices.html
+  - type: docs
+    url: https://www.cisco.com/c/en/us/support/docs/security-vpn/secure-shell-ssh/4145-ssh.html
+  - type: docs
+    url: https://www.cisco.com/c/en/us/td/docs/ios-xml/ios/security/config_library/xe-16/secuser-16-book/sec-encrypt-preshare.html
+  - type: advisory
+    url: https://sec.cloudapps.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-20130318-type7

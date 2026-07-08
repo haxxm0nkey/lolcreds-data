@@ -1,0 +1,131 @@
+id: apache-zookeeper
+name: Apache ZooKeeper
+category: middleware
+vendor: Apache Software Foundation
+author: haxxm0nkey
+
+credentials:
+
+  - id: digest-acl-credential
+    name: Digest ACL Username / Password
+    description: >
+      ZooKeeper ACLs support the digest scheme, which uses a username:password
+      string to generate an ACL identity. ZooKeeper documents that authentication
+      is performed by sending username:password and ACLs store the username with
+      a base64-encoded SHA1 password digest.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: 'digest:[^:\s]+:[A-Za-z0-9+/=]+'
+        detail: ZooKeeper digest ACL identity containing username and base64 SHA1 password digest
+      - pattern: 'addauth\s+digest\s+[^:\s]+:[^\s]+'
+        detail: ZooKeeper CLI digest authentication command with username:password
+    location:
+      - type: database
+        detail: ZooKeeper znodes storing ACLs with digest identities
+      - type: config_file
+        detail: client config, application config, JAAS files, and deployment manifests
+      - type: secret_store
+        detail: Kubernetes Secrets, cloud secret managers, and platform vault entries
+      - type: source_code
+        detail: ZooKeeper client code, tests, scripts, and committed configs
+      - type: logs
+        detail: client debug logs, command history, and ACL troubleshooting output
+      - type: public_interface
+        path: ZooKeeper client port 2181
+    notes: >
+      Digest credentials protect znodes according to ACL permissions. Avoid
+      sending digest username:password over untrusted networks without TLS.
+
+  - id: sasl-jaas-secret
+    name: SASL / JAAS Secret
+    description: >
+      ZooKeeper supports pluggable authentication and SASL configuration. JAAS
+      files used by ZooKeeper servers and clients can contain usernames,
+      passwords, keytabs, or other mechanism-specific secret material.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '(?:username|password)=\"[^\"\r\n]+\"'
+        detail: JAAS option containing username or password in ZooKeeper SASL configuration
+    location:
+      - type: config_file
+        path: jaas.conf, zoo.cfg, java.env
+        detail: ZooKeeper server/client JAAS and authentication configuration
+      - type: environment
+        path: JVMFLAGS, SERVER_JVMFLAGS, CLIENT_JVMFLAGS
+        detail: Java system properties pointing to JAAS config or auth settings
+      - type: secret_store
+        detail: Kerberos keytabs, Kubernetes Secrets, cloud secret managers, and deployment vaults
+      - type: source_code
+        detail: deployment manifests, Helm charts, tests, and committed JAAS configs
+      - type: logs
+        detail: startup logs and SASL authentication debug traces
+    notes: >
+      Depending on mechanism, the credential may be a password, Kerberos keytab,
+      or service principal secret.
+
+  - id: tls-keystore-password
+    name: TLS Keystore / Truststore Password
+    description: >
+      ZooKeeper TLS settings include keyStore and trustStore locations and
+      passwords for client and quorum TLS connections. ZooKeeper documents
+      ssl.keyStore.password and ssl.quorum.keyStore.password configuration.
+    type: password
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: 'zookeeper\.ssl\.(?:keyStore|trustStore)\.password=[^\s]+'
+        detail: ZooKeeper Java system property for TLS keystore or truststore password
+      - pattern: 'ssl\.(?:keyStore|trustStore)\.password\s*=\s*[^\r\n]+'
+        detail: ZooKeeper configuration file TLS store password
+    location:
+      - type: config_file
+        path: zoo.cfg, java.env, JVM system properties
+        detail: ZooKeeper TLS keystore and truststore configuration
+      - type: secret_store
+        detail: Java keystores, Kubernetes Secrets, cloud secret managers, and deployment vaults
+      - type: source_code
+        detail: Helm charts, Docker Compose files, and committed config
+      - type: image
+        detail: ensemble images containing keystores and config
+      - type: logs
+        detail: TLS startup and troubleshooting output
+    notes: >
+      Keystore passwords can unlock private keys used for ZooKeeper client or
+      quorum TLS authentication.
+
+  - id: super-digest
+    name: Super Digest
+    description: >
+      ZooKeeper can configure a super user digest for administrative access.
+      The superDigest value is secret-equivalent because it grants elevated ACL
+      bypass behavior to clients authenticating as the configured super user.
+    type: secret_value
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: 'zookeeper\.DigestAuthenticationProvider\.superDigest=[^\s]+'
+        detail: ZooKeeper superDigest Java system property
+    location:
+      - type: config_file
+        detail: zoo.cfg, java.env, service unit files, and JVM system properties
+      - type: environment
+        path: JVMFLAGS, SERVER_JVMFLAGS
+      - type: secret_store
+        detail: configuration management vaults and Kubernetes Secrets
+      - type: source_code
+        detail: deployment scripts and committed ensemble config
+      - type: logs
+        detail: process listings, startup logs, and service manager output
+    notes: >
+      superDigest should be treated as highly privileged administrative secret
+      material, not as a normal application password.
+
+references:
+  - type: docs
+    url: https://zookeeper.apache.org/doc/current/zookeeperProgrammers.html#sc_ZooKeeperAccessControl
+  - type: docs
+    url: https://zookeeper.apache.org/doc/current/zookeeperAdmin.html#sc_authOptions

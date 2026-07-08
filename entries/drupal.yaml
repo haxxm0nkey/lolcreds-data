@@ -1,0 +1,97 @@
+id: drupal
+name: Drupal
+category: cms
+vendor: Drupal Association
+author: haxxm0nkey
+
+credentials:
+
+  - id: database-credentials
+    name: Database Credentials
+    description: >
+      Drupal settings.php defines the $databases array used to connect to the
+      site's database. Drupal's default.settings.php documents database,
+      username, password, host, port, and driver fields in this array.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: >-
+          'password'\s*=>\s*'[^'\r\n]+'
+        detail: Drupal settings.php database password array entry
+    location:
+      - type: config_file
+        path: sites/*/settings.php
+        detail: Drupal site settings containing database connection arrays
+      - type: environment
+        path: DRUPAL_DATABASE_PASSWORD, DATABASE_URL, MYSQL_PASSWORD, POSTGRES_PASSWORD
+      - type: secret_store
+        detail: platform secrets, Kubernetes Secrets, cloud secret managers, and CI/CD variables
+      - type: source_code
+        detail: accidentally committed settings.php files, local.settings.php, and deployment scripts
+      - type: artifact
+        detail: site backups, database dumps with config, and container images
+      - type: logs
+        detail: installer logs, debug dumps, and CI output
+    notes: >
+      Database access can expose Drupal users, password hashes, configuration,
+      content, and secrets stored by contributed modules.
+
+  - id: hash-salt
+    name: Hash Salt
+    description: >
+      Drupal settings.php contains $settings['hash_salt'], which is site-specific
+      secret material used in hash generation. Drupal documents setting it in
+      settings.php or reading it from an external file.
+    type: secret_value
+    nature: [generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - pattern: >-
+          \$settings\['hash_salt'\]\s*=\s*'[^'\r\n]+'
+        detail: Drupal settings.php hash_salt assignment
+    location:
+      - type: config_file
+        path: sites/*/settings.php
+        detail: Drupal hash_salt setting or file_get_contents reference
+      - type: secret_store
+        detail: external salt files, platform secrets, and deployment vault entries
+      - type: source_code
+        detail: committed settings.php files and backups
+      - type: artifact
+        detail: site archives and container images containing settings.php or salt files
+    notes: >
+      The salt is not a user password but is site secret material that should not
+      be shared between environments or exposed in public repositories.
+
+  - id: administrator-password
+    name: Administrator/User Password
+    description: >
+      Drupal user accounts authenticate to the web UI and APIs with user-defined
+      passwords. The initial site maintenance account is created during
+      installation and has administrative control over the site.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    location:
+      - type: database
+        detail: Drupal user tables containing password hashes and account data
+      - type: public_interface
+        path: /user/login, /user/password
+        detail: Drupal login and password reset interfaces
+      - type: config_file
+        detail: provisioning scripts, local dev config, and test fixtures
+      - type: source_code
+        detail: Behat tests, install scripts, and accidentally committed credentials
+      - type: logs
+        detail: web server logs, failed-login logs, and test output
+    notes: >
+      There is no universal Drupal administrator password; it is chosen or
+      generated during site installation.
+
+references:
+  - type: docs
+    url: https://api.drupal.org/api/drupal/sites%21default%21default.settings.php/10
+  - type: docs
+    url: https://www.drupal.org/docs/getting-started/installing-drupal/trusted-host-settings
+

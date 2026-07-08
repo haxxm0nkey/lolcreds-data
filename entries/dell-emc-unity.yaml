@@ -1,0 +1,89 @@
+id: dell-emc-unity
+name: Dell EMC Unity
+category: network
+vendor: Dell Technologies
+author: haxxm0nkey
+credentials:
+- id: admin-password
+  name: Unity Administrator Password
+  description: Dell EMC Unity storage arrays are managed through Unisphere, CLI, and REST
+    APIs using local or directory-backed administrative accounts. The local admin password
+    is set during initialization.
+  type: username_password
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: Unisphere web UI, Unisphere CLI, REST API, SSH/service interfaces
+  - type: config_file
+    detail: Unity configuration exports, deployment worksheets, and automation scripts
+  - type: secret_store
+    detail: password managers, storage admin vaults, and deployment secrets
+  - type: logs
+    detail: management server logs, audit logs, and REST/CLI traces
+  notes: No universal Unity admin password is modeled; arrays require initialization credentials
+    or changed defaults depending on generation and policy.
+- id: rest-session-token
+  name: REST API Session Token
+  description: Unity REST API clients authenticate and receive session/cookie material used
+    for subsequent management operations.
+  type: token
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: X-EMC-REST-CLIENT
+    detail: Unity REST client/session-related header context
+  - type: http_header
+    path: Cookie
+    detail: management session cookie used by REST/Unisphere clients
+  - type: config_file
+    detail: API client caches, automation scripts, and .env files
+  - type: logs
+    detail: REST debug traces and reverse proxy logs
+- id: directory-snmp-replication-secrets
+  name: Directory, SNMP, Replication, and NAS Secrets
+  description: Unity configurations can contain LDAP/AD bind credentials, SNMP communities/users,
+    replication secrets, NAS server credentials, CHAP secrets, and storage integration passwords.
+  type: secret_value
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: config_file
+    detail: Unity configuration exports for directory services, SNMP, replication, NAS, iSCSI
+      CHAP, and alerts
+  - type: secret_store
+    detail: array internal credential store, password vaults, and storage admin secrets
+  - type: source_code
+    detail: Unisphere CLI scripts, Ansible/Terraform configs, and monitoring integrations
+  - type: logs
+    detail: replication, directory, SNMP, and management logs
+- id: certificate-private-key
+  name: Management Certificate Private Key
+  description: Unity arrays use certificates and private keys for Unisphere/REST TLS and trusted
+    communication.
+  type: key_pair
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: '-----BEGIN (RSA |EC |ENCRYPTED |)PRIVATE KEY-----'
+    detail: private key material for Unity management TLS or imported certificates
+  location:
+  - type: config_file
+    detail: certificate import/export artifacts and array configuration backups
+  - type: secret_store
+    detail: certificate vaults and storage admin key stores
+  - type: artifact
+    detail: support bundles and configuration exports
+references:
+- type: docs
+  url: https://infohub.delltechnologies.com/en-us/l/dell-unity-unisphere-overview/unisphere-management-interface/
+- type: docs
+  url: https://www.dell.com/support/manuals/en-us/dell-emc-unity-family/unity_p_security_config_guide/authentication?guid=guid-d7fab30e-5fd6-43ad-a288-3e456550fd75&lang=en-us

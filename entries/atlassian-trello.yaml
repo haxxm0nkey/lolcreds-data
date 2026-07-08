@@ -1,0 +1,111 @@
+id: atlassian-trello
+name: Atlassian Trello
+category: saas
+vendor: Atlassian
+author: haxxm0nkey
+
+credentials:
+
+  - id: api-token
+    name: API Token
+    description: >
+      Trello's REST API uses token-based authentication. Atlassian documents
+      that after a user grants an application access, Trello gives the
+      application a token that can be used to make API requests on behalf of
+      that user.
+    type: token
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '(?:token=|"token"\s*:\s*")[^\s&"}'']{16,}'
+        detail: >
+          Trello API token in query-string or JSON body context; Atlassian does
+          not document a fixed token prefix in the REST API guide
+      - pattern: 'oauth_token="[^"\r\n]{16,}"'
+        detail: Trello token in the documented OAuth Authorization header format
+    location:
+      - type: http_header
+        path: Authorization
+        detail: OAuth header using oauth_consumer_key and oauth_token
+      - type: public_interface
+        path: https://trello.com/1/authorize
+        detail: authorization route used to grant an application a user token
+      - type: config_file
+        detail: .env files, integration config, automation scripts, and local token caches
+      - type: environment
+        path: TRELLO_TOKEN, TRELLO_API_TOKEN
+      - type: secret_store
+        detail: CI/CD variables, cloud secret managers, and hosted automation settings
+      - type: source_code
+        detail: scripts and examples containing key/token query parameters or JSON bodies
+      - type: logs
+        detail: HTTP request logs, webhook or automation debug output, and CI traces
+    notes: >
+      API tokens grant access to a user's Trello data according to their scopes
+      and expiration. Atlassian explicitly says API tokens should be kept secret.
+
+  - id: api-key
+    name: API Key
+    description: >
+      Trello applications use an API key tied to a Power-Up to identify the
+      application in the delegated authorization flow. Atlassian documents that
+      the API key is intended to be publicly accessible and does not grant
+      access to a user's Trello data by itself.
+    type: api_key
+    nature: [generated_on_install]
+    sensitivity: public_by_design
+    looks_like:
+      - pattern: '(?:key=|"key"\s*:\s*")[A-Za-z0-9]{16,}'
+        detail: >
+          Trello API key in query-string or JSON body context; pair with token
+          context to determine whether a complete secret is present
+      - pattern: 'oauth_consumer_key="[A-Za-z0-9]{16,}"'
+        detail: Trello API key in the documented OAuth Authorization header format
+    location:
+      - type: public_interface
+        path: https://trello.com/power-ups/admin
+        detail: Power-Up management page where API keys are generated
+      - type: config_file
+        detail: application settings, .env files, deployment manifests, and docs examples
+      - type: environment
+        path: TRELLO_KEY, TRELLO_API_KEY
+      - type: source_code
+        detail: Trello integrations, browser clients, examples, and automation scripts
+      - type: logs
+        detail: request URLs and Authorization headers printed by API clients
+    notes: >
+      The API key is not secret on its own, but it commonly appears next to a
+      secret API token. Preserve that context when triaging findings.
+
+  - id: oauth-application-secret
+    name: OAuth 1.0 Application Secret
+    description: >
+      Trello supports Basic OAuth 1.0 for API authorization. Atlassian documents
+      that applications also need an application secret, listed on the Power-Up
+      API Key tab, to sign OAuth requests.
+    type: secret_value
+    nature: [generated_on_install]
+    sensitivity: secret
+    location:
+      - type: public_interface
+        path: https://trello.com/power-ups/admin
+        detail: Power-Up API Key tab where the application secret is listed
+      - type: config_file
+        detail: OAuth client configuration, .env files, and server deployment manifests
+      - type: environment
+        path: TRELLO_SECRET, TRELLO_APPLICATION_SECRET, TRELLO_OAUTH_SECRET
+      - type: secret_store
+        detail: CI/CD variables, app hosting secrets, and cloud secret managers
+      - type: source_code
+        detail: OAuth examples, backend integrations, and committed configuration
+      - type: logs
+        detail: OAuth signing debug logs and failed request traces
+    notes: >
+      The application secret is separate from user API tokens. Exposure can let
+      an attacker sign OAuth requests as the Trello application.
+
+references:
+  - type: docs
+    url: https://developer.atlassian.com/cloud/trello/guides/rest-api/api-introduction/
+  - type: docs
+    url: https://developer.atlassian.com/cloud/trello/guides/rest-api/authorization/

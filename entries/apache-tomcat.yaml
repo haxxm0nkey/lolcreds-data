@@ -1,0 +1,75 @@
+id: apache-tomcat
+name: Apache Tomcat
+category: middleware
+vendor: Apache Software Foundation
+author: haxxm0nkey
+
+credentials:
+
+  - id: manager-user-password
+    name: Manager / Host Manager User Password
+    description: >
+      Tomcat Manager and Host Manager authenticate users through a configured
+      Realm. The default UserDatabaseRealm is typically backed by
+      $CATALINA_BASE/conf/tomcat-users.xml, where operators define usernames,
+      passwords, and manager roles.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '<user\s+username="[^"]+"\s+password="[^"]+"\s+roles="[^"]*(manager-gui|manager-script|manager-jmx|manager-status|admin-gui|admin-script)[^"]*"\s*/?>'
+        detail: >
+          tomcat-users.xml user entry; the password attribute is the
+          credential and manager/admin roles identify privileged web-console access
+    location:
+      - type: config_file
+        path: $CATALINA_BASE/conf/tomcat-users.xml
+      - type: config_file
+        path: $CATALINA_BASE/conf/server.xml
+        detail: Realm configuration can point authentication at XML, JDBC, JNDI, JAAS, or custom stores
+      - type: public_interface
+        path: /manager/html, /manager/text, /manager/jmxproxy, /host-manager/html
+      - type: source_code
+        detail: Dockerfiles, lab compose files, deployment examples, golden Tomcat configs
+      - type: artifact
+        detail: WAR deployment bundles, config backups, AMI/container build artifacts
+    notes: >
+      Tomcat documentation states that no username in the default users file
+      is assigned Manager roles, so Manager access is disabled by default.
+      Do not treat example users as shipped defaults; include only operator
+      configured users and passwords.
+
+  - id: realm-user-password
+    name: Realm User Password
+    description: >
+      Tomcat web applications using container-managed security authenticate
+      users through a Realm. Realms may store usernames, passwords, and roles
+      in tomcat-users.xml, a database, LDAP/JNDI, JAAS, or a custom backend.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '<user\s+username="[^"]+"\s+password="[^"]+"\s+roles="[^"]*"\s*/?>'
+        detail: tomcat-users.xml user entry for a MemoryRealm or UserDatabaseRealm
+    location:
+      - type: config_file
+        path: $CATALINA_BASE/conf/tomcat-users.xml
+      - type: config_file
+        path: $CATALINA_BASE/conf/server.xml, META-INF/context.xml
+        detail: Realm, DataSourceRealm, JDBCRealm, JNDIRealm, and JAASRealm configuration
+      - type: database
+        detail: JDBCRealm or DataSourceRealm user and role tables
+      - type: public_interface
+        detail: application login forms protected by Servlet security constraints
+      - type: source_code
+        detail: context.xml, web.xml, test fixtures, deployment templates
+    notes: >
+      Realm password storage depends on the configured Realm and digest
+      settings. For LOLCreds purposes, the concrete credential location is the
+      configured Realm backend plus any copied deployment artifacts.
+
+references:
+  - type: docs
+    url: https://tomcat.apache.org/tomcat-9.0-doc/manager-howto.html
+  - type: docs
+    url: https://tomcat.apache.org/tomcat-9.0-doc/realm-howto.html

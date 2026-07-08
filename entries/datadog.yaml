@@ -1,0 +1,100 @@
+id: datadog
+name: Datadog
+category: monitoring
+vendor: Datadog
+author: haxxm0nkey
+
+credentials:
+
+  - id: api-key
+    name: API Key
+    description: >
+      Datadog API keys are unique to an organization and are required by the
+      Datadog Agent to submit metrics and events. Datadog API requests use the
+      API key alongside an application key for many programmatic operations.
+    type: api_key
+    nature: [generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - example: 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: '[A-Fa-f0-9]{32}'
+        detail: Datadog API keys are commonly represented as 32-character hexadecimal strings
+    location:
+      - type: environment
+        path: DD_API_KEY, DATADOG_API_KEY
+      - type: http_header
+        path: DD-API-KEY
+        detail: Datadog API key header
+      - type: config_file
+        detail: datadog.yaml, Agent Helm values, Terraform variables, .env files, and CI manifests
+      - type: secret_store
+        detail: Kubernetes Secrets, CI/CD variables, cloud secret managers, and container secrets
+      - type: source_code
+        detail: infrastructure-as-code, deployment scripts, examples, and committed configs
+      - type: logs
+        detail: Agent startup logs, API client traces, Terraform output, and CI logs
+    notes: >
+      API keys identify the Datadog organization for ingestion. Rotate keys
+      found outside intended Agent or service configuration.
+
+  - id: application-key
+    name: Application Key
+    description: >
+      Datadog application keys, used with an organization's API key, give users
+      access to Datadog's programmatic API. Datadog documents that application
+      keys are associated with the user account that created them and inherit
+      that user's permissions by default.
+    type: api_key
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - example: 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: '[A-Fa-f0-9]{40}'
+        detail: Datadog application keys are commonly represented as 40-character hexadecimal strings
+    location:
+      - type: environment
+        path: DD_APP_KEY, DD_APPLICATION_KEY, DATADOG_APP_KEY, DATADOG_APPLICATION_KEY
+      - type: http_header
+        path: DD-APPLICATION-KEY
+        detail: Datadog application key header for API operations
+      - type: config_file
+        detail: Terraform provider config, automation .env files, and deployment manifests
+      - type: secret_store
+        detail: CI/CD variables, cloud secret managers, and secrets mounted into automation jobs
+      - type: source_code
+        detail: monitoring automation, scripts, IaC modules, and committed examples
+      - type: logs
+        detail: API client debug logs, Terraform traces, and CI output
+    notes: >
+      One-Time Read mode can make application key secrets visible only at
+      creation time. A leaked application key usually carries the permissions of
+      the user who created it.
+
+  - id: client-token
+    name: Client Token
+    description: >
+      Datadog client tokens are used by browser and mobile client SDKs for
+      products such as RUM and logs. Datadog documents API keys, application
+      keys, and client tokens together for browser application security.
+    type: token
+    nature: [generated_on_install]
+    sensitivity: context_dependent
+    location:
+      - type: config_file
+        detail: frontend SDK config, mobile app config, .env files, and build-time settings
+      - type: environment
+        path: DD_CLIENT_TOKEN, DATADOG_CLIENT_TOKEN
+      - type: source_code
+        detail: browser bundles, mobile applications, committed SDK initialization snippets
+      - type: logs
+        detail: client SDK startup logs and build output
+    notes: >
+      Client tokens are intended for client-side telemetry submission, but they
+      identify the Datadog intake target and can be abused to send unwanted
+      telemetry if exposed outside expected apps.
+
+references:
+  - type: docs
+    url: https://docs.datadoghq.com/account_management/api-app-keys/
+  - type: docs
+    url: https://docs.datadoghq.com/api/latest/authentication/

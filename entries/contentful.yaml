@@ -1,0 +1,97 @@
+id: contentful
+name: Contentful
+category: saas
+vendor: Contentful
+author: haxxm0nkey
+
+credentials:
+
+  - id: delivery-preview-api-token
+    name: Content Delivery / Preview API Token
+    description: >
+      Contentful Content Delivery and Preview APIs use access tokens generated
+      from API keys in the Contentful web app. Contentful documents sending the
+      token as access_token query parameter or, preferably, Authorization: Bearer.
+    type: token
+    nature: [generated_on_install]
+    sensitivity: secret
+    location:
+      - type: http_header
+        path: Authorization
+        detail: Bearer token used for Contentful API requests
+      - type: public_interface
+        path: access_token
+        detail: query parameter form accepted by Contentful APIs
+      - type: environment
+        path: CONTENTFUL_ACCESS_TOKEN, CONTENTFUL_DELIVERY_TOKEN, CONTENTFUL_PREVIEW_TOKEN
+      - type: config_file
+        detail: site generator config, CMS integration config, .env files, and deployment manifests
+      - type: secret_store
+        detail: CI/CD variables, hosting platform secrets, and cloud secret managers
+      - type: source_code
+        detail: frontend builds, static-site config, examples, and committed CMS clients
+      - type: logs
+        detail: build logs, API client traces, and failed preview requests
+    notes: >
+      Delivery tokens are often used in builds and runtimes; Preview tokens can
+      expose draft content and should be treated as more sensitive.
+
+  - id: management-api-pat
+    name: Content Management Personal Access Token
+    description: >
+      Contentful Content Management API access can use a personal access token.
+      Contentful documents getting a personal access token and authenticating API
+      requests with Bearer tokens.
+    type: token
+    nature: [user_defined]
+    sensitivity: secret
+    location:
+      - type: http_header
+        path: Authorization
+        detail: Bearer token used for Content Management API calls
+      - type: environment
+        path: CONTENTFUL_MANAGEMENT_TOKEN, CONTENTFUL_CMA_TOKEN, CONTENTFUL_PAT
+      - type: config_file
+        detail: migration tooling config, .env files, deployment manifests, and CMS automation settings
+      - type: secret_store
+        detail: CI/CD variables, cloud secret managers, and release automation secrets
+      - type: source_code
+        detail: migration scripts, seed scripts, tests, and committed management clients
+      - type: logs
+        detail: content migration logs, API traces, and CI output
+    notes: >
+      Management tokens can create, update, and delete Contentful resources
+      according to the user's permissions and selected spaces.
+
+  - id: oauth-token
+    name: OAuth Access Token
+    description: >
+      Contentful supports OAuth tokens for applications. Contentful documents
+      OAuth tokens as another way to authenticate API calls using the same Bearer
+      header mechanism.
+    type: token
+    nature: [generated_on_install]
+    sensitivity: secret
+    location:
+      - type: http_header
+        path: Authorization
+        detail: Bearer OAuth access token
+      - type: http_response
+        detail: OAuth token endpoint responses
+      - type: database
+        detail: integration OAuth installation token stores
+      - type: config_file
+        detail: local OAuth examples and application config
+      - type: secret_store
+        detail: encrypted app token stores and cloud secret managers
+      - type: logs
+        detail: OAuth callback and token exchange logs
+    notes: >
+      OAuth token permissions depend on the authorized user, organization,
+      spaces, and scopes granted to the app.
+
+references:
+  - type: docs
+    url: https://www.contentful.com/developers/docs/references/authentication/
+  - type: docs
+    url: https://www.contentful.com/developers/docs/references/content-delivery-api/

@@ -1,0 +1,48 @@
+id: alibaba-dashscope
+name: Alibaba Cloud DashScope
+category: ai_api
+vendor: Alibaba Cloud
+author: haxxm0nkey
+
+credentials:
+
+  - id: api-key
+    name: DashScope API Key
+    description: >
+      Alibaba Cloud Model Studio / DashScope API keys authenticate calls to
+      Qwen and other Model Studio APIs. Alibaba documents DASHSCOPE_API_KEY
+      environment variables and OpenAI-compatible Authorization: Bearer usage.
+    type: api_key
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - example: 'sk-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'sk-[A-Za-z0-9_\-]{20,}'
+        detail: DashScope API key form shown in Alibaba OpenAI-compatible examples
+      - example: 'sk-sp-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'sk-sp-[A-Za-z0-9_\-]{20,}'
+        detail: Token Plan / Coding Plan dedicated API key prefix documented by Alibaba
+    location:
+      - type: environment
+        path: DASHSCOPE_API_KEY
+      - type: http_header
+        path: Authorization
+        detail: Bearer token used by DashScope OpenAI-compatible API calls
+      - type: source_code
+        detail: Qwen examples, OpenAI-compatible clients, notebooks, committed .env files
+      - type: config_file
+        detail: .env, ~/.bashrc, deployment manifests, LLM gateway configs
+      - type: secret_store
+        detail: CI/CD variables, Alibaba Cloud secret stores, hosted app settings
+      - type: logs
+        detail: HTTP client logs and proxy logs containing Authorization headers
+    notes: >
+      DashScope API keys are region and workspace sensitive in Alibaba's
+      examples. Beijing and Singapore keys may differ; treat leaked keys by
+      their region, workspace, and permission configuration.
+
+references:
+  - type: docs
+    url: https://help.aliyun.com/zh/model-studio/developer-reference/get-api-key
+  - type: docs
+    url: https://help.aliyun.com/zh/model-studio/compatibility-of-openai-with-dashscope

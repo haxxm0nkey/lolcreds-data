@@ -1,0 +1,103 @@
+id: cloudera-manager
+name: Cloudera Manager
+category: enterprise_app
+vendor: Cloudera
+author: haxxm0nkey
+credentials:
+- id: default-admin
+  name: Default Cloudera Manager Administrator
+  description: Cloudera Manager initial deployments commonly use the admin account for first
+    login before operators change the password and configure external authentication.
+  type: username_password
+  nature:
+  - static_default
+  - user_defined
+  sensitivity: secret
+  default:
+    username: admin
+    password: admin
+  location:
+  - type: public_interface
+    path: Cloudera Manager Admin Console and REST API
+  - type: database
+    detail: Cloudera Manager database user/password and auth tables
+  - type: config_file
+    detail: installation notes, scm_prepare_database output, and deployment automation
+  - type: logs
+    detail: cloudera-scm-server logs, audit logs, and API traces
+  notes: admin/admin is an initial credential pattern and should be changed immediately during
+    installation/hardening.
+- id: cm-user-password
+  name: Cloudera Manager User / Service Account Password
+  description: Cloudera Manager users and service accounts authenticate to the admin console,
+    API, and managed cluster services. External LDAP/AD/Kerberos may be configured.
+  type: username_password
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: Cloudera Manager UI, REST API, agent/server endpoints, and service UIs
+  - type: database
+    detail: Cloudera Manager database storing users, roles, and encrypted service config values
+  - type: config_file
+    detail: cloudera-scm-server db.properties, LDAP config, and service configuration files
+  - type: secret_store
+    detail: Cloudera Manager credential storage, password vaults, and Kerberos keytabs
+  - type: logs
+    detail: server, agent, audit, LDAP, and API logs
+- id: api-session-basic-auth
+  name: API Basic Auth / Session Credential
+  description: Cloudera Manager REST API clients often use Basic authentication with a CM
+    user password or session cookies for automation.
+  type: token
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Basic credentials for Cloudera Manager API calls
+  - type: http_header
+    path: Cookie
+    detail: Cloudera Manager web/API session cookies
+  - type: config_file
+    detail: cm_api scripts, Ansible, Terraform, .env files, and monitoring configs
+  - type: environment
+    path: CM_USERNAME, CM_PASSWORD, CLOUDERA_MANAGER_PASSWORD
+  - type: secret_store
+    detail: CI/CD variables and automation vaults
+  - type: logs
+    detail: HTTP traces and API client debug logs
+- id: kerberos-keytab-and-service-secrets
+  name: Kerberos Keytab / Service Secret
+  description: Secure Cloudera clusters use Kerberos principals, keytabs, TLS private keys,
+    LDAP bind passwords, database passwords, cloud storage keys, and service-specific secrets
+    managed through Cloudera Manager.
+  type: key_pair
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: \.keytab$
+    detail: Kerberos keytab file path or artifact used by Hadoop/Cloudera services
+  - pattern: '-----BEGIN (RSA |EC |ENCRYPTED |)PRIVATE KEY-----'
+    detail: TLS private key for Cloudera Manager or managed service endpoints
+  location:
+  - type: config_file
+    detail: service keytabs, TLS key files, krb5.conf, db.properties, and generated service
+      configs
+  - type: secret_store
+    detail: Cloudera Manager credential store, KDC/keytab stores, Java keystores, and vaults
+  - type: artifact
+    detail: cluster backups, parcels/config exports, and diagnostic bundles
+  - type: logs
+    detail: Kerberos, TLS, LDAP, and service startup logs
+references:
+- type: docs
+  url: https://docs.cloudera.com/cdp-private-cloud-base/7.1.9/security-overview/topics/cm-security-overview.html
+- type: docs
+  url: https://docs.cloudera.com/cdp-private-cloud-base/7.1.9/security-kerberos-authentication/topics/cm-security-kerberos-authentication.html

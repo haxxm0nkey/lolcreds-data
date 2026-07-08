@@ -1,0 +1,73 @@
+id: apache-couchdb
+name: Apache CouchDB
+category: database
+vendor: Apache Software Foundation
+author: haxxm0nkey
+
+credentials:
+
+  - id: admin-password
+    name: Server Administrator Password
+    description: >
+      CouchDB requires an admin account to start. CouchDB documents that server
+      administrators and passwords are stored in the last [admins] section found
+      when loading ini files, not in the _users database.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '^\[admins\]$|^\s*[^;#\s=]+\s*=\s*[^\r\n]+'
+        detail: CouchDB [admins] ini context; lines under this section assign administrator passwords or password hashes
+    location:
+      - type: config_file
+        path: local.ini, local.d/*.ini
+        detail: CouchDB ini files containing the [admins] section
+      - type: environment
+        path: COUCHDB_USER, COUCHDB_PASSWORD
+      - type: secret_store
+        detail: container secrets, Kubernetes Secrets, cloud secret managers, and deployment vaults
+      - type: source_code
+        detail: Docker Compose files, Helm values, tests, and accidentally committed local.ini files
+      - type: logs
+        detail: startup errors, setup logs, and provisioning traces that reveal admin configuration
+      - type: public_interface
+        path: tcp/5984
+        detail: CouchDB HTTP API and Fauxton login endpoint
+    notes: >
+      There is no universal CouchDB admin password. CouchDB installations must
+      set administrator credentials or the server refuses to start in supported
+      versions.
+
+  - id: user-database-password
+    name: _users Database Password
+    description: >
+      CouchDB stores regular users separately from server administrators in the
+      _users database. Users authenticate to CouchDB HTTP APIs with mechanisms
+      such as cookie, JWT, proxy, or default authentication handlers.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    location:
+      - type: database
+        path: _users
+        detail: CouchDB users database containing user documents and password material
+      - type: http_header
+        path: Authorization
+        detail: Basic or Bearer authentication accepted by configured CouchDB auth handlers
+      - type: config_file
+        detail: application config, replication config, .env files, and deployment manifests
+      - type: secret_store
+        detail: password vaults, CI/CD variables, and cloud secret managers
+      - type: source_code
+        detail: replication scripts, application clients, tests, and committed URLs
+      - type: logs
+        detail: HTTP access logs, replication errors, and client debug output
+    notes: >
+      User password blast radius depends on database membership, roles, and
+      configured authentication handlers.
+
+references:
+  - type: docs
+    url: https://docs.couchdb.org/en/stable/config/auth.html
+  - type: docs
+    url: https://docs.couchdb.org/en/stable/config/intro.html

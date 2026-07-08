@@ -1,0 +1,92 @@
+id: ansible-tower
+name: Ansible Tower / Automation Controller
+category: ci_cd
+vendor: Red Hat
+author: haxxm0nkey
+
+credentials:
+
+  - id: oauth2-token
+    name: OAuth2 / Personal Access Token
+    description: >
+      Ansible Tower and Automation Controller support OAuth2 token
+      authentication for API access. Tokens are used by CLI, API clients, and
+      automation integrations instead of passwords.
+    type: token
+    nature: [generated_on_install]
+    sensitivity: secret
+    location:
+      - type: http_header
+        path: Authorization
+        detail: Bearer token used for Automation Controller API requests
+      - type: database
+        detail: controller database tables storing OAuth applications and tokens
+      - type: environment
+        path: TOWER_OAUTH_TOKEN, CONTROLLER_OAUTH_TOKEN, AWX_TOKEN
+      - type: config_file
+        detail: awx CLI config, automation scripts, .env files, and CI manifests
+      - type: secret_store
+        detail: CI/CD variables, credential stores, Kubernetes Secrets, and cloud secret managers
+      - type: source_code
+        detail: playbooks, tests, and committed API clients
+      - type: logs
+        detail: API client traces and CI output
+    notes: >
+      Token privileges follow the owning user, OAuth application, scopes, and
+      RBAC configuration.
+
+  - id: admin-user-password
+    name: Administrator/User Password
+    description: >
+      Automation Controller users authenticate to the web UI and API through
+      local, LDAP, SAML, or other configured authentication backends. Local admin
+      credentials are created during installation or provisioning.
+    type: username_password
+    nature: [generated_on_install, user_defined]
+    sensitivity: secret
+    location:
+      - type: database
+        detail: controller database user tables and password verifier state for local accounts
+      - type: public_interface
+        path: Automation Controller UI and API
+      - type: environment
+        path: ADMIN_PASSWORD, TOWER_ADMIN_PASSWORD, CONTROLLER_ADMIN_PASSWORD
+      - type: secret_store
+        detail: installer inventory secrets, Kubernetes Secrets, Ansible Vault, and password managers
+      - type: source_code
+        detail: installer inventories, playbooks, tests, and committed variables
+      - type: logs
+        detail: installer logs, setup output, and authentication traces
+    notes: >
+      There is no universal Tower administrator password; it is generated or set
+      during deployment.
+
+  - id: stored-credential-secret
+    name: Stored Automation Credential
+    description: >
+      Automation Controller stores machine, SCM, cloud, vault, and custom
+      credentials for use by jobs. Red Hat documentation covers secret handling
+      for sensitive values in the controller.
+    type: secret_value
+    nature: [user_defined]
+    sensitivity: secret
+    location:
+      - type: database
+        detail: controller database storing encrypted credential fields
+      - type: secret_store
+        detail: Ansible Vault, Kubernetes Secrets, external credential plugins, and cloud secret managers
+      - type: config_file
+        detail: installer inventory, controller settings, and credential plugin configuration
+      - type: source_code
+        detail: exported surveys, test fixtures, and accidentally committed inventories
+      - type: logs
+        detail: job output, callback logs, and debugging traces if no_log is missing
+    notes: >
+      Stored credentials may be SSH private keys, sudo passwords, cloud keys,
+      SCM tokens, vault passwords, and arbitrary integration secrets.
+
+references:
+  - type: docs
+    url: https://docs.ansible.com/automation-controller/latest/html/administration/oauth2_token_auth.html
+  - type: docs
+    url: https://docs.ansible.com/automation-controller/latest/html/administration/secret_handling.html

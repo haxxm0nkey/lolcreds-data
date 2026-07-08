@@ -1,0 +1,253 @@
+id: atlassian-confluence
+name: Atlassian Confluence
+category: ci_cd
+vendor: Atlassian
+author: haxxm0nkey
+
+credentials:
+
+  - id: database-password
+    name: Database Password
+    description: >
+      Confluence Server and Data Center store database connection settings in
+      confluence.cfg.xml in the Confluence home directory, unless configured
+      to use an application-server datasource. The configuration includes the
+      database user and password used by Confluence to connect to its
+      relational database.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '<property name="hibernate\.connection\.username">[^<]+</property>\s*<property name="hibernate\.connection\.password">[^<]*</property>'
+        detail: >
+          confluence.cfg.xml database credential pair; the username and
+          password values are arbitrary operator-supplied strings
+      - pattern: '<property name="hibernate\.connection\.password">[^<]*</property>'
+        detail: >
+          database password property in confluence.cfg.xml; Confluence 9.1+
+          encrypts database passwords by default using secured secrets
+    location:
+      - type: config_file
+        path: $CONFLUENCE_HOME/confluence.cfg.xml
+        detail: Confluence home configuration file
+      - type: config_file
+        path: <installation-directory>/conf/server.xml
+        detail: datasource configuration when Confluence uses a Tomcat datasource
+      - type: build_artifact
+        detail: Confluence home backups, migration bundles, VM snapshots, support zips
+    notes: >
+      Atlassian documents confluence.cfg.xml as an important Confluence home
+      file and datasource setup as touching server.xml, web.xml, and
+      confluence.cfg.xml. Database access commonly exposes page content,
+      attachments metadata, user directories, plugin configuration, and
+      integration state outside the Confluence application layer.
+
+  - id: local-user-admin-password
+    name: Local User / Administrator Password
+    description: >
+      Confluence local users, including the administrator created during
+      setup, authenticate with passwords stored in Confluence's configured
+      user directory. For the internal directory, the password hash is stored
+      in the Confluence database rather than in confluence.cfg.xml.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: 'cwd_user.*credential'
+        detail: >
+          Confluence internal-directory password material in the database;
+          the exact hash value has no Confluence-specific textual prefix and
+          is identified by table and column context
+      - pattern: '[^\\s:@]+@[^\\s:@]+:[^\\s:]+'
+        detail: >
+          raw Basic-auth username:password form before Base64 encoding;
+          context is required because the password itself is arbitrary
+    location:
+      - type: database
+        detail: Confluence internal user directory tables, including cwd_user credential data
+      - type: public_interface
+        path: /login.action
+        detail: Confluence web login for local users and administrators
+      - type: public_interface
+        path: /rest/api/*
+        detail: REST API Basic authentication in Server/Data Center deployments
+      - type: source_code
+        detail: legacy publishing scripts and integrations that embed username/password auth
+    notes: >
+      There is no universal shipped Confluence administrator password. The
+      initial administrator is created by the setup flow or by an operator,
+      and later users may be local, LDAP-backed, SSO-backed, or externally
+      managed. Include literal passwords only for product-specific defaults
+      or CVE-backed hardcoded accounts, not for Confluence as a generic
+      product.
+
+  - id: questions-hardcoded-disabledsystemuser
+    name: Questions App Hardcoded User
+    description: >
+      Vulnerable versions of the Questions for Confluence app created a
+      Confluence user account named disabledsystemuser with a hardcoded
+      password. The account was added to confluence-users and could be used
+      by a remote unauthenticated attacker who knew the password.
+    type: username_password
+    nature: [undocumented, static_default]
+    sensitivity: secret
+    looks_like:
+      - pattern: 'disabledsystemuser'
+        detail: >
+          hardcoded username created by vulnerable Questions for Confluence
+          app versions; the cited CVE confirms a hardcoded password but does
+          not publish a literal password value in the NVD text
+    location:
+      - type: database
+        detail: Confluence user directory tables after installing affected app versions
+      - type: public_interface
+        path: /login.action
+        detail: Confluence web login reachable to remote attackers
+    notes: >
+      CVE-2022-26138 affects Questions for Confluence app versions 2.7.34,
+      2.7.35, and 3.0.2, not every Confluence installation. Because the
+      cited authoritative source does not state a literal password, this
+      entry documents the hardcoded account and storage context without a
+      default block.
+
+  - id: data-center-personal-access-token
+    name: Data Center Personal Access Token
+    description: >
+      Confluence Data Center and Server support personal access tokens for
+      scripts and external integrations. Atlassian documents PATs as bearer
+      tokens supplied in the Authorization header for REST API calls.
+    type: token
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: 'Authorization:\s*Bearer\s+[^\s]+'
+        detail: >
+          no documented Confluence-specific token prefix; identify Data
+          Center PATs by bearer-token use against Confluence REST endpoints
+    location:
+      - type: environment
+        path: CONFLUENCE_TOKEN, CONFLUENCE_PAT, ATLASSIAN_TOKEN
+      - type: source_code
+        detail: automation scripts, curl commands, CI jobs, publishing tools
+      - type: logs
+        detail: REST client debug logs when Authorization headers are printed
+      - type: secret_store
+        detail: CI/CD variables and deployment-platform secret stores
+    notes: >
+      PATs are safer than embedding a user password in scripts, but they are
+      still bearer credentials. The token carries the creating user's
+      Confluence permissions until expiration or revocation.
+
+  - id: cloud-api-token
+    name: Atlassian Cloud API Token
+    description: >
+      Confluence Cloud REST clients authenticate with an Atlassian account
+      email address and API token using HTTP Basic authentication. Atlassian
+      documents the Basic header as the base64 form of email:api-token.
+    type: token
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: 'Authorization:\s*Basic\s+[A-Za-z0-9+/=]+'
+        detail: >
+          Base64-encoded Atlassian account email and API token; decode
+          context is required because the token has no fixed
+          Confluence-specific prefix
+      - pattern: '[^\s:@]+@[^\s:@]+:[^\s:]+'
+        detail: >
+          raw Basic-auth email:api-token form used by curl --user before it
+          is Base64 encoded
+    location:
+      - type: source_code
+        detail: publishing scripts, documentation automation, custom REST integrations
+      - type: environment
+        path: ATLASSIAN_EMAIL, ATLASSIAN_API_TOKEN, CONFLUENCE_API_TOKEN
+      - type: config_file
+        detail: local REST client configuration and integration settings
+      - type: secret_store
+        detail: CI/CD variables and cloud secret managers used by integrations
+    notes: >
+      This token belongs to the Atlassian account, not only to one
+      Confluence site. Its practical blast radius is determined by the
+      account's access across Atlassian Cloud applications that accept the
+      same account token.
+
+  - id: application-link-basic-auth
+    name: Application Link Basic Auth Credential
+    description: >
+      Confluence application links can use Basic HTTP authentication for
+      connecting Atlassian applications and integrations. The configured
+      username and password are integration credentials stored with the link
+      configuration.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: 'Authorization:\s*Basic\s+[A-Za-z0-9+/=]+'
+        detail: >
+          Basic-auth header for an application-link or integration request;
+          decode and request context are required to identify the Confluence
+          peer and account
+    location:
+      - type: database
+        detail: Confluence application-link and plugin tables that persist integration settings
+      - type: config_file
+        detail: exported application-link or integration configuration
+      - type: logs
+        detail: HTTP client debug logs and reverse-proxy logs if headers are captured
+    notes: >
+      Basic-auth application links are legacy but still appear in older
+      Atlassian estates. Treat the stored credential as the configured
+      integration or service account, which often has broad space access.
+
+  - id: application-link-oauth-private-key
+    name: Application Link OAuth Private Key
+    description: >
+      Confluence application links can use OAuth for authenticated
+      communication with other Atlassian applications. OAuth configurations
+      rely on key material or application-link secrets that should be treated
+      as integration credentials.
+    type: key_pair
+    nature: [generated_on_install, user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----'
+        detail: >
+          identified by a PEM private-key header; full key bodies are
+          multi-line and are omitted as compact specimens
+    location:
+      - type: database
+        detail: Confluence application-link and plugin tables for OAuth configuration
+      - type: config_file
+        detail: exported or scripted application-link configuration
+      - type: build_artifact
+        detail: database dumps and Confluence migration backups
+    notes: >
+      The credential is scoped to the linked application trust relationship,
+      not to an individual user password. Exposure can let an attacker forge
+      or impersonate integration traffic depending on the configured OAuth
+      mode and linked-application permissions.
+
+references:
+  - type: docs
+    url: https://confluence.atlassian.com/doc/database-configuration-159764.html
+  - type: docs
+    url: https://confluence.atlassian.com/doc/configuring-a-datasource-connection-937166084.html
+  - type: docs
+    url: https://confluence.atlassian.com/doc/confluence-home-and-other-important-directories-590259707.html
+  - type: docs
+    url: https://confluence.atlassian.com/doc/secure-a-database-password-1115674739.html
+  - type: docs
+    url: https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html
+  - type: docs
+    url: https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/
+  - type: docs
+    url: https://developer.atlassian.com/cloud/confluence/basic-auth-for-rest-apis/
+  - type: docs
+    url: https://confluence.atlassian.com/applinks/oauth-security-for-application-links-774045732.html
+  - type: docs
+    url: https://confluence.atlassian.com/doc/restore-passwords-to-recover-admin-user-rights-158390.html
+  - type: cve
+    url: https://nvd.nist.gov/vuln/detail/CVE-2022-26138
+  - type: advisory
+    url: https://jira.atlassian.com/browse/CONFSERVER-79483

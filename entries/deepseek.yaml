@@ -1,0 +1,43 @@
+id: deepseek
+name: DeepSeek API
+category: ai_api
+vendor: DeepSeek
+author: haxxm0nkey
+
+credentials:
+
+  - id: api-key
+    name: API Key
+    description: >
+      DeepSeek API keys authenticate OpenAI-compatible and Anthropic-compatible
+      calls to api.deepseek.com. DeepSeek's docs show Authorization: Bearer
+      usage and DEEPSEEK_API_KEY in SDK examples.
+    type: api_key
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - example: 'sk-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'sk-[A-Za-z0-9_\-]{20,}'
+        detail: DeepSeek API key form commonly used with OpenAI-compatible clients
+    location:
+      - type: environment
+        path: DEEPSEEK_API_KEY
+      - type: http_header
+        path: Authorization
+        detail: Bearer token used by OpenAI-compatible and Anthropic-compatible API calls
+      - type: source_code
+        detail: OpenAI-compatible clients, coding agents, notebooks, committed .env files
+      - type: config_file
+        detail: .env, LiteLLM configs, proxy configs, deployment manifests
+      - type: secret_store
+        detail: CI/CD variables, hosted app settings, cloud secret managers
+      - type: logs
+        detail: HTTP client logs and gateway request logs with Authorization headers
+    notes: >
+      DeepSeek is often accessed through OpenAI- or Anthropic-compatible SDKs,
+      so leaked keys may appear in generic LLM gateway configuration rather
+      than provider-specific code.
+
+references:
+  - type: docs
+    url: https://api-docs.deepseek.com/

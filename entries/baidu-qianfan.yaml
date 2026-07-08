@@ -1,0 +1,48 @@
+id: baidu-qianfan
+name: Baidu Qianfan
+category: ai_api
+vendor: Baidu AI Cloud
+author: haxxm0nkey
+
+credentials:
+
+  - id: api-key-secret-key
+    name: API Key / Secret Key
+    description: >
+      Baidu Qianfan and Wenxin Workshop integrations use API Key and Secret
+      Key material to obtain access tokens or authenticate model-service
+      calls. The resulting access token is then used as bearer-style request
+      credential material.
+    type: api_key
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - example: 'access_token=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'access_token=[A-Za-z0-9._\-]+'
+        detail: Qianfan / Wenxin access token carried in requests after key exchange
+    location:
+      - type: environment
+        path: BAIDU_API_KEY, BAIDU_SECRET_KEY, QIANFAN_ACCESS_KEY, QIANFAN_SECRET_KEY
+      - type: http_header
+        path: Authorization
+        detail: bearer-style request credential when integrations use an access token header
+      - type: http_response
+        detail: token-exchange responses that return access_token values
+      - type: source_code
+        detail: SDK examples, notebooks, server config, committed .env files
+      - type: config_file
+        detail: .env, deployment manifests, local shell profiles, application config
+      - type: secret_store
+        detail: CI/CD variables, Baidu Cloud secret stores, hosted app settings
+      - type: logs
+        detail: OAuth/token exchange logs and request URLs containing access_token
+    notes: >
+      Baidu credentials often appear as a key pair plus a generated access
+      token. Rotate the API Key / Secret Key pair if either half or any
+      derived access token is exposed.
+
+references:
+  - type: docs
+    url: https://cloud.baidu.com/doc/WENXINWORKSHOP/s/Um2wxbaps
+  - type: docs
+    url: https://cloud.baidu.com/doc/WENXINWORKSHOP/s/Ilkkrb0i5

@@ -1,0 +1,175 @@
+id: atlassian-bitbucket
+name: Atlassian Bitbucket
+category: ci_cd
+vendor: Atlassian
+author: haxxm0nkey
+
+credentials:
+
+  - id: database-password
+    name: Database Password
+    description: >
+      Bitbucket Data Center stores external database connection details in
+      bitbucket.properties under the Bitbucket home directory. Atlassian
+      documents that the database username and password are stored there
+      after database migration.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '^jdbc\.(user|username|password)\s*=\s*[^\r\n]*$'
+        detail: >
+          Bitbucket database connection property; the password value is the
+          operator-supplied database credential and has no fixed shape
+    location:
+      - type: config_file
+        path: $BITBUCKET_HOME/shared/bitbucket.properties
+        detail: shared home properties file for Bitbucket Data Center
+      - type: build_artifact
+        detail: Bitbucket home backups, migration exports, database-migration dump bundles
+    notes: >
+      Database access can expose repositories metadata, pull request data,
+      user directory state, plugin configuration, and stored integration
+      state. The Bitbucket home directory and its backups should be treated
+      as credential-bearing artifacts.
+
+  - id: local-user-admin-password
+    name: Local User / Administrator Password
+    description: >
+      Bitbucket local users, including administrators created by setup or by
+      operators, authenticate with passwords stored in the configured user
+      directory. For the internal directory, password material is database
+      state rather than a plaintext file in Bitbucket home.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: 'cwd_user.*credential'
+        detail: >
+          internal-directory password material in Atlassian user tables; the
+          value has no Bitbucket-specific textual prefix and is identified
+          by table and column context
+      - pattern: '[^\s:@]+:[^\s:]+'
+        detail: >
+          raw Basic-auth username:password form used by Git over HTTPS or
+          REST clients before Base64 encoding; context identifies Bitbucket
+    location:
+      - type: database
+        detail: internal user directory tables, including cwd_user credential data
+      - type: public_interface
+        path: /login
+        detail: Bitbucket web login for local users and administrators
+      - type: public_interface
+        detail: Git over HTTPS and Bitbucket REST API Basic authentication
+      - type: source_code
+        detail: legacy scripts, Git remote URLs, and integration configs
+    notes: >
+      There is no universal shipped Bitbucket administrator password. The
+      setup flow or an operator creates administrator credentials, and later
+      users may come from local, LDAP, Crowd, SSO, or other configured
+      directories.
+
+  - id: data-center-http-access-token
+    name: Data Center HTTP Access Token
+    description: >
+      Bitbucket Data Center HTTP access tokens can be created for users,
+      projects, and repositories. Atlassian documents them as replacements
+      for passwords in Git over HTTPS and REST API authentication.
+    type: token
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: 'Authorization:\s*Bearer\s+[^\s]+'
+        detail: >
+          project and repository HTTP access tokens use Bearer
+          authentication; no documented Bitbucket-specific prefix identifies
+          the opaque token itself
+    location:
+      - type: environment
+        path: BITBUCKET_TOKEN, BITBUCKET_ACCESS_TOKEN
+      - type: source_code
+        detail: Git remotes, automation scripts, CI configuration, deployment tooling
+      - type: logs
+        detail: Git and REST client debug logs when Authorization headers are printed
+      - type: secret_store
+        detail: CI/CD secret stores and deployment variables
+    notes: >
+      User tokens, project tokens, and repository tokens have different
+      scopes and permissions. Project and repository tokens must be used
+      with Bearer authentication rather than as a username/password pair.
+
+  - id: cloud-api-token-app-password
+    name: Bitbucket Cloud API Token / App Password
+    description: >
+      Bitbucket Cloud API tokens and legacy app passwords are user-scoped
+      tokens for scripts, CI/CD tools, and Git or API access. Atlassian
+      documents API tokens as the long-term replacement for app passwords.
+    type: token
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '[^\s:@]+:[^\s:]+'
+        detail: >
+          raw Bitbucket username:token form used by Git or curl before
+          Basic-auth encoding; the token itself has no documented fixed
+          prefix
+      - pattern: 'Authorization:\s*Basic\s+[A-Za-z0-9+/=]+'
+        detail: >
+          Base64-encoded Bitbucket Cloud username and API token or app
+          password; decode context is required to identify the credential
+    location:
+      - type: source_code
+        detail: Git remote URLs, build scripts, Terraform providers, deployment automation
+      - type: environment
+        path: BITBUCKET_USERNAME, BITBUCKET_APP_PASSWORD, BITBUCKET_API_TOKEN
+      - type: config_file
+        path: ~/.git-credentials
+        detail: Git credential helper storage for HTTPS remotes
+      - type: secret_store
+        detail: pipeline variables and cloud secret managers used by integrations
+    notes: >
+      These credentials are tied to an individual Bitbucket Cloud account and
+      inherit the scopes selected at creation. Treat a leaked token according
+      to both its scopes and the repositories or workspaces reachable by the
+      account.
+
+  - id: ssh-private-key
+    name: SSH Private Key
+    description: >
+      Bitbucket Data Center and Bitbucket Cloud support SSH keys for Git
+      access. Users add public keys to Bitbucket; the private key remains on
+      the client, build agent, deployment server, or CI secret store.
+    type: key_pair
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '-----BEGIN (OPENSSH|RSA|EC|DSA) PRIVATE KEY-----'
+        detail: >
+          identified by the PEM/OpenSSH private-key header; full private keys
+          are multi-line and not useful as compact specimens
+    location:
+      - type: config_file
+        path: ~/.ssh/id_*, ~/.ssh/*_bitbucket*
+        detail: developer machines, build agents, and deployment hosts
+      - type: secret_store
+        detail: CI/CD variables and deployment-platform SSH key stores
+      - type: source_code
+        detail: accidentally committed deployment keys or local test keys
+    notes: >
+      The private key's blast radius is defined by the Bitbucket account,
+      repository access key, or deployment workflow that trusts the public
+      key. Read/write keys can push code and are supply-chain sensitive.
+
+references:
+  - type: docs
+    url: https://confluence.atlassian.com/bitbucketserver/important-directories-and-files-776640881.html
+  - type: docs
+    url: https://confluence.atlassian.com/bitbucketserver/connecting-bitbucket-server-to-an-external-database-776640378.html
+  - type: docs
+    url: https://confluence.atlassian.com/bitbucketserver/personal-access-tokens-939515499.html
+  - type: docs
+    url: https://confluence.atlassian.com/bitbucketserver/ssh-access-776640358.html
+  - type: docs
+    url: https://support.atlassian.com/bitbucket-cloud/docs/app-passwords/
+  - type: docs
+    url: https://support.atlassian.com/bitbucket-cloud/docs/access-tokens/

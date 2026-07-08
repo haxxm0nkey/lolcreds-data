@@ -1,0 +1,94 @@
+id: citrix-adc
+name: Citrix ADC / NetScaler
+category: network
+vendor: Citrix
+author: haxxm0nkey
+credentials:
+- id: default-nsroot
+  name: Default nsroot Credential
+  description: Citrix ADC/NetScaler appliances document the nsroot local administrator used
+    for initial management access. The default password must be changed during setup.
+  type: username_password
+  nature:
+  - static_default
+  - user_defined
+  sensitivity: secret
+  default:
+    username: nsroot
+    password: nsroot
+  location:
+  - type: public_interface
+    path: Citrix ADC GUI, SSH/CLI, NITRO API, and console
+  - type: config_file
+    path: ns.conf
+    detail: local system user configuration and exported appliance config
+  - type: artifact
+    detail: tech support bundles, appliance backups, and config exports
+- id: local-system-user-password
+  name: Local System User Password
+  description: ADC local system users authenticate to the management GUI, CLI, and NITRO API
+    with command policies and partitions controlling access.
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: '^add system user \S+ '
+    detail: Citrix ADC ns.conf command defining a local system user; password may appear in
+      exported commands depending on context
+  location:
+  - type: config_file
+    path: /nsconfig/ns.conf
+    detail: Citrix ADC running/saved configuration
+  - type: public_interface
+    path: management GUI, SSH/CLI, NITRO API
+  - type: secret_store
+    detail: password managers and automation vaults
+  - type: logs
+    detail: ns.log, audit logs, and NITRO traces
+- id: nitro-session-token
+  name: NITRO API Session Token
+  description: Citrix ADC NITRO API login returns a session cookie/token used for subsequent
+    API operations.
+  type: token
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Cookie
+    detail: NITRO_AUTH_TOKEN or session cookie used by NITRO API clients
+  - type: http_response
+    path: Set-Cookie
+    detail: NITRO login response setting the API session cookie
+  - type: config_file
+    detail: automation client caches, scripts, and .env files
+  - type: logs
+    detail: HTTP traces and NITRO debug logs
+- id: ssl-vpn-aaa-secrets
+  name: SSL VPN, AAA, SNMP, and LDAP/RADIUS Secrets
+  description: ADC configurations contain SSL private keys, VPN/AAA integration credentials,
+    LDAP bind passwords, RADIUS/TACACS+ shared secrets, SNMP communities, and monitor credentials.
+  type: secret_value
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - pattern: '-----BEGIN (RSA |EC |ENCRYPTED |)PRIVATE KEY-----'
+    detail: private key material for ADC SSL vServers, client certs, or management TLS
+  location:
+  - type: config_file
+    detail: /nsconfig/ns.conf, /nsconfig/ssl/, AAA actions, auth policies, monitor definitions,
+      and VPN config
+  - type: secret_store
+    detail: appliance backups, HSM/certificate stores, and password vaults
+  - type: source_code
+    detail: NITRO automation, Terraform, and ADC config-as-code repositories
+  - type: logs
+    detail: AAA debug logs, ns.log, and packet/HTTP traces
+references:
+- type: docs
+  url: https://docs.netscaler.com/en-us/citrix-adc/current-release/getting-started-with-citrix-adc.html
+- type: docs
+  url: https://docs.netscaler.com/en-us/citrix-adc/current-release/system/authentication-and-authorization.html

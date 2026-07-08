@@ -1,0 +1,90 @@
+id: concourse
+name: Concourse CI
+category: ci_cd
+vendor: Concourse
+author: haxxm0nkey
+credentials:
+- id: local-user-password
+  name: Local Team User Password
+  description: Concourse web authentication can define local users and team membership for
+    web UI, fly CLI, and API access.
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: Concourse web UI, fly CLI, and ATC API
+  - type: config_file
+    detail: web node flags, Helm values, docker-compose files, and team auth config
+  - type: environment
+    path: CONCOURSE_ADD_LOCAL_USER, CONCOURSE_MAIN_TEAM_LOCAL_USER
+  - type: secret_store
+    detail: BOSH vars, Kubernetes Secrets, CredHub, Vault, and SOPS files
+  - type: source_code
+    detail: deployment manifests and platform automation repos
+  - type: logs
+    detail: web startup logs and auth traces
+- id: oauth-client-secret
+  name: OAuth / OIDC Client Secret
+  description: Concourse can authenticate teams through GitHub, OIDC, LDAP, and other providers
+    using client secrets and bind credentials.
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: config_file
+    detail: Concourse web auth flags, Helm values, and BOSH manifests
+  - type: environment
+    path: CONCOURSE_GITHUB_CLIENT_SECRET, CONCOURSE_OIDC_CLIENT_SECRET, CONCOURSE_LDAP_BIND_PW
+  - type: secret_store
+    detail: CredHub, Vault, Kubernetes Secrets, and BOSH variable stores
+  - type: source_code
+    detail: platform deployment repositories
+  - type: logs
+    detail: auth provider debug logs
+- id: tsa-worker-keys
+  name: TSA / Worker SSH Keys
+  description: Concourse workers authenticate to the web TSA using SSH key material. Leaked
+    worker keys can affect worker registration and pipeline execution trust.
+  type: key_pair
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: '-----BEGIN (RSA |OPENSSH |EC |)PRIVATE KEY-----'
+    detail: Concourse TSA or worker private key material
+  location:
+  - type: config_file
+    detail: TSA host key, authorized worker keys, worker private key files, and Helm/BOSH
+      manifests
+  - type: secret_store
+    detail: Kubernetes Secrets, BOSH variables, and Vault/CredHub entries
+  - type: artifact
+    detail: deployment backups and support bundles
+- id: pipeline-credential
+  name: Pipeline Credential Manager Secret
+  description: Concourse pipelines resolve secrets from Vault, CredHub, Kubernetes, SSM, or
+    other credential managers; these values include deploy keys, cloud credentials, passwords,
+    and tokens used by jobs.
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: secret_store
+    detail: Vault, CredHub, Kubernetes Secrets, AWS SSM/Secrets Manager, and other configured
+      credential managers
+  - type: config_file
+    detail: pipeline var files, vars, credential manager config, and task params
+  - type: source_code
+    detail: pipeline YAML, task files, and test fixtures
+  - type: logs
+    detail: build logs when tasks print secrets or masking fails
+references:
+- type: docs
+  url: https://concourse-ci.org/creds.html
+- type: docs
+  url: https://concourse-ci.org/managing-teams.html

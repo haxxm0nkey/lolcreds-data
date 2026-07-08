@@ -1,0 +1,76 @@
+id: circleci
+name: CircleCI
+category: ci_cd
+vendor: CircleCI
+author: haxxm0nkey
+credentials:
+- id: personal-api-token
+  name: Personal API Token
+  description: CircleCI users create personal API tokens for API and CLI access.
+  type: api_key
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Circle-Token
+    detail: CircleCI API token header
+  - type: http_header
+    path: Authorization
+    detail: Basic or token-based CircleCI API authentication
+  - type: config_file
+    detail: CircleCI CLI config, .env files, scripts, and Terraform provider config
+  - type: environment
+    path: CIRCLE_TOKEN, CIRCLECI_TOKEN
+  - type: secret_store
+    detail: CI/CD variables, password managers, and cloud secret managers
+  - type: source_code
+    detail: automation scripts and accidentally committed configs
+  - type: logs
+    detail: curl traces, CLI debug logs, and job output
+- id: project-context-env-var
+  name: Project / Context Environment Variable Secret
+  description: CircleCI projects and contexts store environment variables used by jobs, including
+    deploy keys, cloud tokens, package credentials, and passwords.
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: secret_store
+    detail: CircleCI project environment variables and organization contexts
+  - type: environment
+    detail: runtime job environment variables injected by CircleCI
+  - type: source_code
+    detail: .circleci/config.yml references to secret variable names
+  - type: logs
+    detail: job output if commands print secret values or xtrace is enabled
+- id: ssh-key-and-deploy-key
+  name: SSH Key / Deploy Key
+  description: CircleCI can store SSH keys for checking out private repositories or deploying
+    from jobs.
+  type: key_pair
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - pattern: '-----BEGIN (RSA |OPENSSH |EC |)PRIVATE KEY-----'
+    detail: private SSH key stored for CircleCI job use
+  location:
+  - type: secret_store
+    detail: CircleCI project SSH keys and deploy key storage
+  - type: config_file
+    detail: job config referencing add_ssh_keys fingerprints
+  - type: source_code
+    detail: .circleci/config.yml and setup scripts
+  - type: logs
+    detail: SSH debug output and accidental key prints
+references:
+- type: docs
+  url: https://circleci.com/docs/guides/toolkit/managing-api-tokens/
+- type: docs
+  url: https://circleci.com/docs/guides/security/env-vars/
+- type: docs
+  url: https://circleci.com/docs/guides/integration/add-ssh-key/

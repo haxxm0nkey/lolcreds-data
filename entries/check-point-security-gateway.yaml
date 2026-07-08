@@ -1,0 +1,91 @@
+id: check-point-security-gateway
+name: Check Point Security Gateway
+category: network
+vendor: Check Point
+author: haxxm0nkey
+credentials:
+- id: gaia-admin-password
+  name: Gaia Administrator Password
+  description: Check Point Gaia appliances and gateways use local administrator accounts for
+    WebUI, SSH/CLI, and management access. Initial/admin passwords are set during installation,
+    first-time wizard, or appliance onboarding.
+  type: username_password
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: Gaia Portal/WebUI, SSH, console, clish, expert mode, and management APIs
+  - type: config_file
+    detail: Gaia configuration database, configuration backups, and first-time configuration
+      artifacts
+  - type: secret_store
+    detail: password vaults, deployment tools, and appliance management stores
+  - type: logs
+    detail: audit logs, /var/log/messages, WebUI logs, and authentication traces
+  notes: No universal Gaia administrator password is modeled; appliances prompt for or generate
+    initial credentials depending on deployment path.
+- id: expert-password
+  name: Expert Mode Password
+  description: Gaia systems can protect expert mode with a separate expert password, enabling
+    access to the underlying shell for low-level administration.
+  type: password
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: expert mode from clish/SSH/console
+  - type: config_file
+    detail: Gaia local configuration and password hash storage
+  - type: secret_store
+    detail: admin password vaults and break-glass stores
+  - type: logs
+    detail: shell access, audit, and authentication logs
+- id: sic-one-time-password
+  name: SIC One-Time Password / Trust Secret
+  description: Security gateways establish Secure Internal Communication (SIC) trust with
+    management servers using an activation key/one-time password and certificates.
+  type: secret_value
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: config_file
+    detail: first-time wizard files, cpconfig/SIC configuration, management database, and
+      gateway objects
+  - type: secret_store
+    detail: management server stores, deployment vaults, and certificate stores
+  - type: logs
+    detail: cpca, fwm, SIC, and trust establishment logs
+- id: vpn-snmp-ldap-radius-secrets
+  name: VPN, SNMP, LDAP, RADIUS, and API Secrets
+  description: Check Point deployments contain VPN pre-shared keys, SNMP communities/users,
+    LDAP bind passwords, RADIUS/TACACS+ shared secrets, API keys, and certificate private
+    keys.
+  type: secret_value
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - pattern: '-----BEGIN (RSA |EC |ENCRYPTED |)PRIVATE KEY-----'
+    detail: private key material for VPN, HTTPS inspection, management, or SIC-related certificates
+  location:
+  - type: config_file
+    detail: Gaia config, management database objects, VPN communities, auth servers, SNMP
+      settings, and certificate stores
+  - type: secret_store
+    detail: SmartConsole/management server credential stores, HSMs, and vaults
+  - type: source_code
+    detail: mgmt_cli scripts, Terraform/Ansible, and deployment repos
+  - type: logs
+    detail: VPN, identity awareness, SNMP, LDAP, and API debug logs
+references:
+- type: docs
+  url: https://sc1.checkpoint.com/documents/R81.20/WebAdminGuides/EN/CP_R81.20_Gaia_AdminGuide/Content/Topics-GAG/Administrator-Accounts.htm
+- type: docs
+  url: https://sc1.checkpoint.com/documents/R81.20/WebAdminGuides/EN/CP_R81.20_SecurityManagement_AdminGuide/Content/Topics-SECMG/Administrators.htm
