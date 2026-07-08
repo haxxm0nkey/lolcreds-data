@@ -1,0 +1,101 @@
+id: adobe-experience-manager
+name: Adobe Experience Manager
+category: cms
+vendor: Adobe
+author: haxxm0nkey
+credentials:
+- id: default-admin
+  name: Default Administrator Account
+  description: AEM quickstart installations include the built-in admin account used for initial
+    author/publish administration. Adobe hardening guidance calls out changing default passwords
+    and securing default accounts.
+  type: username_password
+  nature:
+  - static_default
+  - user_defined
+  sensitivity: secret
+  default:
+    username: admin
+    password: admin
+  location:
+  - type: public_interface
+    path: AEM author/publish login, CRXDE Lite, Felix console, Package Manager, and Sling
+      endpoints
+  - type: database
+    detail: JCR/Oak repository user and token nodes
+  - type: config_file
+    detail: quickstart startup scripts, OSGi configs, runmode configs, and provisioning files
+  - type: artifact
+    detail: AEM package exports, repository backups, and quickstart snapshots
+  notes: admin/admin is an initial/development credential and should be changed or disabled
+    for production hardening.
+- id: repository-user-password
+  name: Repository / Service User Password
+  description: AEM stores local repository users, service users, and application accounts
+    in the JCR/Oak repository for authoring, replication, package management, and integrations.
+  type: username_password
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: database
+    detail: JCR/Oak repository users, groups, rep:password hashes, and service user mappings
+  - type: public_interface
+    path: AEM login, Sling servlets, CRXDE, package manager, and replication endpoints
+  - type: secret_store
+    detail: password vaults, Cloud Manager variables, and deployment secrets
+  - type: source_code
+    detail: content packages, repoinit scripts, tests, and runmode configs
+  - type: logs
+    detail: request.log, audit logs, error.log, and authentication traces
+- id: osgi-and-crypto-secrets
+  name: OSGi, Crypto Support, and Integration Secrets
+  description: AEM OSGi configurations can hold SMTP passwords, LDAP bind credentials, dispatcher
+    flush secrets, OAuth/client secrets, database credentials, replication agent passwords,
+    and the Crypto Support master key material.
+  type: secret_value
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: \{[A-Za-z0-9+/=]+\}
+    detail: AEM encrypted OSGi configuration value produced by Crypto Support
+  location:
+  - type: config_file
+    path: crx-quickstart/launchpad/config, crx-quickstart/conf
+    detail: OSGi configs, runmode configs, crypto keys, and connector settings
+  - type: database
+    detail: JCR configuration nodes for replication agents and integration credentials
+  - type: secret_store
+    detail: AEM Crypto Support, Cloud Manager secrets, Kubernetes Secrets, and vaults
+  - type: source_code
+    detail: committed OSGi config files, content packages, and deployment repos
+  - type: logs
+    detail: replication, LDAP, mail, and connector debug logs
+- id: api-session-token
+  name: Login Token / OAuth Token
+  description: AEM issues login tokens and may store OAuth/access tokens for integrations
+    with Adobe and third-party services.
+  type: token
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Cookie
+    detail: AEM login-token and session cookies
+  - type: http_header
+    path: Authorization
+    detail: Bearer/OAuth tokens used by integrations and Sling clients
+  - type: database
+    detail: JCR token nodes and OAuth/client credential storage
+  - type: logs
+    detail: HTTP traces, request logs, and client debug output
+references:
+- type: docs
+  url: https://experienceleague.adobe.com/en/docs/experience-manager-65/content/security/security
+- type: docs
+  url: https://experienceleague.adobe.com/en/docs/experience-manager-65/content/security/security-checklist
