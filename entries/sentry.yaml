@@ -1,0 +1,93 @@
+id: sentry
+name: Sentry
+category: monitoring
+vendor: Sentry
+author: haxxm0nkey
+
+credentials:
+
+  - id: auth-token
+    name: API Auth Token
+    description: >
+      Sentry API authentication tokens authenticate as a user or organization
+      account. Sentry documents that auth tokens are passed in the
+      Authorization header using Bearer authentication.
+    type: token
+    nature: [user_defined]
+    sensitivity: secret
+    location:
+      - type: environment
+        path: SENTRY_AUTH_TOKEN, SENTRY_TOKEN
+      - type: http_header
+        path: Authorization
+        detail: Bearer token used for Sentry API requests
+      - type: config_file
+        detail: .sentryclirc, .env files, release automation config, and CI manifests
+      - type: secret_store
+        detail: CI/CD variables, cloud secret managers, and deployment secrets
+      - type: source_code
+        detail: release scripts, source-map upload tooling, and committed SDK config
+      - type: logs
+        detail: API client debug output, sentry-cli logs, and CI traces
+    notes: >
+      Token blast radius depends on the scopes granted to the token and whether
+      it belongs to a user account or an organization account.
+
+  - id: dsn
+    name: Project DSN
+    description: >
+      Sentry DSNs configure SDK event ingestion. Sentry documents the DSN as a
+      URL containing protocol, public key, optional secret key, host, path, and
+      project identifier.
+    type: token
+    nature: [generated_on_install]
+    sensitivity: context_dependent
+    looks_like:
+      - example: 'https://XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX@o000000.ingest.sentry.io/0000000'
+        pattern: 'https?://[A-Fa-f0-9]{16,64}(?::[A-Fa-f0-9]{16,64})?@[^\s/]+/\d+'
+        detail: Sentry DSN URL with public key and optional legacy secret key
+    location:
+      - type: environment
+        path: SENTRY_DSN, NEXT_PUBLIC_SENTRY_DSN, VITE_SENTRY_DSN
+      - type: config_file
+        detail: SDK initialization config, .env files, frontend build config, and mobile app config
+      - type: source_code
+        detail: Sentry.init calls, committed examples, source maps, and frontend bundles
+      - type: logs
+        detail: application startup logs and SDK diagnostic output
+    notes: >
+      Modern DSNs are often intentionally embedded in client code for event
+      submission, but they still identify the project ingest endpoint and can be
+      abused for noisy event injection.
+
+  - id: oauth-client-secret
+    name: OAuth Client Secret
+    description: >
+      Sentry OAuth applications exchange authorization codes at the token
+      endpoint using a client_id and client_secret. Sentry documents the
+      client_secret parameter in OAuth token requests.
+    type: secret_value
+    nature: [generated_on_install]
+    sensitivity: secret
+    location:
+      - type: environment
+        path: SENTRY_CLIENT_ID, SENTRY_CLIENT_SECRET
+      - type: config_file
+        detail: OAuth backend config, .env files, and deployment manifests
+      - type: secret_store
+        detail: cloud secret managers, hosted app secrets, and CI/CD variables
+      - type: source_code
+        detail: OAuth examples, tests, and accidentally committed integration config
+      - type: logs
+        detail: token exchange request dumps and OAuth troubleshooting output
+    notes: >
+      Client secret exposure can allow impersonation of the Sentry OAuth
+      application during token exchange flows.
+
+references:
+  - type: docs
+    url: https://docs.sentry.io/api/auth/
+  - type: docs
+    url: https://docs.sentry.io/product/sentry-basics/dsn-explainer/
+  - type: docs
+    url: https://docs.sentry.io/product/accounts/auth-tokens/

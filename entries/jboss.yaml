@@ -1,0 +1,96 @@
+id: jboss
+name: JBoss / WildFly
+category: middleware
+vendor: Red Hat / WildFly
+author: haxxm0nkey
+
+credentials:
+
+  - id: management-user-password
+    name: Management User Password
+    description: >
+      JBoss/WildFly management interfaces use security realms or Elytron security
+      domains for authentication. WildFly documentation describes management
+      and application authentication mechanisms backed by users, passwords, and
+      roles.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '^[^#:\r\n]+=[0-9a-fA-F]{32,}$'
+        detail: WildFly/JBoss properties-realm user password hash entry in mgmt-users.properties or application-users.properties
+    location:
+      - type: config_file
+        path: mgmt-users.properties, application-users.properties, standalone.xml, domain.xml
+        detail: management/application user stores and security realm configuration
+      - type: public_interface
+        path: management console, management API
+        detail: JBoss/WildFly management interfaces
+      - type: secret_store
+        detail: deployment vaults, credential stores, Kubernetes Secrets, and configuration management secrets
+      - type: source_code
+        detail: committed standalone.xml/domain.xml, container images, and test configs
+      - type: logs
+        detail: add-user output, startup logs, and authentication troubleshooting traces
+    notes: >
+      Management passwords are created during setup with add-user tooling or
+      provisioning and are not universal static defaults.
+
+  - id: application-user-password
+    name: Application Realm User Password
+    description: >
+      JBoss security realms can authenticate inbound application connections
+      using mechanisms such as BASIC, DIGEST, PLAIN, or client certificate.
+      Realm-backed users and roles are often stored in application user files or
+      Elytron stores.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    location:
+      - type: config_file
+        path: application-users.properties, application-roles.properties, standalone.xml, domain.xml
+        detail: application realm users, role mappings, and Elytron security domain config
+      - type: http_header
+        path: Authorization
+        detail: BASIC/DIGEST credentials for secured JBoss applications
+      - type: secret_store
+        detail: credential stores, vaults, and orchestration secrets
+      - type: source_code
+        detail: app server configs, tests, and committed deployment descriptors
+      - type: logs
+        detail: authentication traces and failed login logs
+    notes: >
+      Application credentials can protect deployed applications, EJB remoting,
+      JNDI, and management-adjacent services depending on configuration.
+
+  - id: keystore-credential
+    name: Elytron Credential Store / Keystore Secret
+    description: >
+      WildFly Elytron supports credential storage, keystores, and passwords for
+      TLS and authentication material. Elytron documentation covers credential
+      stores, masked passwords, key stores, and security domains.
+    type: secret_value
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '(?:credential-reference|keystore-password|key-store-password|password)\s*=\s*[^\r\n]+'
+        detail: JBoss/WildFly XML or CLI configuration containing credential references or keystore passwords
+    location:
+      - type: config_file
+        path: standalone.xml, domain.xml, credential stores, keystores
+        detail: Elytron credential-store and key-store configuration
+      - type: secret_store
+        detail: Elytron credential stores, Java keystores, Kubernetes Secrets, and deployment vaults
+      - type: source_code
+        detail: committed server configs and container build contexts
+      - type: image
+        detail: application server images containing credential stores or keystores
+    notes: >
+      Credential store secrets may unlock stored database passwords, TLS private
+      keys, LDAP bind credentials, or outbound connector credentials.
+
+references:
+  - type: docs
+    url: https://docs.jboss.org/author/display/WFLY/Security%20Realms.html
+  - type: docs
+    url: https://docs.wildfly.org/32/WildFly_Elytron_Security.html

@@ -1,0 +1,97 @@
+id: phpmyadmin
+name: phpMyAdmin
+category: database
+vendor: phpMyAdmin Project
+author: haxxm0nkey
+
+credentials:
+
+  - id: config-auth-credentials
+    name: Config Authentication MySQL Credentials
+    description: >
+      phpMyAdmin supports config authentication, where the MySQL username and
+      password are stored in config.inc.php. phpMyAdmin documents config auth as
+      the mode where username and password are stored in config.inc.php.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: >-
+          \$cfg\['Servers'\]\[\$i\]\['password'\]\s*=\s*'[^'\r\n]*'
+        detail: phpMyAdmin config.inc.php server password setting
+    location:
+      - type: config_file
+        path: config.inc.php
+        detail: phpMyAdmin server connection settings and authentication mode
+      - type: environment
+        path: PMA_USER, PMA_PASSWORD, PMA_HOST, PMA_CONTROLUSER, PMA_CONTROLPASS
+      - type: secret_store
+        detail: Docker/Kubernetes secrets, cloud secret managers, and hosting control panel secrets
+      - type: source_code
+        detail: accidentally committed config.inc.php files, Docker Compose files, and examples
+      - type: artifact
+        detail: webroot backups and container images containing phpMyAdmin configuration
+      - type: logs
+        detail: setup output and container environment dumps
+    notes: >
+      Config authentication embeds a reusable MySQL credential in phpMyAdmin
+      configuration and should not be exposed to clients or repositories.
+
+  - id: blowfish-secret
+    name: blowfish_secret
+    description: >
+      phpMyAdmin cookie authentication uses blowfish_secret in configuration to
+      encrypt cookies. phpMyAdmin setup documentation shows setting
+      $cfg['blowfish_secret'] to random bytes.
+    type: secret_value
+    nature: [generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - pattern: >-
+          \$cfg\['blowfish_secret'\]\s*=\s*[^;\r\n]+;
+        detail: phpMyAdmin blowfish_secret configuration line
+    location:
+      - type: config_file
+        path: config.inc.php
+        detail: phpMyAdmin cookie encryption secret
+      - type: environment
+        path: PMA_BLOWFISH_SECRET
+      - type: secret_store
+        detail: deployment secrets and cloud secret managers
+      - type: source_code
+        detail: committed config.inc.php files and backups
+      - type: artifact
+        detail: container images or webroot archives containing config.inc.php
+    notes: >
+      The blowfish secret is not a database password, but it protects phpMyAdmin
+      cookie authentication state.
+
+  - id: control-user-password
+    name: Control User Password
+    description: >
+      phpMyAdmin can use a control user for phpMyAdmin configuration storage.
+      phpMyAdmin setup documentation defines PMA_CONTROLUSER and PMA_CONTROLPASS
+      for the configuration storage database user.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    location:
+      - type: config_file
+        path: config.inc.php
+        detail: controluser and controlpass settings for phpMyAdmin configuration storage
+      - type: environment
+        path: PMA_CONTROLUSER, PMA_CONTROLPASS
+      - type: secret_store
+        detail: container secrets, vault entries, and platform config variables
+      - type: source_code
+        detail: Docker Compose files and accidentally committed config
+    notes: >
+      The control user should have only the privileges required for phpMyAdmin
+      configuration storage.
+
+references:
+  - type: docs
+    url: https://docs.phpmyadmin.net/en/latest/config.html
+  - type: docs
+    url: https://docs.phpmyadmin.net/en/latest/setup.html
+

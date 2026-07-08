@@ -1,0 +1,88 @@
+id: sap-sybase-ase
+name: SAP Sybase Adaptive Server Enterprise
+category: database
+vendor: SAP
+author: haxxm0nkey
+credentials:
+- id: sa-login-password
+  name: sa Login Password
+  description: SAP ASE contains the sa system administrator login and other server logins
+    for database administration and application access. The sa password is set during installation/hardening.
+  type: username_password
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: TDS clients, isql, JDBC/ODBC, and administrative tools
+  - type: database
+    detail: master database system tables storing login/password verifier state
+  - type: config_file
+    detail: interfaces/sql.ini files, application datasource configs, installer response files,
+      and scripts
+  - type: secret_store
+    detail: password vaults and deployment secrets
+  - type: logs
+    detail: ASE errorlog, audit logs, installer logs, and failed login traces
+  notes: No universal ASE sa password is modeled; blank/default sa states are installation/version
+    dependent and should be confirmed per source before cataloging as a literal default.
+- id: application-database-user
+  name: Application Database User Password
+  description: ASE applications and SAP products store database usernames and passwords for
+    connecting to user databases.
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: config_file
+    detail: application datasource files, JDBC properties, ODBC DSNs, SAP profiles, and batch
+      scripts
+  - type: secret_store
+    detail: vault entries, CI/CD variables, and OS key stores
+  - type: source_code
+    detail: legacy application config, tests, and deployment manifests
+  - type: logs
+    detail: application connection errors and SQL client debug output
+- id: ssl-private-key-and-keystore
+  name: SSL Private Key / Keystore Password
+  description: ASE can use SSL/TLS certificates and private keys for encrypted client/server
+    communication.
+  type: key_pair
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: '-----BEGIN (RSA |EC |ENCRYPTED |)PRIVATE KEY-----'
+    detail: private key material used for ASE SSL/TLS
+  location:
+  - type: config_file
+    detail: ASE SSL certificate/key files, sql.ini/interfaces settings, and keystore configuration
+  - type: secret_store
+    detail: certificate stores and backup vaults
+  - type: artifact
+    detail: database server backups and support bundles
+- id: replication-remote-login
+  name: Replication / Remote Server Login Secret
+  description: ASE environments may store remote server, Replication Server, backup server,
+    and monitoring login credentials for cross-server operations.
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: database
+    detail: master database remote login and server configuration tables
+  - type: config_file
+    detail: replication, backup, monitoring, and batch job configuration
+  - type: secret_store
+    detail: enterprise password vaults
+  - type: logs
+    detail: replication server, backup server, and ASE error logs
+references:
+- type: docs
+  url: https://help.sap.com/docs/SAP_ADAPTIVE_SERVER_ENTERPRISE
+- type: docs
+  url: https://help.sap.com/docs/SAP_ADAPTIVE_SERVER_ENTERPRISE/4e870f06a15b4bbeb237cca890000421

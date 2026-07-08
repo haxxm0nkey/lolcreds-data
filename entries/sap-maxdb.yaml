@@ -1,0 +1,71 @@
+id: sap-maxdb
+name: SAP MaxDB
+category: database
+vendor: SAP
+author: haxxm0nkey
+credentials:
+- id: dbm-and-dba-user-password
+  name: DBM / DBA User Password
+  description: SAP MaxDB uses database manager and database user credentials for administration,
+    SQL access, backup, and service operations. These passwords are created during installation
+    or database creation.
+  type: username_password
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: Database Manager CLI/GUI, SQL Studio, JDBC/ODBC, and service tools
+  - type: database
+    detail: MaxDB system catalog and user credential storage
+  - type: config_file
+    detail: xuser entries, DBM scripts, backup scripts, datasource files, and SAP profiles
+  - type: secret_store
+    detail: xuser secure store, password vaults, and deployment secrets
+  - type: logs
+    detail: knldiag, dbm.prt, installer logs, and client traces
+  notes: MaxDB installations create or ask for DBM/DBA credentials; no universal password
+    is modeled.
+- id: xuser-secure-store-key
+  name: xuser Secure User Store Entry
+  description: MaxDB client tools can store database connection credentials as xuser entries
+    for scripts and SAP application servers.
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: secret_store
+    path: xuser
+    detail: MaxDB secure user store entries containing database logon material
+  - type: config_file
+    detail: scripts and profiles referencing xuser keys
+  - type: source_code
+    detail: backup, monitoring, and application automation
+  - type: logs
+    detail: dbmcli/sqlcli debug output and failed connections
+- id: backup-encryption-and-ssl-key
+  name: Backup Encryption / SSL Key Material
+  description: MaxDB deployments can use SSL/TLS and backup/encryption keys or passwords that
+    must be preserved for secure client access and recovery.
+  type: secret_value
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: '-----BEGIN (RSA |EC |ENCRYPTED |)PRIVATE KEY-----'
+    detail: private key material for MaxDB SSL/TLS client or server authentication
+  location:
+  - type: config_file
+    detail: SSL key/certificate files, backup media definitions, and database parameter files
+  - type: secret_store
+    detail: key backups, certificate stores, and recovery vaults
+  - type: artifact
+    detail: database backups, support packages, and recovery bundles
+references:
+- type: docs
+  url: https://help.sap.com/docs/SAP_MAXDB
+- type: docs
+  url: https://help.sap.com/docs/SAP_MAXDB/9b5c904e3bb241dc9b01795d73f0c3d5

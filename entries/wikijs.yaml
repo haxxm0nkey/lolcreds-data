@@ -1,0 +1,83 @@
+id: wikijs
+name: Wiki.js
+category: cms
+vendor: Requarks
+author: haxxm0nkey
+credentials:
+- id: administrator-password
+  name: Administrator/User Password
+  description: Wiki.js users authenticate to the admin UI, wiki UI, and GraphQL API through
+    local or external authentication strategies. The initial administrator is created during
+    setup.
+  type: username_password
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: Wiki.js web login, admin UI, and GraphQL API
+  - type: database
+    detail: Wiki.js user and authentication tables containing password verifier data
+  - type: config_file
+    path: config.yml
+    detail: runtime configuration and auth strategy settings
+  - type: secret_store
+    detail: Docker/Kubernetes secrets and password managers
+  - type: source_code
+    detail: deployment manifests and setup automation
+  - type: logs
+    detail: setup logs and authentication traces
+- id: api-key-jwt-token
+  name: API Key / JWT Token
+  description: Wiki.js API and integrations use API keys or bearer tokens for GraphQL and
+    automation access.
+  type: api_key
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Bearer token/API key used for Wiki.js GraphQL/API requests
+  - type: database
+    detail: API key/token records and user sessions
+  - type: config_file
+    detail: integration scripts, .env files, and automation configs
+  - type: environment
+    path: WIKIJS_API_KEY, WIKIJS_TOKEN
+  - type: secret_store
+    detail: CI/CD variables and vault entries
+  - type: source_code
+    detail: automation repositories and tests
+  - type: logs
+    detail: GraphQL client traces and debug logs
+- id: database-storage-auth-secrets
+  name: Database, Storage, and Authentication Strategy Secrets
+  description: Wiki.js config includes database credentials, session/JWT secrets, Git/storage
+    integration credentials, SMTP passwords, and OAuth/SAML/LDAP authentication strategy secrets.
+  type: secret_value
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: config_file
+    path: config.yml
+    detail: database connection, bind address, SSL, and runtime settings
+  - type: database
+    detail: authentication strategy, storage target, and integration secret records
+  - type: environment
+    path: DB_PASS, DB_PASSWORD, WIKI_DB_PASS, WIKIJS_DB_PASSWORD
+  - type: secret_store
+    detail: Kubernetes Secrets, Docker secrets, and cloud secret managers
+  - type: source_code
+    detail: Docker Compose files, Helm values, and committed configs
+  - type: artifact
+    detail: Wiki.js backups and exported configuration
+references:
+- type: docs
+  url: https://docs.requarks.io/install/config
+- type: docs
+  url: https://docs.requarks.io/dev/api

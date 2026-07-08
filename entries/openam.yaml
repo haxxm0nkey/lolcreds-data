@@ -1,0 +1,115 @@
+id: openam
+name: OpenAM
+category: identity
+vendor: Open Identity Platform
+author: haxxm0nkey
+
+credentials:
+
+  - id: amadmin-password
+    name: OpenAM Administrator Password
+    description: >
+      OpenAM installation requires passwords for the default OpenAM
+      administrator, amadmin, and default Policy Agent users. OpenAM documents
+      logging in as the administrator with the password provided during setup.
+    type: username_password
+    nature: [generated_on_install, user_defined]
+    sensitivity: secret
+    default:
+      username: amadmin
+      password: (set during configuration)
+    location:
+      - type: public_interface
+        path: /openam
+        detail: OpenAM administration console and authentication endpoints
+      - type: database
+        detail: OpenAM configuration store or directory service containing admin and agent account data
+      - type: config_file
+        detail: OpenAM bootstrap/configuration files, install properties, and deployment scripts
+      - type: secret_store
+        detail: container secrets, cloud secret managers, configuration vaults, and CI/CD variables
+      - type: source_code
+        detail: install automation, Docker Compose files, and committed configuration samples
+      - type: logs
+        detail: installation logs and configuration wizard output
+    notes: >
+      The default block records the built-in administrator username, not a static
+      password. The password is operator-supplied during configuration.
+
+  - id: policy-agent-password
+    name: Policy Agent Password
+    description: >
+      OpenAM installation asks for a password for default Policy Agent users.
+      Policy agents use configured credentials to authenticate to OpenAM for
+      policy enforcement and agent profile operations.
+    type: username_password
+    nature: [generated_on_install, user_defined]
+    sensitivity: secret
+    location:
+      - type: config_file
+        detail: policy agent profiles, agent bootstrap properties, and container deployment config
+      - type: database
+        detail: OpenAM configuration store entries for agent profiles and credentials
+      - type: secret_store
+        detail: agent installation password files, vault entries, and Kubernetes Secrets
+      - type: source_code
+        detail: committed agent configs and install scripts
+      - type: logs
+        detail: policy agent installation and connection troubleshooting logs
+    notes: >
+      Agent credentials can permit policy agent impersonation or unauthorized
+      access to protected resource configuration.
+
+  - id: oauth-client-secret
+    name: OAuth/OIDC Client Secret
+    description: >
+      OpenAM supports OAuth2 and OIDC applications and authentication modules.
+      Client integrations commonly use client IDs and client secrets issued or
+      configured in OpenAM realms.
+    type: secret_value
+    nature: [generated_on_install]
+    sensitivity: secret
+    location:
+      - type: database
+        detail: OpenAM configuration store holding OAuth2/OIDC client profiles
+      - type: config_file
+        detail: application config, realm exports, .env files, and deployment manifests
+      - type: environment
+        path: OPENAM_CLIENT_ID, OPENAM_CLIENT_SECRET
+      - type: secret_store
+        detail: application secret stores, CI/CD variables, and cloud secret managers
+      - type: source_code
+        detail: OAuth examples, tests, and accidentally committed app config
+      - type: logs
+        detail: token exchange traces and authentication debugging output
+    notes: >
+      Client secret exposure can allow impersonation of the relying party in
+      OAuth/OIDC token exchange flows.
+
+  - id: directory-bind-password
+    name: Directory Store Bind Password
+    description: >
+      OpenAM custom configuration can connect to an LDAP directory service.
+      OpenAM installation docs include Login ID and Password for the directory
+      administrator user used to update schema and user data.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    location:
+      - type: config_file
+        detail: OpenAM install properties and directory-service connection configuration
+      - type: secret_store
+        detail: LDAP bind password vault entries and deployment secrets
+      - type: source_code
+        detail: install automation and committed configuration files
+      - type: logs
+        detail: installer logs and LDAP connection troubleshooting output
+    notes: >
+      Directory administrator credentials may grant broad read/write access to
+      identity data, schema, and user credentials.
+
+references:
+  - type: docs
+    url: https://doc.openidentityplatform.org/openam/install-guide/chap-install-core
+  - type: docs
+    url: https://doc.openidentityplatform.org/openam/admin-guide/chap-auth-services

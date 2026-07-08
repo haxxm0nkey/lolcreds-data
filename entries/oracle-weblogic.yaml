@@ -1,0 +1,93 @@
+id: oracle-weblogic
+name: Oracle WebLogic Server
+category: middleware
+vendor: Oracle
+author: haxxm0nkey
+
+credentials:
+
+  - id: administrator-password
+    name: WebLogic Administrator Password
+    description: >
+      WebLogic Server security realms authenticate users for administrative and
+      application access. Oracle documents security realms, authentication
+      providers, and user/password protection in WebLogic Server.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    location:
+      - type: database
+        detail: WebLogic embedded LDAP or configured authentication provider storing users and password verifier material
+      - type: public_interface
+        path: Administration Console, Node Manager, T3/HTTP management endpoints
+        detail: WebLogic administrative login surfaces
+      - type: config_file
+        detail: domain config, provisioning scripts, and security provider configuration
+      - type: secret_store
+        detail: credential stores, deployment vaults, Kubernetes Secrets, and domain secrets
+      - type: source_code
+        detail: domain templates, WLST scripts, Docker Compose files, and committed config
+      - type: logs
+        detail: domain creation logs, boot logs, and authentication troubleshooting output
+    notes: >
+      WebLogic administrator passwords are chosen during domain creation or
+      provisioning; there is no universal static WebLogic administrator password.
+
+  - id: boot-identity-file
+    name: Boot Identity File Credential
+    description: >
+      WebLogic Server can use boot identity files to start servers without
+      interactively entering the administrator username and password. These files
+      contain boot credentials that WebLogic protects after use.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '^(?:username|password)\s*=\s*[^\r\n]+$'
+        detail: WebLogic boot.properties username or password entry
+    location:
+      - type: config_file
+        path: boot.properties
+        detail: WebLogic server boot identity file
+      - type: secret_store
+        detail: domain backups, Kubernetes Secrets, and provisioning vault entries
+      - type: source_code
+        detail: committed domains, container images, and WLST provisioning scripts
+      - type: artifact
+        detail: domain archives and server backups containing boot.properties
+      - type: logs
+        detail: startup traces and provisioning output showing boot identity file locations
+    notes: >
+      Even if WebLogic later encrypts the file contents, boot identity files in
+      backups or images remain sensitive operational credentials.
+
+  - id: credential-mapping-secret
+    name: Credential Mapping / Data Source Secret
+    description: >
+      WebLogic security includes credential mapping providers and supports
+      stored credentials for data sources, JMS, and outbound resources.
+      WebLogic protects passwords in configuration but they remain sensitive
+      deployment secrets.
+    type: secret_value
+    nature: [user_defined]
+    sensitivity: secret
+    location:
+      - type: config_file
+        detail: config.xml, JDBC data source descriptors, JMS modules, and deployment plans
+      - type: secret_store
+        detail: WebLogic credential stores, domain encryption key material, Kubernetes Secrets, and vaults
+      - type: source_code
+        detail: domain templates, WLST scripts, and committed deployment plans
+      - type: artifact
+        detail: domain backups and container images containing encrypted configuration
+    notes: >
+      Domain encryption key material plus encrypted configuration can expose
+      downstream database, LDAP, JMS, and service credentials.
+
+references:
+  - type: docs
+    url: https://docs.oracle.com/en/middleware/fusion-middleware/weblogic-server/14.1.2/secmg/overview.html
+  - type: docs
+    url: https://docs.oracle.com/en/middleware/fusion-middleware/weblogic-server/14.1.2/secmg/atn.html
+  - type: docs
+    url: https://docs.oracle.com/en/middleware/fusion-middleware/weblogic-server/14.1.2/secmg/boot-identity.html

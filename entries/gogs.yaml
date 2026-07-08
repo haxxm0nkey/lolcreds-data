@@ -1,0 +1,80 @@
+id: gogs
+name: Gogs
+category: ci_cd
+vendor: Gogs
+author: haxxm0nkey
+credentials:
+- id: local-user-password
+  name: Local User Password
+  description: Gogs users authenticate to the web UI, Git over HTTP, SSH workflows, and API.
+    Administrators are created during installation or user provisioning.
+  type: username_password
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: Gogs web UI, Git HTTP, SSH, and API
+  - type: database
+    detail: Gogs user table and password hash state
+  - type: config_file
+    path: custom/conf/app.ini
+    detail: authentication, database, mailer, and security configuration
+  - type: secret_store
+    detail: password managers and deployment vaults
+  - type: source_code
+    detail: Docker Compose files, provisioning scripts, and tests
+- id: access-token
+  name: Personal Access Token / API Token
+  description: Gogs supports access tokens for API clients and integrations.
+  type: token
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Authorization
+    detail: token used by Gogs API clients
+  - type: database
+    detail: access token records in the Gogs database
+  - type: config_file
+    detail: CLI configs, .env files, integration scripts, and .netrc
+  - type: environment
+    path: GOGS_TOKEN, GOGS_ACCESS_TOKEN
+  - type: secret_store
+    detail: CI/CD variables and vault entries
+  - type: source_code
+    detail: automation repositories and tests
+  - type: logs
+    detail: API client debug logs and CI output
+- id: security-and-integration-secrets
+  name: Secret Key, Database, Mailer, and Webhook Secrets
+  description: Gogs app.ini and database records can contain SECRET_KEY, database passwords,
+    mailer credentials, webhook secrets, OAuth app secrets, and external auth bind credentials.
+  type: secret_value
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: ^(SECRET_KEY|INTERNAL_TOKEN)\s*=\s*\S+
+    detail: Gogs app.ini security secret assignment
+  location:
+  - type: config_file
+    path: custom/conf/app.ini
+    detail: security, database, mailer, webhook, and auth settings
+  - type: database
+    detail: webhook, OAuth, token, and login source records
+  - type: secret_store
+    detail: Docker/Kubernetes secrets and vaults
+  - type: source_code
+    detail: deployment manifests and committed example configs
+  - type: artifact
+    detail: Gogs backups containing config and database dumps
+references:
+- type: docs
+  url: https://github.com/gogs/gogs/blob/main/conf/app.ini
+- type: docs
+  url: https://github.com/gogs/docs-api

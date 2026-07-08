@@ -1,0 +1,138 @@
+id: twilio
+name: Twilio
+category: saas
+vendor: Twilio
+author: haxxm0nkey
+
+credentials:
+
+  - id: account-sid-auth-token
+    name: Account SID / Auth Token
+    description: >
+      Twilio accounts use an Account SID and Auth Token to authenticate API
+      requests. Twilio recommends storing TWILIO_ACCOUNT_SID and
+      TWILIO_AUTH_TOKEN in environment variables and using API keys for
+      production access where possible.
+    type: api_key
+    nature: [generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - example: 'ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'AC[0-9a-fA-F]{32}'
+        detail: Twilio Account SID; the paired Auth Token is the secret credential
+    location:
+      - type: environment
+        path: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN
+      - type: http_header
+        path: Authorization
+        detail: HTTP Basic authentication using Account SID and Auth Token
+      - type: config_file
+        detail: .env files, application config, deployment manifests, local shell profiles
+      - type: secret_store
+        detail: CI/CD variables, cloud secret managers, hosted app settings
+      - type: source_code
+        detail: Twilio SDK initialization code, examples, tests, committed configs
+      - type: logs
+        detail: HTTP client debug logs, stack traces, CI logs, and request dumps
+    notes: >
+      Account SID alone is an identifier, but it commonly appears beside the
+      Auth Token. A leaked Auth Token can compromise the Twilio account and
+      should be rotated through Console or the Auth Token API.
+
+  - id: api-key-secret
+    name: API Key SID / Secret
+    description: >
+      Twilio API keys authenticate REST API requests and can be Main, Standard,
+      or Restricted. Twilio API Key resources have SIDs beginning with SK and a
+      secret value shown when the key is created.
+    type: api_key
+    nature: [generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - example: 'SKXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'SK[0-9a-fA-F]{32}'
+        detail: Twilio API Key SID; the paired API Secret is the secret credential
+    location:
+      - type: environment
+        path: TWILIO_API_KEY, TWILIO_API_SECRET, TWILIO_ACCOUNT_SID
+      - type: http_header
+        path: Authorization
+        detail: HTTP Basic authentication using API Key SID and API Secret
+      - type: config_file
+        detail: .env files, SDK config, deployment manifests, serverless variables
+      - type: secret_store
+        detail: CI/CD variables, cloud secret managers, hosted app settings
+      - type: source_code
+        detail: SDK initialization, access-token minting code, committed examples
+      - type: logs
+        detail: key creation output, application debug logs, CI logs
+      - type: http_response
+        detail: API key creation responses include the key SID and secret at creation time
+    notes: >
+      API key secrets are shown only at creation time in normal workflows.
+      Deleting an API key revokes API authentication and invalidates access
+      tokens generated with that key's secret.
+
+  - id: access-token-signing-secret
+    name: Access Token Signing Secret
+    description: >
+      Twilio client access tokens are JWTs signed with a Twilio API Key Secret.
+      The API Key SID identifies the key and the API Secret signs tokens for
+      Voice, Video, Conversations, Sync, and other client SDKs.
+    type: secret_value
+    nature: [generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - example: 'SKXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'SK[0-9a-fA-F]{32}'
+        detail: Twilio API Key SID used as JWT issuer; the paired API Secret signs access tokens
+    location:
+      - type: environment
+        path: TWILIO_API_KEY, TWILIO_API_SECRET, TWILIO_ACCOUNT_SID
+      - type: source_code
+        detail: access-token minting endpoints, serverless functions, SDK examples
+      - type: config_file
+        detail: .env files, serverless config, deployment manifests
+      - type: secret_store
+        detail: CI/CD variables, cloud secret managers, hosted app settings
+      - type: logs
+        detail: token generation debug logs and CI output
+    notes: >
+      Exposure of the API Secret allows minting Twilio client access tokens
+      according to the code and grants used by the application.
+
+  - id: webhook-signing-auth-token
+    name: Webhook Signature Auth Token
+    description: >
+      Twilio uses the account Auth Token to validate request signatures on
+      incoming Twilio webhooks. Applications that verify X-Twilio-Signature
+      need access to the same Auth Token used for API authentication.
+    type: secret_value
+    nature: [generated_on_install]
+    sensitivity: secret
+    location:
+      - type: environment
+        path: TWILIO_AUTH_TOKEN
+      - type: http_header
+        path: X-Twilio-Signature
+        detail: incoming webhook signature verified using the Auth Token; the token itself is not sent
+      - type: config_file
+        detail: webhook verifier config, .env files, deployment manifests
+      - type: secret_store
+        detail: CI/CD variables, cloud secret managers, hosted app settings
+      - type: source_code
+        detail: webhook validation middleware, tests, examples
+    notes: >
+      The signing secret is the same Auth Token used by the account. Rotate it
+      carefully because rotation affects both REST API authentication and
+      webhook validation.
+
+references:
+  - type: docs
+    url: https://www.twilio.com/docs/iam/api-keys
+  - type: docs
+    url: https://www.twilio.com/docs/iam/keys/api-key-resource
+  - type: docs
+    url: https://www.twilio.com/docs/iam/api/authtoken
+  - type: docs
+    url: https://www.twilio.com/docs/usage/secure-credentials

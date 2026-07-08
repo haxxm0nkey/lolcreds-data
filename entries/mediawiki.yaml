@@ -1,0 +1,95 @@
+id: mediawiki
+name: MediaWiki
+category: cms
+vendor: MediaWiki
+author: haxxm0nkey
+credentials:
+- id: user-password-hash
+  name: User Password Hash
+  description: MediaWiki stores local user password hashes in its database for wiki logins
+    unless external authentication replaces local auth.
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: database
+    detail: MediaWiki user/authentication tables containing password hash data
+  - type: public_interface
+    path: MediaWiki login, API login, and web sessions
+  - type: artifact
+    detail: database dumps and wiki backups
+- id: bot-password
+  name: Bot Password
+  description: MediaWiki bot passwords let users create limited credentials for bots and API
+    clients without using the main account password.
+  type: username_password
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: database
+    detail: bot password tables and associated grants/restrictions
+  - type: config_file
+    detail: bot scripts, Pywikibot config, .netrc, and CI variables
+  - type: environment
+    path: MEDIAWIKI_BOT_USERNAME, MEDIAWIKI_BOT_PASSWORD
+  - type: secret_store
+    detail: CI/CD variables and bot credential vaults
+  - type: source_code
+    detail: bot repositories and test configs
+  - type: logs
+    detail: bot framework debug logs and API traces
+- id: api-csrf-oauth-token
+  name: API CSRF / OAuth Token
+  description: MediaWiki API workflows use CSRF/edit tokens and OAuth consumer secrets/access
+    tokens for authenticated edits and integrations.
+  type: token
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Authorization
+    detail: OAuth or bearer token used by API clients
+  - type: database
+    detail: OAuth consumer and access token tables
+  - type: config_file
+    detail: bot configs, OAuth client configs, and integration scripts
+  - type: secret_store
+    detail: bot vaults and CI/CD secrets
+  - type: logs
+    detail: API debug logs and HTTP traces
+- id: wg-secret-key-and-db-password
+  name: LocalSettings Secret Key and Database Password
+  description: MediaWiki LocalSettings.php contains $wgSecretKey and database credentials
+    used for sessions, tokens, upgrades, and runtime database access.
+  type: secret_value
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: \$wgSecretKey\s*=\s*[\'\"][^\'\"]+[\'\"]\s*;
+    detail: MediaWiki LocalSettings.php secret key assignment
+  - pattern: \$wgDBpassword\s*=\s*[\'\"][^\'\"]+[\'\"]\s*;
+    detail: MediaWiki database password assignment
+  location:
+  - type: config_file
+    path: LocalSettings.php
+    detail: wiki secret key, database credentials, and extension secrets
+  - type: secret_store
+    detail: Kubernetes Secrets, Docker secrets, and deployment vaults
+  - type: source_code
+    detail: committed LocalSettings.php copies and extension configs
+  - type: artifact
+    detail: site backups and support bundles
+references:
+- type: docs
+  url: https://www.mediawiki.org/wiki/Manual:$wgSecretKey
+- type: docs
+  url: https://www.mediawiki.org/wiki/API:Tokens
+- type: docs
+  url: https://www.mediawiki.org/wiki/Manual:Bot_passwords

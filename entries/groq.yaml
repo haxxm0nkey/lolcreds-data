@@ -1,0 +1,45 @@
+id: groq
+name: GroqCloud
+category: ai_api
+vendor: Groq
+author: haxxm0nkey
+
+credentials:
+
+  - id: api-key
+    name: API Key
+    description: >
+      GroqCloud API keys authenticate requests to Groq's OpenAI-compatible
+      API. Groq's quickstart documents exporting the key as GROQ_API_KEY and
+      sending it as a Bearer token in the Authorization header.
+    type: api_key
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - example: 'gsk_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'gsk_[A-Za-z0-9]{20,}'
+        detail: Groq API key form commonly seen in GroqCloud deployments
+    location:
+      - type: environment
+        path: GROQ_API_KEY
+      - type: http_header
+        path: Authorization
+        detail: Bearer token used by Groq API calls
+      - type: source_code
+        detail: scripts, inference services, notebooks, committed .env files
+      - type: config_file
+        detail: .env, shell profiles, deployment manifests, local app config
+      - type: secret_store
+        detail: CI/CD variables, cloud secret managers, hosted app settings
+      - type: logs
+        detail: HTTP client debug logs and request dumps with Authorization headers
+    notes: >
+      Groq exposes OpenAI-compatible endpoints, so Groq keys are often placed
+      in code paths originally written for OpenAI-style clients. Check both
+      provider-specific GROQ_API_KEY variables and generic LLM gateway config.
+
+references:
+  - type: docs
+    url: https://console.groq.com/docs/quickstart
+  - type: docs
+    url: https://console.groq.com/docs/api-reference

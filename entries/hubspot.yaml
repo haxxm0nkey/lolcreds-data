@@ -1,0 +1,93 @@
+id: hubspot
+name: HubSpot
+category: saas
+vendor: HubSpot
+author: haxxm0nkey
+
+credentials:
+
+  - id: private-app-access-token
+    name: Private App Access Token
+    description: >
+      HubSpot private apps use an access token to make API calls to the account
+      where the private app is installed. HubSpot documents setting the
+      Authorization header to Bearer [YOUR_TOKEN].
+    type: token
+    nature: [generated_on_install]
+    sensitivity: secret
+    location:
+      - type: environment
+        path: HUBSPOT_ACCESS_TOKEN, HUBSPOT_PRIVATE_APP_TOKEN, HUBAPI_TOKEN
+      - type: http_header
+        path: Authorization
+        detail: Bearer token used for HubSpot API requests
+      - type: config_file
+        detail: .env files, integration config, workflow automation settings, and deployment manifests
+      - type: secret_store
+        detail: CI/CD variables, cloud secret managers, hosted app secrets, and platform config vars
+      - type: source_code
+        detail: CRM integrations, examples, tests, and accidentally committed automation scripts
+      - type: logs
+        detail: API client traces, webhook handler logs, and CI output
+    notes: >
+      Private app tokens inherit the scopes selected for the private app and are
+      tied to a single HubSpot account.
+
+  - id: oauth-access-refresh-token
+    name: OAuth Access / Refresh Token
+    description: >
+      HubSpot public apps use OAuth authorization tokens rather than passwords.
+      HubSpot documents OAuth installation with client ID and client secret, and
+      apps exchange authorization grants for access and refresh tokens.
+    type: token
+    nature: [generated_on_install]
+    sensitivity: secret
+    location:
+      - type: http_header
+        path: Authorization
+        detail: Bearer access token for HubSpot API calls
+      - type: http_response
+        detail: OAuth token endpoint responses containing access_token and refresh_token
+      - type: database
+        detail: public app installation token stores by portal/account
+      - type: environment
+        path: HUBSPOT_ACCESS_TOKEN, HUBSPOT_REFRESH_TOKEN
+      - type: config_file
+        detail: OAuth example config, local token caches, and integration settings
+      - type: secret_store
+        detail: encrypted app token stores and cloud secret managers
+      - type: logs
+        detail: OAuth callback logs and token exchange debug output
+    notes: >
+      OAuth token blast radius depends on installed scopes and the HubSpot
+      account where the app was authorized.
+
+  - id: oauth-client-secret
+    name: OAuth Client Secret
+    description: >
+      HubSpot OAuth apps use a client ID and client secret to build the
+      authorization URL and complete OAuth token exchange. HubSpot documents
+      using the client secret when setting up OAuth authentication.
+    type: secret_value
+    nature: [generated_on_install]
+    sensitivity: secret
+    location:
+      - type: environment
+        path: HUBSPOT_CLIENT_ID, HUBSPOT_CLIENT_SECRET
+      - type: config_file
+        detail: OAuth backend config, app settings, .env files, and deployment manifests
+      - type: secret_store
+        detail: cloud secret managers, CI/CD variables, and hosted app secrets
+      - type: source_code
+        detail: OAuth handlers, examples, tests, and committed app config
+      - type: logs
+        detail: token exchange request dumps and OAuth troubleshooting output
+    notes: >
+      Client secret exposure can allow impersonation of the HubSpot public app
+      in OAuth token exchange flows.
+
+references:
+  - type: docs
+    url: https://developers.hubspot.com/docs/api/private-apps
+  - type: docs
+    url: https://developers.hubspot.com/docs/api/working-with-oauth

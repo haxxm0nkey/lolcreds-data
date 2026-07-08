@@ -1,0 +1,121 @@
+id: sap-netweaver-abap
+name: SAP NetWeaver Application Server ABAP
+category: enterprise_app
+vendor: SAP
+author: haxxm0nkey
+credentials:
+- id: sap-star-default-client-user
+  name: SAP* Emergency / Default Client User
+  description: ABAP systems contain special built-in users such as SAP* used for emergency
+    access and client administration. Public SAP documentation describes securing standard
+    users and changing default passwords immediately after installation.
+  type: username_password
+  nature:
+  - static_default
+  - user_defined
+  sensitivity: secret
+  default:
+    username: SAP*
+    password: PASS
+  location:
+  - type: public_interface
+    path: SAP GUI, RFC, WebGUI, ICF services, and ABAP login screens
+  - type: database
+    detail: ABAP user master tables such as USR02/USRACL and client-dependent user records
+  - type: config_file
+    detail: installation guides, client copy scripts, and system provisioning files
+  - type: logs
+    detail: security audit log, SM20/SM21 events, RFC traces, and gateway logs
+  notes: SAP* behavior depends on client/user-master state and profile parameters. Treat this
+    as a known standard-user default requiring post-install hardening, not as evidence that
+    every system accepts it.
+- id: ddic-earlywatch-standard-users
+  name: DDIC / EARLYWATCH Standard User Password
+  description: ABAP installations include standard technical users such as DDIC and EARLYWATCH
+    whose default or initial passwords are commonly targeted and must be changed during system
+    hardening.
+  type: username_password
+  nature:
+  - static_default
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: SAP GUI, RFC, WebGUI, and administrative transactions
+  - type: database
+    detail: ABAP user master and password hash tables
+  - type: artifact
+    detail: client copies, system refresh exports, and audit extracts
+  notes: Known initial passwords vary by release/client and are included in SAP hardening
+    guidance; avoid assuming they remain valid after proper installation hardening.
+- id: abap-user-password-hash
+  name: ABAP Dialog/System User Password Hash
+  description: NetWeaver ABAP stores dialog, system, communication, service, and reference
+    user credentials in user master tables. These users drive SAP GUI, RFC, background jobs,
+    integrations, and service accounts.
+  type: username_password
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - pattern: \bUSR02\b|\bBCODE\b|\bPASSCODE\b|\bPWDSALTEDHASH\b
+    detail: ABAP user master/password hash table or field names seen in dumps, SQL extracts,
+      and documentation
+  location:
+  - type: database
+    detail: USR02 and related ABAP user/password tables
+  - type: public_interface
+    path: SAP GUI, RFC, ICF, OData, WebGUI, and application logins
+  - type: config_file
+    detail: RFC destinations, background job variants, interface configs, and provisioning
+      files
+  - type: secret_store
+    detail: SAP Secure Storage, password vaults, and automation secrets
+  - type: logs
+    detail: security audit log, RFC traces, gateway logs, and job logs
+- id: rfc-destination-credential
+  name: RFC Destination Credential
+  description: ABAP systems store RFC destination credentials for trusted and password-based
+    connections to SAP and non-SAP systems.
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: database
+    detail: RFC destination configuration and protected password storage
+  - type: config_file
+    detail: transport exports, interface documentation, and provisioning scripts
+  - type: secret_store
+    detail: SAP Secure Storage and enterprise vaults
+  - type: logs
+    detail: SM59 tests, RFC traces, and interface error logs
+- id: pse-snc-ssl-private-key
+  name: PSE / SNC / SSL Private Key
+  description: ABAP application servers use PSE private keys and certificates for SSL/TLS,
+    SNC, SSO, and trusted RFC communication.
+  type: key_pair
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: '-----BEGIN (RSA |EC |ENCRYPTED |)PRIVATE KEY-----'
+    detail: private key material exported from SAP PSE or automation
+  - pattern: \.pse$
+    detail: SAP Personal Security Environment file path or artifact
+  location:
+  - type: config_file
+    detail: SECUDIR PSE files such as SAPSSLS.pse, SAPSNCS.pse, and STRUST-managed stores
+  - type: secret_store
+    detail: SAP Cryptographic Library PSEs, HSM/vault-backed keys, and certificate stores
+  - type: artifact
+    detail: system backups, exports, and support bundles
+references:
+- type: docs
+  url: https://help.sap.com/docs/SAP_NETWEAVER_AS_ABAP_752/4a368c163b08418890a406d413933ba7/4a288f3a5d594815e10000000a42189c.html
+- type: docs
+  url: https://help.sap.com/docs/SAP_NETWEAVER_AS_ABAP_752/8d0e372f2ca84d9ba40e925188f548a8/4a288f3a5d594815e10000000a42189c.html
+- type: docs
+  url: https://support.sap.com/en/my-support/keys.html

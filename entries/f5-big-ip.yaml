@@ -1,0 +1,113 @@
+id: f5-big-ip
+name: F5 BIG-IP
+category: network
+vendor: F5
+author: haxxm0nkey
+credentials:
+- id: default-admin-root
+  name: Default admin/root Credentials
+  description: F5 BIG-IP systems have documented default local credentials for initial management
+    access that must be changed during setup and hardening.
+  type: username_password
+  nature:
+  - static_default
+  - user_defined
+  sensitivity: secret
+  default:
+    username: admin
+    password: admin
+  location:
+  - type: public_interface
+    path: BIG-IP Configuration utility, SSH, TMOS shell, iControl REST, and console
+  - type: config_file
+    detail: BIG-IP user configuration, UCS archives, and onboarding declarations
+  - type: artifact
+    detail: UCS/QKView/support bundles and device backups
+  notes: F5 documentation also discusses root/default on affected versions/platforms; the
+    default block records the web/admin default admin/admin.
+- id: local-user-password
+  name: Local BIG-IP User Password
+  description: BIG-IP local users authenticate to the GUI, SSH, tmsh, and iControl REST according
+    to assigned roles and partitions.
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: ^auth user \S+ \{
+    detail: tmsh BIG-IP local user stanza in configuration or UCS exports
+  location:
+  - type: config_file
+    detail: bigip_user.conf, bigip.conf, SCF files, DO declarations, and UCS archives
+  - type: public_interface
+    path: GUI, SSH, tmsh, iControl REST, and console
+  - type: secret_store
+    detail: password managers and automation vaults
+  - type: logs
+    detail: audit logs, restjavad logs, ssh logs, and auth failures
+- id: icontrol-rest-token
+  name: iControl REST Token
+  description: BIG-IP iControl REST clients can obtain authentication tokens for API automation.
+    Tokens act as bearer credentials until expiration or revocation.
+  type: token
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: X-F5-Auth-Token
+    detail: iControl REST authentication token
+  - type: http_header
+    path: Authorization
+    detail: Basic credentials or bearer-style auth used to obtain/use REST tokens
+  - type: config_file
+    detail: automation scripts, Terraform/Ansible provider configs, and .env files
+  - type: environment
+    path: F5_TOKEN, F5_PASSWORD, BIGIP_TOKEN
+  - type: secret_store
+    detail: CI/CD variables and vault entries
+  - type: logs
+    detail: REST debug logs and HTTP traces
+- id: device-trust-and-ssl-keys
+  name: Device Trust / SSL Private Keys
+  description: BIG-IP stores device trust certificates, SSL profile private keys, appliance
+    certs, and related passphrases used for traffic termination and cluster trust.
+  type: key_pair
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: '-----BEGIN (RSA |EC |ENCRYPTED |)PRIVATE KEY-----'
+    detail: private key material from BIG-IP SSL/device trust key files
+  location:
+  - type: config_file
+    path: /config/ssl/ssl.key/, /config/ssl/ssl.crt/
+    detail: BIG-IP SSL keys, device certs, and trust material
+  - type: secret_store
+    detail: UCS archives, certificate vaults, and HSM integrations
+  - type: artifact
+    detail: UCS backups, SCF files, and support bundles
+- id: snmp-ldap-radius-secrets
+  name: SNMP / LDAP / RADIUS / TACACS+ Secrets
+  description: BIG-IP stores SNMP communities, AAA bind passwords, RADIUS/TACACS+ shared secrets,
+    and monitor credentials for management and traffic features.
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: config_file
+    detail: bigip.conf, bigip_base.conf, auth source config, monitor definitions, and UCS
+      archives
+  - type: secret_store
+    detail: automation vaults and password managers
+  - type: source_code
+    detail: AS3/DO declarations and network automation repos
+  - type: logs
+    detail: AAA, monitor, and SNMP debug logs
+references:
+- type: docs
+  url: https://techdocs.f5.com/en-us/bigip-17-1-0/big-ip-system-secure-administration.html
+- type: docs
+  url: https://my.f5.com/manage/s/article/K13121

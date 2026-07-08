@@ -1,0 +1,91 @@
+id: rabbitmq
+name: RabbitMQ
+category: middleware
+vendor: Broadcom / VMware Tanzu
+author: haxxm0nkey
+
+credentials:
+
+  - id: default-guest-user
+    name: Default guest User
+    description: >
+      RabbitMQ documents a default pair of credentials called the default user.
+      The default guest user is restricted to local connections in modern
+      RabbitMQ deployments unless loopback restrictions are changed.
+    type: username_password
+    nature: [static_default]
+    sensitivity: secret
+    default:
+      username: guest
+      password: guest
+    location:
+      - type: public_interface
+        path: AMQP 5672, management UI 15672
+        detail: RabbitMQ broker and management login surfaces
+      - type: config_file
+        detail: rabbitmq.conf settings that relax loopback_users or configure default users
+      - type: source_code
+        detail: Docker Compose files, tutorials, and local dev configurations
+      - type: logs
+        detail: connection logs and management authentication failures
+    notes: >
+      Treat guest/guest as high-risk when reachable remotely or when loopback
+      restrictions are disabled.
+
+  - id: user-password
+    name: RabbitMQ User Password
+    description: >
+      RabbitMQ clients authenticate with a username/password pair, JWT token, or
+      x.509 certificate. RabbitMQ documents rabbitmqctl add_user and
+      rabbitmqadmin users declare for creating users and setting passwords.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: 'rabbitmqctl\s+add_user\s+[^\s]+\s+[^\s]+'
+        detail: rabbitmqctl command creating a user with a password argument
+    location:
+      - type: config_file
+        detail: definitions.json, rabbitmq.conf, advanced.config, Helm values, and Docker Compose files
+      - type: environment
+        path: RABBITMQ_DEFAULT_USER, RABBITMQ_DEFAULT_PASS, RABBITMQ_USER, RABBITMQ_PASSWORD
+      - type: secret_store
+        detail: Kubernetes Secrets, Docker secrets, cloud secret managers, and vault entries
+      - type: source_code
+        detail: broker definitions, deployment scripts, tests, and accidentally committed configs
+      - type: logs
+        detail: broker connection logs, management API traces, and CI output
+      - type: public_interface
+        path: AMQP 5672, management UI/API 15672
+    notes: >
+      User permissions are scoped by virtual host and tags; management UI access
+      additionally depends on user tags.
+
+  - id: oauth-jwt-token
+    name: OAuth 2 / JWT Access Token
+    description: >
+      RabbitMQ can authenticate clients and management UI users with OAuth 2.0
+      JWT tokens. RabbitMQ documents JWT token credentials and management UI
+      OAuth authorization code flows.
+    type: token
+    nature: [generated_on_install]
+    sensitivity: secret
+    location:
+      - type: http_header
+        path: Authorization
+        detail: Bearer JWT used for management UI/API or OAuth-enabled clients
+      - type: config_file
+        detail: rabbitmq.conf OAuth provider and resource server settings
+      - type: secret_store
+        detail: OAuth client secrets, Kubernetes Secrets, and vault entries
+      - type: logs
+        detail: management UI OAuth logs and broker authentication traces
+    notes: >
+      JWT blast radius depends on token scopes, resource server configuration,
+      and mapped RabbitMQ permissions.
+
+references:
+  - type: docs
+    url: https://www.rabbitmq.com/docs/access-control
+  - type: docs
+    url: https://www.rabbitmq.com/docs/management

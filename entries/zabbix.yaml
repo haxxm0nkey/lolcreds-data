@@ -1,0 +1,89 @@
+id: zabbix
+name: Zabbix
+category: monitoring
+vendor: Zabbix LLC
+author: haxxm0nkey
+
+credentials:
+
+  - id: api-token
+    name: API Token
+    description: >
+      Zabbix API requests can be authorized with an API token. Zabbix documents
+      sending the token in the Authorization header using Bearer authentication.
+    type: token
+    nature: [user_defined]
+    sensitivity: secret
+    location:
+      - type: http_header
+        path: Authorization
+        detail: Bearer token used for Zabbix API requests
+      - type: environment
+        path: ZABBIX_TOKEN, ZABBIX_API_TOKEN
+      - type: config_file
+        detail: automation config, .env files, monitoring integration config, and deployment manifests
+      - type: secret_store
+        detail: CI/CD variables, cloud secret managers, and monitoring automation secrets
+      - type: source_code
+        detail: Zabbix API scripts, Terraform providers, tests, and committed examples
+      - type: logs
+        detail: API client traces, webhook automation logs, and CI output
+    notes: >
+      API token permissions depend on the creating user and token scope. Treat
+      tokens as bearer credentials for Zabbix API operations.
+
+  - id: frontend-user-password
+    name: Frontend User Password
+    description: >
+      Zabbix frontend users authenticate to the web interface and API workflows.
+      Zabbix user accounts, groups, roles, and authentication settings control
+      access to monitoring configuration and historical data.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    location:
+      - type: database
+        detail: Zabbix database tables storing users, sessions, roles, and password verifier material
+      - type: public_interface
+        path: /zabbix/index.php, /zabbix/api_jsonrpc.php
+        detail: Zabbix web frontend and JSON-RPC API endpoint
+      - type: config_file
+        detail: frontend config, automation .env files, and integration settings
+      - type: secret_store
+        detail: password vaults, CI/CD variables, and cloud secret managers
+      - type: source_code
+        detail: API scripts, deployment examples, tests, and accidentally committed credentials
+      - type: logs
+        detail: web server logs, API request logs, and authentication troubleshooting output
+    notes: >
+      Zabbix has historically documented installer/default credentials in some
+      distribution contexts; avoid modeling a static default unless the exact
+      package or appliance source states it ships that way.
+
+  - id: macro-secret
+    name: Secret User Macro / External Secret
+    description: >
+      Zabbix supports user macros, including secret user macros, and storage of
+      secrets through external providers such as CyberArk and HashiCorp Vault.
+      These secrets are often used by checks, web monitoring, and integrations.
+    type: secret_value
+    nature: [user_defined]
+    sensitivity: secret
+    location:
+      - type: secret_store
+        detail: Zabbix secret macros, CyberArk, HashiCorp Vault, and frontend secret storage
+      - type: database
+        detail: Zabbix configuration database containing macro definitions and references
+      - type: config_file
+        detail: exported templates, automation config, and provisioning manifests
+      - type: source_code
+        detail: committed templates and monitoring-as-code repositories
+      - type: logs
+        detail: item preprocessing logs, script output, and webhook debugging traces
+    notes: >
+      Secret macros may contain credentials for monitored services and should be
+      triaged as secrets even when they are not Zabbix login credentials.
+
+references:
+  - type: docs
+    url: https://www.zabbix.com/documentation/current/en/manual/api

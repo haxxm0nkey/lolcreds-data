@@ -1,0 +1,89 @@
+id: sap-businessobjects
+name: SAP BusinessObjects Business Intelligence Platform
+category: enterprise_app
+vendor: SAP
+author: haxxm0nkey
+credentials:
+- id: administrator-password
+  name: CMS Administrator Password
+  description: SAP BusinessObjects BI Platform uses Central Management Server accounts such
+    as Administrator for CMC, BI Launch Pad, SDK, and REST access. The Administrator password
+    is set during installation or deployment.
+  type: username_password
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: Central Management Console, BI Launch Pad, RESTful web services, and SDK logon
+  - type: database
+    detail: CMS repository/security database storing users, groups, tokens, and encrypted
+      credential data
+  - type: config_file
+    detail: response.ini, deployment scripts, SIA/CMS configuration, and web application properties
+  - type: secret_store
+    detail: password managers and deployment vaults
+  - type: logs
+    detail: CMS, Adaptive Processing Server, webapp, and installer logs
+- id: enterprise-alias-and-service-account
+  name: Enterprise/LDAP/AD User Credential
+  description: BusinessObjects can authenticate Enterprise users and external LDAP/AD users,
+    and often stores service account credentials for schedules, publications, data sources,
+    and external identity integration.
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: CMC, BI Launch Pad, SDK, REST, and scheduling workflows
+  - type: database
+    detail: CMS repository records for users, aliases, schedules, and connection objects
+  - type: config_file
+    detail: LDAP/AD plugin configuration, service account scripts, and BI deployment files
+  - type: secret_store
+    detail: enterprise password vaults and server credential stores
+  - type: logs
+    detail: authentication plugin logs and schedule execution logs
+- id: trusted-auth-shared-secret
+  name: Trusted Authentication Shared Secret
+  description: BusinessObjects trusted authentication uses shared secrets/tokens between trusted
+    web applications and the BI platform to assert users.
+  type: secret_value
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: config_file
+    detail: trusted authentication configuration files, web.xml/properties, and custom application
+      settings
+  - type: secret_store
+    detail: application vaults and deployment secrets
+  - type: source_code
+    detail: custom SSO/trusted-auth applications and samples
+  - type: logs
+    detail: SSO and authentication debug traces
+- id: database-connection-secret
+  name: Universe / Data Connection Credential
+  description: BI content stores database connection credentials for universes, reports, publications,
+    and data federation.
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: database
+    detail: CMS repository connection objects and encrypted credential storage
+  - type: config_file
+    detail: universe exports, LCMBIAR/BIAR packages, and connection server configuration
+  - type: artifact
+    detail: BIAR/LCMBIAR promotion packages, report exports, and backups
+  - type: logs
+    detail: report refresh and connection server traces
+references:
+- type: docs
+  url: https://help.sap.com/docs/SAP_BUSINESSOBJECTS_BUSINESS_INTELLIGENCE_PLATFORM
+- type: docs
+  url: https://help.sap.com/docs/SAP_BUSINESSOBJECTS_BUSINESS_INTELLIGENCE_PLATFORM/467c6b8c6d1a4d8f9d4c73e0f9aa9ac7

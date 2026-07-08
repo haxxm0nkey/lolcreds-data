@@ -1,0 +1,96 @@
+id: firebase
+name: Firebase
+category: cloud
+vendor: Google
+author: haxxm0nkey
+
+credentials:
+
+  - id: web-api-key
+    name: Firebase Web API Key
+    description: >
+      Firebase web and mobile configuration includes API keys that identify the
+      Firebase project and app to Firebase services. Firebase documents that
+      Firebase API keys are public by design and do not need to be treated as
+      secrets when restricted to Firebase services.
+    type: api_key
+    nature: [generated_on_install]
+    sensitivity: public_by_design
+    looks_like:
+      - example: 'AIzaXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'AIza[0-9A-Za-z_\-]{30,}'
+        detail: Google/Firebase API key prefix used in Firebase app configuration
+    location:
+      - type: environment
+        path: FIREBASE_API_KEY, NEXT_PUBLIC_FIREBASE_API_KEY, VITE_FIREBASE_API_KEY
+      - type: config_file
+        detail: firebaseConfig objects, google-services.json, GoogleService-Info.plist, .env files, and frontend build config
+      - type: source_code
+        detail: web bundles, mobile apps, examples, and committed Firebase initialization code
+      - type: logs
+        detail: frontend build output and client SDK diagnostics
+    notes: >
+      API keys identify the project but do not authorize access by themselves;
+      Firebase Security Rules, Google Cloud IAM, and App Check provide
+      authorization controls. Misconfigured restrictions still deserve review.
+
+  - id: service-account-private-key
+    name: Service Account Private Key
+    description: >
+      Firebase Admin SDK server environments can authenticate with a Firebase
+      Admin SDK service account. Firebase documents using a service account to
+      communicate with Firebase from trusted server code.
+    type: key_pair
+    nature: [generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - pattern: '-----BEGIN PRIVATE KEY-----'
+        detail: PEM private_key field inside a Google service account JSON file
+    location:
+      - type: config_file
+        path: serviceAccountKey.json, firebase-adminsdk-*.json
+        detail: downloaded service account JSON credentials for server SDKs
+      - type: environment
+        path: GOOGLE_APPLICATION_CREDENTIALS, FIREBASE_SERVICE_ACCOUNT, GOOGLE_CREDENTIALS
+      - type: secret_store
+        detail: cloud secret managers, CI/CD variables, Kubernetes Secrets, and platform app secrets
+      - type: source_code
+        detail: accidentally committed service account JSON, tests, and deployment scripts
+      - type: logs
+        detail: CI output or stack traces that print credential JSON
+    notes: >
+      Service account private keys can access Firebase and Google Cloud
+      resources according to IAM roles. Prefer Application Default Credentials
+      or workload identity where possible.
+
+  - id: cli-token
+    name: Firebase CLI Token
+    description: >
+      Firebase CLI workflows can use login credentials or CI tokens to authorize
+      project operations. Firebase CLI documentation describes authentication
+      for deployment and project-management commands.
+    type: token
+    nature: [user_defined]
+    sensitivity: secret
+    location:
+      - type: environment
+        path: FIREBASE_TOKEN
+      - type: config_file
+        detail: CI configuration, local Firebase CLI credential stores, and deployment manifests
+      - type: secret_store
+        detail: CI/CD variables and hosted deployment secrets
+      - type: source_code
+        detail: legacy deploy scripts and accidentally committed CI examples
+      - type: logs
+        detail: deployment logs and CI traces
+    notes: >
+      Firebase CLI tokens authorize deployment and administrative actions for
+      the projects reachable by the authenticated Google account or service setup.
+
+references:
+  - type: docs
+    url: https://firebase.google.com/docs/projects/api-keys
+  - type: docs
+    url: https://firebase.google.com/docs/admin/setup
+  - type: docs
+    url: https://firebase.google.com/docs/cli

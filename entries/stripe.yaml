@@ -1,0 +1,136 @@
+id: stripe
+name: Stripe
+category: saas
+vendor: Stripe
+author: haxxm0nkey
+
+credentials:
+
+  - id: secret-api-key
+    name: Secret API Key
+    description: >
+      Stripe API requests are authenticated with API keys. Stripe documents that
+      secret keys start with sk_test_ in test mode and sk_live_ in live mode,
+      and that live secret keys grant access to Stripe API resources.
+    type: api_key
+    nature: [generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - example: 'sk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'sk_(?:test|live)_[A-Za-z0-9]{16,}'
+        detail: Stripe secret API key prefix
+    location:
+      - type: environment
+        path: STRIPE_SECRET_KEY, STRIPE_API_KEY
+      - type: http_header
+        path: Authorization
+        detail: Basic auth using the secret key as the username or Authorization bearer-style helper output
+      - type: config_file
+        detail: .env files, backend config, deployment manifests, and serverless settings
+      - type: secret_store
+        detail: cloud secret managers, CI/CD variables, PaaS config vars, and Kubernetes Secrets
+      - type: source_code
+        detail: backend payment code, tests, examples, and accidentally committed config
+      - type: logs
+        detail: HTTP client debug output, failed payment traces, and CI logs
+    notes: >
+      Secret keys can create charges, read customers, and perform other account
+      operations according to mode and account permissions. Live keys carry
+      production payment risk.
+
+  - id: restricted-api-key
+    name: Restricted API Key
+    description: >
+      Stripe restricted API keys limit access to selected API resources. Stripe
+      documents restricted keys with rk_test_ and rk_live_ prefixes and
+      recommends them to limit damage if a key is obtained by a bad actor.
+    type: api_key
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - example: 'rk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'rk_(?:test|live)_[A-Za-z0-9]{16,}'
+        detail: Stripe restricted API key prefix
+    location:
+      - type: environment
+        path: STRIPE_RESTRICTED_KEY, STRIPE_API_KEY
+      - type: http_header
+        path: Authorization
+        detail: API authentication with the restricted key
+      - type: config_file
+        detail: service-specific backend config, .env files, and deployment manifests
+      - type: secret_store
+        detail: secret managers, CI/CD variables, and platform app settings
+      - type: source_code
+        detail: scoped integrations, webhook processors, and operational scripts
+      - type: logs
+        detail: API client traces and CI output
+    notes: >
+      Blast radius depends on the resources and permissions selected when the
+      restricted key was created.
+
+  - id: publishable-key
+    name: Publishable Key
+    description: >
+      Stripe publishable keys identify an account to client-side Stripe
+      libraries. Stripe documents publishable key prefixes pk_test_ and pk_live_
+      and states that only publishable keys are safe to expose outside the
+      backend.
+    type: api_key
+    nature: [generated_on_install]
+    sensitivity: public_by_design
+    looks_like:
+      - example: 'pk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'pk_(?:test|live)_[A-Za-z0-9]{16,}'
+        detail: Stripe publishable API key prefix
+    location:
+      - type: environment
+        path: STRIPE_PUBLISHABLE_KEY, NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+      - type: config_file
+        detail: frontend config, mobile app config, .env files, and build settings
+      - type: source_code
+        detail: browser bundles, mobile applications, examples, and checkout integrations
+      - type: logs
+        detail: frontend build logs and client SDK diagnostics
+    notes: >
+      Publishable keys are not secrets by themselves, but they often appear near
+      secret keys in misconfigured applications or .env files.
+
+  - id: webhook-signing-secret
+    name: Webhook Signing Secret
+    description: >
+      Stripe webhook endpoints use an endpoint secret to verify the
+      Stripe-Signature header. Stripe documents that webhook signing secrets
+      start with the whsec_ prefix.
+    type: secret_value
+    nature: [generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - example: 'whsec_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'whsec_[A-Za-z0-9]{16,}'
+        detail: Stripe webhook signing secret prefix
+    location:
+      - type: environment
+        path: STRIPE_WEBHOOK_SECRET
+      - type: http_header
+        path: Stripe-Signature
+        detail: incoming header verified with the endpoint secret; the secret itself is not sent
+      - type: config_file
+        detail: webhook handler config, .env files, local Stripe CLI config, and deployment manifests
+      - type: secret_store
+        detail: cloud secret managers, platform config vars, and CI/CD variables
+      - type: source_code
+        detail: webhook examples, tests, and committed local config
+      - type: logs
+        detail: webhook verification errors and local stripe listen terminal output
+    notes: >
+      Dashboard-managed endpoint secrets and Stripe CLI forwarding secrets are
+      different even though both use the whsec_ prefix.
+
+references:
+  - type: docs
+    url: https://docs.stripe.com/keys
+  - type: docs
+    url: https://docs.stripe.com/api/authentication
+  - type: docs
+    url: https://docs.stripe.com/webhooks/signature

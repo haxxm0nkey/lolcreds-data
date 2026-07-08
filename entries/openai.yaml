@@ -1,0 +1,50 @@
+id: openai
+name: OpenAI
+category: ai_api
+vendor: OpenAI
+author: haxxm0nkey
+
+credentials:
+
+  - id: api-key
+    name: API Key
+    description: >
+      OpenAI API keys authenticate requests to the OpenAI API. OpenAI's
+      quickstart instructs users to create an API key, store it securely, and
+      export it as OPENAI_API_KEY for SDK and CLI use.
+    type: api_key
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - example: 'sk-proj-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'sk-proj-[A-Za-z0-9_\-]{20,}'
+        detail: project-scoped OpenAI API key form commonly seen in current deployments
+      - example: 'sk-svcacct-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'sk-svcacct-[A-Za-z0-9_\-]{20,}'
+        detail: service-account OpenAI API key form
+      - example: 'sk-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'sk-[A-Za-z0-9]{20,}'
+        detail: legacy OpenAI API key form without the project/service-account qualifier
+    location:
+      - type: environment
+        path: OPENAI_API_KEY
+      - type: http_header
+        path: Authorization
+        detail: Bearer token used by OpenAI API calls
+      - type: source_code
+        detail: application config, examples, notebooks, CLI scripts, committed .env files
+      - type: config_file
+        detail: .env, deployment manifests, serverless settings, local shell profiles
+      - type: secret_store
+        detail: CI/CD variables, cloud secret managers, platform environment stores
+      - type: logs
+        detail: request dumps or debug logs that include Authorization headers
+    notes: >
+      OpenAI API keys are bearer credentials. Treat exposure according to the
+      project, organization, and permissions attached to the key, and rotate
+      any key that appears in source code, logs, notebooks, or shared
+      deployment configuration.
+
+references:
+  - type: docs
+    url: https://platform.openai.com/docs/quickstart

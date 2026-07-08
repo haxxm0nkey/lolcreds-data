@@ -1,0 +1,64 @@
+id: vercel
+name: Vercel
+category: cloud
+vendor: Vercel
+author: haxxm0nkey
+
+credentials:
+
+  - id: api-token
+    name: API Token
+    description: >
+      Vercel API and CLI automation use account tokens. Vercel documentation
+      includes token management and CLI commands that operate with tokens for
+      deployments, teams, projects, and environment variables.
+    type: token
+    nature: [user_defined]
+    sensitivity: secret
+    location:
+      - type: http_header
+        path: Authorization
+        detail: Bearer token used for Vercel API requests
+      - type: environment
+        path: VERCEL_TOKEN
+      - type: config_file
+        detail: Vercel CLI config, CI pipeline config, .env files, and deployment manifests
+      - type: secret_store
+        detail: GitHub Actions secrets, CI/CD variables, cloud secret managers, and password managers
+      - type: source_code
+        detail: deployment scripts, tests, and accidentally committed CLI configs
+      - type: logs
+        detail: CI logs, CLI traces, and API client debug output
+    notes: >
+      Token blast radius depends on account/team permissions and scopes selected
+      at token creation.
+
+  - id: project-environment-secret
+    name: Project Environment Variable Secret
+    description: >
+      Vercel projects store environment variables and secrets used by builds,
+      serverless functions, and deployments. Vercel CLI env commands manage
+      project environment variables.
+    type: secret_value
+    nature: [user_defined]
+    sensitivity: secret
+    location:
+      - type: secret_store
+        detail: Vercel project environment variables and encrypted deployment secrets
+      - type: environment
+        detail: runtime and build-time environment variables exposed to Vercel functions/builds
+      - type: config_file
+        detail: .env, .env.local, vercel.json, and CI pipeline configuration
+      - type: source_code
+        detail: accidentally committed .env files, tests, and examples
+      - type: logs
+        detail: build logs and runtime logs if applications print environment values
+    notes: >
+      Vercel environment secrets often contain downstream database URLs, API
+      tokens, OAuth secrets, and cloud credentials.
+
+references:
+  - type: docs
+    url: https://vercel.com/docs/cli/env
+  - type: docs
+    url: https://vercel.com/docs/accounts/create-api-tokens

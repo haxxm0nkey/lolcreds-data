@@ -1,0 +1,93 @@
+id: oracle-peoplesoft
+name: Oracle PeopleSoft
+category: enterprise_app
+vendor: Oracle
+author: haxxm0nkey
+credentials:
+- id: delivered-demo-users
+  name: Delivered Demo / Bootstrap User
+  description: PeopleSoft PeopleTools environments include delivered users used in demo, bootstrap,
+    and administration contexts such as VP1 and PS. These credentials are commonly changed
+    or disabled during production hardening.
+  type: username_password
+  nature:
+  - static_default
+  - user_defined
+  sensitivity: secret
+  default:
+    username: VP1
+    password: VP1
+  location:
+  - type: public_interface
+    path: PeopleSoft PIA login, Application Designer, Data Mover, and integration broker endpoints
+  - type: database
+    detail: PeopleTools security tables such as PSOPRDEFN and related permission data
+  - type: config_file
+    detail: demo install notes, Data Mover scripts, and provisioning artifacts
+  - type: logs
+    detail: PIA access logs, application server logs, and signon traces
+  notes: VP1/VP1 represents a delivered/demo credential. Other delivered IDs such as PS are
+    environment-dependent and should be rotated or disabled.
+- id: operator-password
+  name: Operator ID Password
+  description: PeopleSoft operator IDs authenticate users, administrators, integration accounts,
+    and batch/service identities.
+  type: username_password
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: database
+    detail: PSOPRDEFN and PeopleTools security tables storing password verifier data and roles
+  - type: public_interface
+    path: PIA, Application Designer, Process Scheduler, Integration Broker, and web services
+  - type: secret_store
+    detail: enterprise password vaults and scheduler/service credential stores
+  - type: source_code
+    detail: integration scripts, Data Mover files, CI configs, and test harnesses
+  - type: logs
+    detail: application server, process scheduler, and integration broker logs
+- id: connect-id-and-access-password
+  name: Connect ID / Access ID Password
+  description: PeopleSoft application servers use Connect ID and Access ID credentials to
+    bootstrap database connectivity and access PeopleTools metadata.
+  type: username_password
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: config_file
+    detail: psappsrv.cfg, psprcs.cfg, configuration manager settings, and domain config
+  - type: database
+    detail: database accounts for Connect ID/Access ID and PeopleSoft schemas
+  - type: secret_store
+    detail: Oracle wallets, OS credential stores, and password vaults
+  - type: logs
+    detail: application server boot logs, database connection errors, and install logs
+- id: integration-broker-secret
+  name: Integration Broker Node Password / Gateway Secret
+  description: PeopleSoft Integration Broker nodes, gateways, web services, and app keys use
+    node passwords and shared secrets for message authentication.
+  type: secret_value
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: database
+    detail: PeopleTools integration broker node, gateway, and service operation configuration
+      tables
+  - type: config_file
+    detail: integrationGateway.properties, gateway keystores, app server config, and web service
+      configs
+  - type: secret_store
+    detail: keystores, password vaults, and deployment secrets
+  - type: logs
+    detail: IB gateway logs, app server logs, and SOAP/REST traces
+references:
+- type: docs
+  url: https://docs.oracle.com/cd/E92519_02/pt856pbr3/eng/pt/tsec/concept_UnderstandingPeopleSoftSecurity.html
+- type: docs
+  url: https://docs.oracle.com/cd/F28299_01/pt857pbr3/eng/pt/tsec/task_WorkingWithUserProfiles.html

@@ -1,0 +1,43 @@
+id: zhipu
+name: Zhipu AI / BigModel
+category: ai_api
+vendor: Zhipu AI
+author: haxxm0nkey
+
+credentials:
+
+  - id: api-key
+    name: API Key
+    description: >
+      Zhipu AI BigModel API keys authenticate calls to GLM and other Zhipu
+      platform APIs. Zhipu's documentation exposes API Key management in the
+      developer console and supports OpenAI-compatible client usage.
+    type: api_key
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - example: 'XXXXXXXXXXXXXXXX.XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: '[A-Za-z0-9_\-]{8,}\.[A-Za-z0-9_\-]{20,}'
+        detail: JWT-like BigModel API key form commonly seen in older Zhipu integrations
+    location:
+      - type: environment
+        path: ZHIPUAI_API_KEY
+      - type: http_header
+        path: Authorization
+        detail: bearer token used by Zhipu / BigModel API calls
+      - type: source_code
+        detail: GLM examples, OpenAI-compatible clients, notebooks, committed .env files
+      - type: config_file
+        detail: .env, deployment manifests, local app config, gateway config
+      - type: secret_store
+        detail: CI/CD variables, hosted app settings, cloud secret managers
+      - type: logs
+        detail: HTTP client logs and LLM gateway logs containing Authorization headers
+    notes: >
+      Zhipu keys appear in both native SDK and OpenAI-compatible client
+      configurations. Treat bearer headers, ZHIPUAI_API_KEY variables, and
+      JWT-like key strings as equivalent API credential material.
+
+references:
+  - type: docs
+    url: https://docs.bigmodel.cn/cn/guide/start/introduction

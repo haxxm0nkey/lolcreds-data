@@ -1,0 +1,93 @@
+id: sharepoint
+name: Microsoft SharePoint
+category: saas
+vendor: Microsoft
+author: haxxm0nkey
+credentials:
+- id: add-in-client-secret
+  name: SharePoint Add-in / Azure AD App Client Secret
+  description: SharePoint add-ins and Microsoft Entra ID applications use client IDs with
+    client secrets or certificates for app-only access to SharePoint resources.
+  type: secret_value
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Bearer access token minted for SharePoint app-only/API calls
+  - type: config_file
+    detail: web.config, appsettings.json, Azure Functions settings, PowerShell scripts, and
+      deployment manifests
+  - type: environment
+    path: CLIENT_SECRET, SHAREPOINT_CLIENT_SECRET, AZURE_CLIENT_SECRET
+  - type: secret_store
+    detail: Azure Key Vault, app service settings, CI/CD variables, and password managers
+  - type: source_code
+    detail: SharePoint add-ins, migration scripts, and integration repos
+  - type: logs
+    detail: OAuth debug logs and HTTP traces
+- id: certificate-private-key
+  name: App-only Certificate Private Key
+  description: Certificate-based SharePoint app-only authentication uses private keys associated
+    with registered apps or add-ins.
+  type: key_pair
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: '-----BEGIN (RSA |PRIVATE |ENCRYPTED )?PRIVATE KEY-----'
+    detail: private key used by SharePoint/Azure AD app-only certificate auth
+  location:
+  - type: config_file
+    detail: PFX/PEM files, appsettings, PowerShell certificate paths, and deployment packages
+  - type: secret_store
+    detail: Azure Key Vault certificates, local certificate stores, and CI secret files
+  - type: artifact
+    detail: build artifacts, migration bundles, and backups
+- id: user-password-and-cookie
+  name: User Password / FedAuth Session Cookie
+  description: Interactive SharePoint users authenticate through Microsoft 365/ADFS/Entra
+    ID; legacy scripts may store usernames, passwords, FedAuth cookies, or refresh tokens
+    for CSOM/REST automation.
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: SharePoint Online/Server web UI, CSOM, REST, and Graph-connected access
+  - type: http_header
+    path: Cookie
+    detail: FedAuth/rtFa or related SharePoint session cookies
+  - type: config_file
+    detail: PowerShell scripts, migration tool configs, and service account settings
+  - type: secret_store
+    detail: credential manager, password vaults, and automation runbooks
+  - type: logs
+    detail: HTTP traces and migration logs
+- id: webhook-client-state
+  name: Webhook Client State Secret
+  description: SharePoint webhook subscriptions can include a clientState value used by receivers
+    to validate notifications.
+  type: secret_value
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: http_response
+    detail: webhook subscription metadata containing clientState
+  - type: config_file
+    detail: webhook receiver configuration and deployment manifests
+  - type: secret_store
+    detail: Azure Key Vault and app settings
+  - type: source_code
+    detail: webhook receiver source and tests
+references:
+- type: docs
+  url: https://learn.microsoft.com/en-us/sharepoint/dev/sp-add-ins/authorization-and-authentication-of-sharepoint-add-ins
+- type: docs
+  url: https://learn.microsoft.com/en-us/sharepoint/dev/apis/webhooks/overview-sharepoint-webhooks

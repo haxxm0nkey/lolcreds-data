@@ -1,0 +1,69 @@
+id: tikiwiki
+name: TikiWiki / Tiki CMS Groupware
+category: cms
+vendor: Tiki Software Community Association
+author: haxxm0nkey
+credentials:
+- id: user-password-hash
+  name: User Password Hash
+  description: Tiki stores local users and password verifier data in its database for wiki/CMS/groupware
+    authentication unless external auth is used.
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: database
+    detail: Tiki user tables containing local account password hashes and login state
+  - type: public_interface
+    path: Tiki login, web UI, and service endpoints
+  - type: artifact
+    detail: database dumps and site backups
+- id: token-access
+  name: Token Access Secret
+  description: Tiki supports token access features that allow generated tokens to grant access
+    according to configured permissions and expiry.
+  type: token
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Bearer or token-style usage by API/integration clients where configured
+  - type: database
+    detail: Tiki token access records and permissions
+  - type: config_file
+    detail: integration scripts, URL tokens, and automation settings
+  - type: secret_store
+    detail: password managers and CI/CD secrets
+  - type: logs
+    detail: web server access logs and integration traces
+- id: db-mail-ldap-oauth-secrets
+  name: Database, Mail, LDAP, and OAuth Secrets
+  description: Tiki installations contain database credentials, SMTP passwords, LDAP bind
+    credentials, OAuth client secrets, and other integration secrets in local config and database
+    settings.
+  type: secret_value
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: config_file
+    path: db/local.php
+    detail: database connection credentials and local site configuration
+  - type: database
+    detail: preference and integration tables containing service secrets
+  - type: secret_store
+    detail: Kubernetes/Docker secrets, vaults, and password managers
+  - type: source_code
+    detail: deployment manifests and committed site configs
+  - type: logs
+    detail: mail, LDAP, OAuth, and installer debug logs
+references:
+- type: docs
+  url: https://doc.tiki.org/User-Management
+- type: docs
+  url: https://doc.tiki.org/Token-Access

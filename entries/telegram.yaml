@@ -1,0 +1,101 @@
+id: telegram
+name: Telegram
+category: saas
+vendor: Telegram
+author: haxxm0nkey
+
+credentials:
+
+  - id: bot-token
+    name: Bot API Token
+    description: >
+      Telegram Bot API tokens authenticate HTTPS requests for a bot. Telegram
+      documents that each bot receives a unique authentication token when it
+      is created and shows the token embedded in /bot<token>/ API URLs.
+    type: token
+    nature: [generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - example: '123456789:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: '[0-9]{6,}:[A-Za-z0-9_\-]{30,}'
+        detail: Telegram Bot API token format documented by Telegram
+    location:
+      - type: environment
+        path: TELEGRAM_BOT_TOKEN, BOT_TOKEN
+      - type: public_interface
+        path: https://api.telegram.org/bot<token>/METHOD_NAME
+      - type: config_file
+        detail: .env files, bot config files, deployment manifests, systemd units
+      - type: secret_store
+        detail: CI/CD variables, cloud secret managers, hosted bot settings
+      - type: source_code
+        detail: bot scripts, webhook handlers, notebooks, committed examples
+      - type: logs
+        detail: request URLs, webhook debug logs, bot framework logs, reverse-proxy logs
+    notes: >
+      Anyone with the bot token can call Bot API methods as that bot. Rotate
+      leaked bot tokens through BotFather or the managed-bot token replacement
+      flow where applicable.
+
+  - id: mtproto-api-id-api-hash
+    name: MTProto api_id / api_hash
+    description: >
+      Telegram MTProto client applications use api_id and api_hash parameters
+      obtained from my.telegram.org API development tools. Telegram documents
+      that these parameters are required for user authorization.
+    type: api_key
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: 'api_hash\s*[:=]\s*[a-f0-9]{32}'
+        detail: Telegram API hash value in application configuration
+      - pattern: 'api_id\s*[:=]\s*[0-9]+'
+        detail: Telegram API ID value; api_id and api_hash are useful as a pair
+    location:
+      - type: environment
+        path: TELEGRAM_API_ID, TELEGRAM_API_HASH
+      - type: config_file
+        detail: Telethon/Pyrogram config, .env files, client app config
+      - type: secret_store
+        detail: CI/CD variables, cloud secret managers, hosted app settings
+      - type: source_code
+        detail: MTProto clients, automation scripts, committed examples
+      - type: logs
+        detail: client debug logs and failed authorization traces
+    notes: >
+      api_hash is the sensitive half of the pair. A client still needs the
+      user's phone authorization flow or existing session to act as a user.
+
+  - id: mtproto-session-string
+    name: MTProto Session String / File
+    description: >
+      Telegram MTProto client libraries commonly persist user or bot sessions
+      after authorization. These sessions are not a Bot API token, but they can
+      allow a client to continue acting as the authorized Telegram account.
+    type: token
+    nature: [generated_on_install]
+    sensitivity: secret
+    location:
+      - type: config_file
+        detail: Telethon .session files, Pyrogram session files, local bot/client state
+      - type: environment
+        path: TELEGRAM_SESSION, STRING_SESSION
+      - type: database
+        detail: SQLite session databases used by MTProto client libraries
+      - type: secret_store
+        detail: CI/CD variables and secret stores holding string sessions
+      - type: source_code
+        detail: committed session strings, notebooks, automation scripts
+      - type: artifact
+        detail: backups, container images, bot deployment bundles
+    notes: >
+      Session artifacts can outlive the original login flow. Revoke sessions
+      from Telegram account settings or regenerate bot credentials if exposed.
+
+references:
+  - type: docs
+    url: https://core.telegram.org/bots/api
+  - type: docs
+    url: https://core.telegram.org/api/obtaining_api_id
+  - type: docs
+    url: https://core.telegram.org/api/auth

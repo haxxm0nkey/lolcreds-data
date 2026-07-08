@@ -1,0 +1,94 @@
+id: oracle-ebs
+name: Oracle E-Business Suite
+category: enterprise_app
+vendor: Oracle
+author: haxxm0nkey
+credentials:
+- id: sysadmin-default
+  name: SYSADMIN Application User
+  description: Oracle E-Business Suite includes the SYSADMIN application user for system administration.
+    Fresh or demo environments commonly use an initial SYSADMIN password that must be changed
+    during implementation hardening.
+  type: username_password
+  nature:
+  - static_default
+  - user_defined
+  sensitivity: secret
+  default:
+    username: SYSADMIN
+    password: SYSADMIN
+  location:
+  - type: public_interface
+    path: E-Business Suite login, Forms, OA Framework, and web self-service pages
+  - type: database
+    detail: FND_USER and related Oracle EBS application security tables
+  - type: config_file
+    detail: implementation notes, cloning scripts, and application tier configuration
+  - type: logs
+    detail: sign-on audit records, Concurrent Manager logs, and web access logs
+  notes: Treat SYSADMIN/SYSADMIN as an initial/demo credential to verify and rotate, not proof
+    that a hardened production instance accepts it.
+- id: fnd-user-password
+  name: FND Application User Password
+  description: EBS application users and service accounts authenticate through the FND user
+    model for forms, web applications, concurrent programs, and integrations.
+  type: username_password
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: database
+    detail: FND_USER, password hash/verifier fields, responsibilities, and sign-on audit tables
+  - type: public_interface
+    path: EBS web login, Forms, mobile/web services, and integration endpoints
+  - type: secret_store
+    detail: password managers and enterprise vaults
+  - type: source_code
+    detail: integration scripts, SOA adapters, and test configs
+  - type: logs
+    detail: FND login audit, Apache/OACore logs, and concurrent request logs
+- id: apps-schema-password
+  name: APPS Schema Password
+  description: Oracle EBS application tiers and database tools use the APPS schema credential
+    to access the EBS data model and PL/SQL packages.
+  type: username_password
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: database
+    detail: Oracle Database user/schema state for APPS and product schemas
+  - type: config_file
+    detail: EBS context files, dbc files, AutoConfig output, scripts, and clone artifacts
+  - type: secret_store
+    detail: Oracle wallets, password vaults, and deployment secrets
+  - type: source_code
+    detail: DBA automation, integrations, and migration scripts
+  - type: logs
+    detail: AutoConfig, adop, clone, and SQL*Plus logs
+- id: dbc-and-jdbc-secrets
+  name: DBC, JDBC, and WebLogic Secrets
+  description: EBS application tier files contain database connection descriptors, DBC information,
+    WebLogic admin credentials, and managed server secrets used by the application stack.
+  type: secret_value
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: config_file
+    detail: FND_SECURE .dbc files, context XML, WebLogic domain config, JDBC data sources,
+      and application tier properties
+  - type: secret_store
+    detail: Oracle wallets, credential stores, and deployment vaults
+  - type: artifact
+    detail: EBS clones, backups, and support bundles
+  - type: logs
+    detail: WebLogic, OACore, forms, and patching logs
+references:
+- type: docs
+  url: https://docs.oracle.com/cd/E26401_01/doc.122/e22954/T202991T174305.htm
+- type: docs
+  url: https://docs.oracle.com/cd/E26401_01/doc.122/e22953/T174296T174305.htm

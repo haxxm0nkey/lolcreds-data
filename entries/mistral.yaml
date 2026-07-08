@@ -1,0 +1,42 @@
+id: mistral
+name: Mistral AI
+category: ai_api
+vendor: Mistral AI
+author: haxxm0nkey
+
+credentials:
+
+  - id: api-key
+    name: API Key
+    description: >
+      Mistral AI API keys authenticate requests to api.mistral.ai. Mistral's
+      API reference documents Authorization: Bearer headers and SDK examples
+      using MISTRAL_API_KEY.
+    type: api_key
+    nature: [user_defined]
+    sensitivity: secret
+    location:
+      - type: environment
+        path: MISTRAL_API_KEY
+      - type: http_header
+        path: Authorization
+        detail: Bearer token used by Mistral API calls
+      - type: source_code
+        detail: apps, notebooks, inference workers, committed .env files
+      - type: config_file
+        detail: .env, deployment manifests, server config, shell profiles
+      - type: secret_store
+        detail: CI/CD variables, cloud secret managers, hosted app settings
+      - type: logs
+        detail: HTTP debug output or gateway logs containing Authorization headers
+    notes: >
+      Mistral keys are opaque bearer credentials with no reliable public
+      prefix in the referenced docs. They commonly appear in OpenAI-compatible
+      client configuration because many SDKs can target Mistral with a custom
+      base URL.
+
+references:
+  - type: docs
+    url: https://docs.mistral.ai/getting-started/quickstart/
+  - type: docs
+    url: https://docs.mistral.ai/api/

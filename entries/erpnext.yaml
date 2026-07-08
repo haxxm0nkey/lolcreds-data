@@ -1,0 +1,86 @@
+id: erpnext
+name: ERPNext
+category: enterprise_app
+vendor: Frappe Technologies
+author: haxxm0nkey
+credentials:
+- id: administrator-password
+  name: Administrator/User Password
+  description: ERPNext and the Frappe framework use local site users, including the Administrator
+    account created during site setup, for Desk and API login.
+  type: username_password
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: ERPNext/Frappe Desk login and REST API
+  - type: database
+    detail: Frappe site database user records and password verifier fields
+  - type: config_file
+    detail: site_config.json, bench setup files, and deployment manifests
+  - type: secret_store
+    detail: bench passwords, Docker/Kubernetes secrets, and password managers
+  - type: source_code
+    detail: bench automation, test fixtures, and CI configuration
+  - type: logs
+    detail: bench install logs and authentication traces
+  notes: There is no universal ERPNext Administrator password; it is set or generated during
+    site creation.
+- id: api-key-secret
+  name: API Key and API Secret
+  description: Frappe/ERPNext users can generate API key and API secret pairs for token-based
+    REST API access.
+  type: api_key
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: token\s+[A-Za-z0-9._~-]+:[A-Za-z0-9._~-]+
+    detail: Frappe token authorization value containing api_key:api_secret
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Token api_key:api_secret for REST API authentication
+  - type: database
+    detail: User records storing API key and secret material
+  - type: config_file
+    detail: integration scripts, .env files, bench commands, and connector settings
+  - type: environment
+    path: FRAPPE_API_KEY, FRAPPE_API_SECRET, ERPNEXT_API_KEY, ERPNEXT_API_SECRET
+  - type: secret_store
+    detail: CI/CD variables, vault entries, and integration secrets
+  - type: source_code
+    detail: ERP integrations, tests, and automation repositories
+  - type: logs
+    detail: HTTP traces and connector debug logs
+- id: site-and-integration-secrets
+  name: Site Config and Integration Secrets
+  description: ERPNext site configuration carries database credentials, encryption keys, scheduler/webhook
+    secrets, email account passwords, and third-party integration tokens.
+  type: secret_value
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: config_file
+    path: sites/*/site_config.json
+    detail: per-site database password, encryption key, and integration settings
+  - type: database
+    detail: DocType records for Email Account, Social Login Key, integrations, and webhooks
+  - type: secret_store
+    detail: Docker/Kubernetes secrets and bench deployment vaults
+  - type: source_code
+    detail: bench repo configuration and committed site backups
+  - type: artifact
+    detail: bench backups containing site_config.json and SQL dumps
+references:
+- type: docs
+  url: https://docs.frappe.io/erpnext/adding-users
+- type: docs
+  url: https://docs.frappe.io/framework/user/en/guides/integration/rest_api
+- type: docs
+  url: https://docs.frappe.io/framework/user/en/basics/site_config

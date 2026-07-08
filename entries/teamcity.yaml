@@ -1,0 +1,93 @@
+id: teamcity
+name: TeamCity
+category: ci_cd
+vendor: JetBrains
+author: haxxm0nkey
+credentials:
+- id: user-password
+  name: TeamCity User Password
+  description: TeamCity users authenticate to the web UI, REST API, and build tools through
+    local or external authentication backends.
+  type: username_password
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: TeamCity web UI, REST API, and agent/server endpoints
+  - type: database
+    detail: TeamCity user records and password verifier state for local authentication
+  - type: config_file
+    detail: server configuration, auth modules, and deployment manifests
+  - type: secret_store
+    detail: password managers and deployment vaults
+  - type: logs
+    detail: server auth logs and REST client traces
+- id: access-token
+  name: Personal Access Token
+  description: TeamCity supports user access tokens for REST API access and integrations.
+  type: token
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Bearer token or basic auth token for TeamCity REST API
+  - type: database
+    detail: TeamCity token storage associated with users
+  - type: config_file
+    detail: build scripts, service connection config, IDE/CLI caches, and .env files
+  - type: environment
+    path: TEAMCITY_TOKEN, TEAMCITY_ACCESS_TOKEN
+  - type: secret_store
+    detail: CI/CD variables and vaults
+  - type: source_code
+    detail: automation scripts and integration tests
+  - type: logs
+    detail: REST debug logs and build output
+- id: super-user-token
+  name: Super User Authentication Token
+  description: TeamCity can provide a super user authentication token for emergency administration
+    when normal authentication is unavailable.
+  type: token
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: logs
+    detail: TeamCity server startup logs can display the super user token
+  - type: public_interface
+    path: TeamCity login page super user token flow
+  - type: artifact
+    detail: support bundles and collected server logs
+  notes: Treat this as highly privileged emergency access; rotate/restart according to TeamCity
+    guidance if exposed.
+- id: secure-project-parameter
+  name: Secure Project Parameter / VCS Settings Token
+  description: TeamCity stores secure parameters, VCS root passwords/tokens, SSH keys, cloud
+    profiles, and deployment credentials for build configurations.
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: database
+    detail: TeamCity configuration database and secure value storage
+  - type: config_file
+    detail: project settings, Kotlin DSL, VCS root config, and data directory XML
+  - type: secret_store
+    detail: TeamCity credentials storage and external secret integrations
+  - type: source_code
+    detail: Kotlin DSL repositories and build scripts referencing secret parameters
+  - type: logs
+    detail: build logs if parameters are printed or masking fails
+references:
+- type: docs
+  url: https://www.jetbrains.com/help/teamcity/configuring-your-user-profile.html
+- type: docs
+  url: https://www.jetbrains.com/help/teamcity/storing-project-settings-in-version-control.html
+- type: docs
+  url: https://www.jetbrains.com/help/teamcity/super-user.html

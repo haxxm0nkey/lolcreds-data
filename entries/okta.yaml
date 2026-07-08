@@ -1,0 +1,118 @@
+id: okta
+name: Okta
+category: identity
+vendor: Okta
+author: haxxm0nkey
+
+credentials:
+
+  - id: ssws-api-token
+    name: SSWS API Token
+    description: >
+      Okta API tokens authenticate requests to Okta APIs. Okta documents that
+      callers supply the token in the HTTP Authorization header with the SSWS
+      authentication scheme.
+    type: token
+    nature: [user_defined]
+    sensitivity: secret
+    location:
+      - type: http_header
+        path: Authorization
+        detail: SSWS token used for Okta API requests
+      - type: environment
+        path: OKTA_API_TOKEN, OKTA_TOKEN
+      - type: config_file
+        detail: .env files, Terraform provider config, automation config, and deployment manifests
+      - type: secret_store
+        detail: CI/CD variables, cloud secret managers, and identity automation secrets
+      - type: source_code
+        detail: Okta automation scripts, tests, examples, and committed IaC
+      - type: logs
+        detail: API client traces, Terraform logs, and CI output
+    notes: >
+      Okta recommends scoped OAuth 2.0 access tokens over proprietary SSWS API
+      tokens where possible. SSWS token privilege is tied to the creating user's
+      permissions and network restrictions.
+
+  - id: oauth-service-app-private-key
+    name: OAuth Service App Private Key
+    description: >
+      Okta service apps can authenticate to the org authorization server with a
+      public/private key pair. Okta documents creating and signing a JSON Web
+      Token using the private key to obtain scoped OAuth access tokens.
+    type: key_pair
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '-----BEGIN (?:RSA |EC |)PRIVATE KEY-----'
+        detail: PEM private key used to sign Okta OAuth client assertions
+    location:
+      - type: config_file
+        detail: PEM/JWK files, OAuth service app config, Terraform variables, and deployment manifests
+      - type: environment
+        path: OKTA_PRIVATE_KEY, OKTA_CLIENT_PRIVATE_KEY
+      - type: secret_store
+        detail: cloud KMS, secret managers, CI/CD variables, and platform app secrets
+      - type: source_code
+        detail: service app examples, tests, and accidentally committed key material
+    notes: >
+      The registered public key is not secret, but the private key can mint
+      client assertions for the service app and should be stored server-side.
+
+  - id: oauth-client-secret
+    name: OAuth Client Secret
+    description: >
+      Okta OIDC and OAuth clients can use client secret authentication depending
+      on the application type and client authentication method. Okta documents
+      switching service apps between client secret and public/private key
+      authentication methods.
+    type: secret_value
+    nature: [generated_on_install]
+    sensitivity: secret
+    location:
+      - type: environment
+        path: OKTA_CLIENT_ID, OKTA_CLIENT_SECRET
+      - type: config_file
+        detail: OIDC client config, .env files, backend settings, and deployment manifests
+      - type: secret_store
+        detail: cloud secret managers, CI/CD variables, and platform app secrets
+      - type: source_code
+        detail: OIDC examples, tests, Terraform files, and committed configuration
+      - type: logs
+        detail: token request traces and OAuth troubleshooting logs
+    notes: >
+      Client secret exposure can allow impersonation of the Okta OAuth client in
+      token flows that accept client_secret authentication.
+
+  - id: user-password
+    name: User Password
+    description: >
+      Okta Authentication API primary authentication validates a user's primary
+      password credential. Okta documents trusted applications sending username
+      and password in the authentication transaction, optionally with an SSWS
+      token.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '"password"\s*:\s*"[^"\r\n]+"'
+        detail: Okta Authentication API JSON password field; the password value itself has no Okta-specific shape
+    location:
+      - type: public_interface
+        path: /api/v1/authn
+        detail: Authentication API primary authentication endpoint
+      - type: logs
+        detail: request dumps, proxy logs, and failed authentication traces if bodies are logged
+      - type: source_code
+        detail: test fixtures, examples, and scripts containing sample user credentials
+    notes: >
+      This is an ordinary user-defined password flow, not a shipped default.
+      Okta account access is further shaped by MFA, policies, and app assignments.
+
+references:
+  - type: docs
+    url: https://developer.okta.com/docs/guides/create-an-api-token/main/
+  - type: docs
+    url: https://developer.okta.com/docs/reference/api/authn/
+  - type: docs
+    url: https://developer.okta.com/docs/guides/implement-oauth-for-okta-serviceapp/main/

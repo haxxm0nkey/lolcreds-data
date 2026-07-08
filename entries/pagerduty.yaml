@@ -1,0 +1,101 @@
+id: pagerduty
+name: PagerDuty
+category: monitoring
+vendor: PagerDuty
+author: haxxm0nkey
+
+credentials:
+
+  - id: rest-api-key
+    name: REST API Key
+    description: >
+      PagerDuty REST API keys authenticate automation against the PagerDuty REST
+      API. PagerDuty documents General Access and User Token REST API keys, and
+      states both types are 20-character strings.
+    type: api_key
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - example: 'XXXXXXXXXXXXXXXXXXXX'
+        pattern: '[A-Za-z0-9]{20}'
+        detail: PagerDuty REST API key length documented for General Access and User Token keys
+    location:
+      - type: http_header
+        path: Authorization
+        detail: Token authentication header used for PagerDuty REST API requests
+      - type: environment
+        path: PAGERDUTY_API_KEY, PD_API_KEY, PAGERDUTY_TOKEN
+      - type: config_file
+        detail: Terraform provider config, automation .env files, runbooks, and deployment manifests
+      - type: secret_store
+        detail: CI/CD variables, cloud secret managers, and incident automation secrets
+      - type: source_code
+        detail: incident automation scripts, Terraform modules, tests, and committed examples
+      - type: logs
+        detail: API client traces, Terraform logs, and CI output
+    notes: >
+      REST API keys do not work with PagerDuty Events API calls. User token keys
+      act with the creating user's permissions.
+
+  - id: events-routing-key
+    name: Events API Integration / Routing Key
+    description: >
+      PagerDuty Events API integrations use routing keys to route events to a
+      service or event orchestration. PagerDuty distinguishes Events API keys
+      from REST API keys in its API access key documentation.
+    type: api_key
+    nature: [generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - example: 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: '[A-Fa-f0-9]{32}'
+        detail: PagerDuty Events API integration/routing key commonly represented as 32 hexadecimal characters
+    location:
+      - type: environment
+        path: PAGERDUTY_ROUTING_KEY, PD_ROUTING_KEY, PAGERDUTY_INTEGRATION_KEY
+      - type: config_file
+        detail: monitoring alert configs, IaC, .env files, and deployment manifests
+      - type: secret_store
+        detail: monitoring platform secrets, CI/CD variables, and cloud secret managers
+      - type: source_code
+        detail: alerting scripts, examples, and committed service integrations
+      - type: logs
+        detail: event submission logs and incident automation traces
+      - type: http_response
+        detail: integration creation responses containing routing or integration keys
+    notes: >
+      A leaked routing key can trigger or manipulate events for the associated
+      service or orchestration but does not grant REST API access.
+
+  - id: oauth-access-token
+    name: OAuth Access Token
+    description: >
+      PagerDuty supports OAuth access for apps and API integrations. OAuth
+      access tokens authenticate API calls with delegated scopes instead of a
+      static REST API key.
+    type: token
+    nature: [generated_on_install]
+    sensitivity: secret
+    location:
+      - type: http_header
+        path: Authorization
+        detail: Bearer OAuth access token used for PagerDuty API calls
+      - type: http_response
+        detail: OAuth token endpoint responses containing access_token and refresh_token
+      - type: database
+        detail: app installation token stores
+      - type: config_file
+        detail: OAuth example config and integration settings
+      - type: secret_store
+        detail: encrypted app secrets and cloud secret managers
+      - type: logs
+        detail: OAuth callback logs and token exchange traces
+    notes: >
+      OAuth token blast radius depends on app scopes, installation, and the user
+      or account context granting access.
+
+references:
+  - type: docs
+    url: https://support.pagerduty.com/main/docs/api-access-keys
+  - type: docs
+    url: https://developer.pagerduty.com/docs/ZG9jOjExMDI5NTgx-rest-api-overview

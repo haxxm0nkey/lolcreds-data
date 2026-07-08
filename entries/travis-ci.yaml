@@ -1,0 +1,81 @@
+id: travis-ci
+name: Travis CI
+category: ci_cd
+vendor: Travis CI
+author: haxxm0nkey
+credentials:
+- id: api-token
+  name: API Token
+  description: Travis CI API tokens authenticate CLI and API clients for repository, build,
+    and environment-variable management.
+  type: api_key
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Travis-API-Version
+    detail: Used alongside Authorization in Travis API requests
+  - type: http_header
+    path: Authorization
+    detail: token used by Travis CI API clients
+  - type: config_file
+    detail: Travis CLI config, .travis.yml encrypted variables workflow, scripts, and .env
+      files
+  - type: environment
+    path: TRAVIS_TOKEN, TRAVIS_API_TOKEN
+  - type: secret_store
+    detail: password managers, CI variables, and deployment vaults
+  - type: source_code
+    detail: automation repos and accidentally committed configs
+  - type: logs
+    detail: CLI debug output and curl traces
+- id: env-var-secret
+  name: Repository Environment Variable / Encrypted Variable
+  description: Travis CI repository settings and .travis.yml encrypted variables hold deployment
+    credentials, cloud keys, package tokens, and passwords injected into builds.
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: secret_store
+    detail: Travis repository environment variables and encrypted variables
+  - type: config_file
+    path: .travis.yml
+    detail: encrypted env/global values and deploy provider settings
+  - type: environment
+    detail: runtime build environment variables injected by Travis CI
+  - type: source_code
+    detail: repository CI configuration and deployment scripts
+  - type: logs
+    detail: build logs if secrets are printed or masking fails
+- id: deploy-key-and-provider-secret
+  name: Deploy Key / Provider Token
+  description: Travis deployment providers and repository access features use SSH keys, GitHub
+    tokens, package tokens, and cloud credentials to publish artifacts.
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: '-----BEGIN (RSA |OPENSSH |EC |)PRIVATE KEY-----'
+    detail: private SSH deploy key used by Travis jobs
+  location:
+  - type: config_file
+    path: .travis.yml
+    detail: deploy provider token fields and encrypted credentials
+  - type: secret_store
+    detail: Travis secure env vars and deployment provider secrets
+  - type: source_code
+    detail: deployment scripts and release tooling
+  - type: logs
+    detail: deployment logs and provider CLI debug output
+references:
+- type: docs
+  url: https://docs.travis-ci.com/user/environment-variables/
+- type: docs
+  url: https://docs.travis-ci.com/user/deployment/releases/
+- type: docs
+  url: https://developer.travis-ci.com/authentication

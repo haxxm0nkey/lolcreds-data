@@ -1,0 +1,91 @@
+id: hp-ilo
+name: HPE Integrated Lights-Out (iLO)
+category: network
+vendor: Hewlett Packard Enterprise
+author: haxxm0nkey
+credentials:
+- id: factory-administrator-password
+  name: Factory Administrator Password
+  description: HPE iLO ships with a default local Administrator account whose initial password
+    is unique to the server and printed on the iLO default network settings tag/label rather
+    than being a universal static password.
+  type: username_password
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  default:
+    username: Administrator
+  location:
+  - type: public_interface
+    path: iLO web UI, SSH, Redfish, IPMI, Remote Console
+    detail: Out-of-band management login surfaces
+  - type: artifact
+    detail: server labels/tags, asset inventories, deployment records, and support bundles
+  - type: config_file
+    detail: iLO configuration exports and scripted setup files
+  notes: Only the username is universal; the password is device-specific and should not be
+    modeled as a literal default.
+- id: local-user-password
+  name: Local iLO User Password
+  description: iLO local users authenticate to management interfaces including browser UI,
+    SSH, Redfish, IPMI, and remote console. Provisioning tools often carry these credentials
+    for fleet setup.
+  type: username_password
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: iLO web UI / SSH / Redfish / IPMI / Remote Console
+  - type: config_file
+    detail: iLO RESTful Interface Tool scripts, XML/JSON exports, and server profile configuration
+  - type: secret_store
+    detail: OneView, password managers, and deployment vaults
+  - type: source_code
+    detail: provisioning scripts, Ansible playbooks, and CI variables
+  - type: logs
+    detail: RESTful Interface Tool, Redfish client, and deployment logs
+- id: redfish-session-token
+  name: Redfish Session Token
+  description: HPE iLO Redfish sessions return session tokens that clients send in X-Auth-Token
+    headers for subsequent management API calls.
+  type: token
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: X-Auth-Token
+    detail: Redfish authentication token for iLO API requests
+  - type: http_response
+    path: Location
+    detail: Created Redfish session URI returned by login
+  - type: logs
+    detail: HTTP traces and client debug output
+  - type: config_file
+    detail: API client token caches and automation scripts
+- id: snmp-ipmi-directory-secrets
+  name: SNMP / IPMI / Directory Integration Secrets
+  description: iLO deployments may contain SNMP community strings, IPMI LAN credentials, and
+    LDAP/directory bind credentials used for monitoring and centralized authentication.
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: config_file
+    detail: iLO configuration exports and management profiles for SNMP, IPMI, and directory
+      settings
+  - type: public_interface
+    path: SNMP, IPMI LAN, and directory-backed login paths
+  - type: source_code
+    detail: monitoring and provisioning templates
+  - type: secret_store
+    detail: HPE OneView, vaults, and configuration management secrets
+references:
+- type: docs
+  url: https://support.hpe.com/hpesc/public/docDisplay?docId=a00105236en_us
+- type: docs
+  url: https://servermanagementportal.ext.hpe.com/docs/redfishservices/ilos/ilo6/ilo6_168/

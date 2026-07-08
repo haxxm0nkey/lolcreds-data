@@ -1,0 +1,48 @@
+id: google-gemini
+name: Google Gemini API
+category: ai_api
+vendor: Google
+author: haxxm0nkey
+
+credentials:
+
+  - id: api-key
+    name: Gemini API Key
+    description: >
+      Gemini API keys authenticate requests to Google's Gemini API. Google
+      documents standard and authorization API keys, the x-goog-api-key HTTP
+      header, and the GEMINI_API_KEY / GOOGLE_API_KEY environment variables.
+    type: api_key
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - example: 'AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'AIza[0-9A-Za-z_\-]{35}'
+        detail: Google API key form used by Gemini API keys
+    location:
+      - type: environment
+        path: GEMINI_API_KEY
+      - type: environment
+        path: GOOGLE_API_KEY
+        detail: Google docs state GOOGLE_API_KEY takes precedence if both variables are set
+      - type: http_header
+        path: x-goog-api-key
+        detail: Gemini REST API key header
+      - type: source_code
+        detail: notebooks, sample apps, client SDK configuration, committed .env files
+      - type: config_file
+        detail: .env, shell profiles, deployment manifests, server config
+      - type: secret_store
+        detail: CI/CD variables, Google Secret Manager, hosted app settings
+      - type: logs
+        detail: REST client logs and gateway logs containing x-goog-api-key headers
+    notes: >
+      Google distinguishes standard Gemini API keys from authorization keys.
+      Both are bearer-style secrets for Gemini requests; rotate any key found
+      in source code, notebooks, logs, or shared deployment configuration.
+
+references:
+  - type: docs
+    url: https://ai.google.dev/gemini-api/docs/api-key
+  - type: docs
+    url: https://ai.google.dev/gemini-api/docs

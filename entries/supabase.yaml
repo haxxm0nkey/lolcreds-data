@@ -1,0 +1,131 @@
+id: supabase
+name: Supabase
+category: saas
+vendor: Supabase
+author: haxxm0nkey
+
+credentials:
+
+  - id: publishable-key
+    name: Publishable API Key
+    description: >
+      Supabase publishable API keys are low-privilege platform keys intended for
+      public clients. Supabase documents publishable keys with an sb_publishable_
+      prefix and says they are safe to expose in web pages, apps, CLIs, source
+      code, and similar public environments.
+    type: api_key
+    nature: [generated_on_install]
+    sensitivity: public_by_design
+    looks_like:
+      - example: 'sb_publishable_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'sb_publishable_[A-Za-z0-9_\-]{20,}'
+        detail: Supabase publishable API key prefix
+    location:
+      - type: environment
+        path: SUPABASE_PUBLISHABLE_KEY, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, VITE_SUPABASE_ANON_KEY
+      - type: config_file
+        detail: frontend config, mobile app config, .env files, and build settings
+      - type: source_code
+        detail: browser bundles, mobile apps, examples, CLIs, and committed Supabase client config
+      - type: logs
+        detail: build output and client SDK diagnostics
+    notes: >
+      Publishable keys identify the project but should be paired with Row Level
+      Security, Auth, and backend authorization controls.
+
+  - id: secret-key
+    name: Secret API Key
+    description: >
+      Supabase secret API keys are elevated platform keys for backend components.
+      Supabase documents secret keys with an sb_secret_ prefix and warns that
+      they provide full access to project data and bypass Row Level Security.
+    type: api_key
+    nature: [generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - example: 'sb_secret_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'sb_secret_[A-Za-z0-9_\-]{20,}'
+        detail: Supabase secret API key prefix
+    location:
+      - type: environment
+        path: SUPABASE_SECRET_KEY, SUPABASE_SERVICE_KEY
+      - type: http_header
+        path: apikey
+        detail: Supabase API key header for backend service calls
+      - type: config_file
+        detail: backend .env files, server config, Edge Function secrets, and deployment manifests
+      - type: secret_store
+        detail: cloud secret managers, Supabase secrets, CI/CD variables, and Kubernetes Secrets
+      - type: source_code
+        detail: backend code, serverless functions, scripts, and accidentally committed config
+      - type: logs
+        detail: API client debug logs and CI traces
+    notes: >
+      Secret keys are backend-only credentials. Do not place them in client code
+      or build artifacts.
+
+  - id: legacy-service-role-jwt
+    name: Legacy Service Role JWT
+    description: >
+      Supabase legacy API keys include long-lived JWT-based anon and
+      service_role keys. Supabase documents that service_role JWT keys bypass
+      Row Level Security and are only for trusted server environments.
+    type: token
+    nature: [generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - pattern: 'eyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+'
+        detail: Supabase legacy anon/service_role API keys are JWTs; role claims distinguish anon from service_role
+    location:
+      - type: environment
+        path: SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY, NEXT_PUBLIC_SUPABASE_ANON_KEY
+      - type: http_header
+        path: Authorization, apikey
+        detail: legacy JWT API key in Bearer or apikey contexts
+      - type: config_file
+        detail: Supabase client config, backend .env files, Edge Functions, and deployment manifests
+      - type: secret_store
+        detail: cloud secret managers, CI/CD variables, and platform app secrets
+      - type: source_code
+        detail: frontend/backend code, examples, and committed client initialization snippets
+      - type: logs
+        detail: request traces, build output, and CI logs
+    notes: >
+      The anon JWT is low-privilege when RLS is configured correctly; the
+      service_role JWT is secret and bypasses RLS. Context and JWT role claims
+      determine severity.
+
+  - id: database-password
+    name: Postgres Database Password
+    description: >
+      Supabase projects include a Postgres database that clients can connect to
+      using project connection strings. Supabase documents direct database
+      connection workflows for Postgres clients and connection poolers.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: 'postgres(?:ql)?://[^\s:@]+:[^\s@]+@[^\s/]+'
+        detail: Supabase Postgres connection URL containing username and password
+    location:
+      - type: environment
+        path: DATABASE_URL, SUPABASE_DB_URL, POSTGRES_PASSWORD
+      - type: config_file
+        detail: ORM config, .env files, migration tooling, connection pooler config, and deployment manifests
+      - type: secret_store
+        detail: cloud secret managers, CI/CD variables, and database password vault entries
+      - type: source_code
+        detail: migration scripts, seed scripts, tests, and accidentally committed connection strings
+      - type: logs
+        detail: ORM debug logs, failed connection traces, and CI output
+    notes: >
+      Database password blast radius depends on the Postgres role, network
+      access path, and whether the direct connection or pooler endpoint is used.
+
+references:
+  - type: docs
+    url: https://supabase.com/docs/guides/api/api-keys
+  - type: docs
+    url: https://supabase.com/docs/guides/auth/jwts
+  - type: docs
+    url: https://supabase.com/docs/guides/database/connecting-to-postgres

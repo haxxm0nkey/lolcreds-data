@@ -1,0 +1,45 @@
+id: tencent-hunyuan
+name: Tencent Cloud Hunyuan
+category: ai_api
+vendor: Tencent Cloud
+author: haxxm0nkey
+
+credentials:
+
+  - id: secret-id-secret-key
+    name: SecretId / SecretKey
+    description: >
+      Tencent Cloud Hunyuan API access uses Tencent Cloud CAM SecretId and
+      SecretKey credentials for signed API requests. These credentials are
+      account or sub-account API keys, not model-specific bearer tokens.
+    type: api_key
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - example: 'AKIDXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'AKID[A-Za-z0-9]{20,}'
+        detail: Tencent Cloud SecretId value; the paired SecretKey is the signing secret
+    location:
+      - type: environment
+        path: TENCENTCLOUD_SECRET_ID
+      - type: environment
+        path: TENCENTCLOUD_SECRET_KEY
+      - type: http_header
+        path: Authorization
+        detail: TC3-HMAC-SHA256 signed request header contains the SecretId in Credential scope
+      - type: source_code
+        detail: SDK examples, backend services, notebooks, committed .env files
+      - type: config_file
+        detail: .env, cloud function config, deployment manifests, local credentials files
+      - type: secret_store
+        detail: CI/CD variables, Tencent Cloud secrets, hosted app settings
+      - type: logs
+        detail: request signing debug logs and Authorization headers exposing SecretId
+    notes: >
+      A leaked SecretKey is the credential that enables request signing; the
+      SecretId alone is usually not sufficient, but both values commonly leak
+      together in environment files and deployment configuration.
+
+references:
+  - type: docs
+    url: https://cloud.tencent.com/document/product/1729/97731

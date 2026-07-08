@@ -1,0 +1,124 @@
+id: palo-alto-pan-os
+name: Palo Alto Networks PAN-OS
+category: network
+vendor: Palo Alto Networks
+author: haxxm0nkey
+credentials:
+- id: default-admin-login
+  name: Default Administrator Login
+  description: PAN-OS initial setup documentation for firewalls includes logging in to the
+    management interface with the built-in admin account and default password before changing
+    it.
+  type: username_password
+  nature:
+  - static_default
+  - user_defined
+  sensitivity: secret
+  default:
+    username: admin
+    password: admin
+  location:
+  - type: public_interface
+    path: PAN-OS web interface, SSH, console, and XML/REST APIs
+    detail: Administrative login surfaces
+  - type: config_file
+    detail: PAN-OS configuration XML administrator entries
+  - type: artifact
+    detail: configuration backups and device-state exports
+  notes: Treat admin/admin as an initial setup default only; production deployments should
+    change it and may use generated bootstrap passwords or external authentication.
+- id: local-admin-password
+  name: Local Administrator Password
+  description: PAN-OS local administrators authenticate to the GUI, CLI, and APIs. Config
+    exports contain administrator account definitions and password hash/secret material.
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: <entry\s+name="[^"]+">\s*<phash>[^<]+</phash>
+    detail: PAN-OS XML configuration administrator entry with password hash
+  - pattern: <phash>[^<]+</phash>
+    detail: PAN-OS administrator password hash field in configuration XML
+  location:
+  - type: config_file
+    detail: PAN-OS configuration XML under mgt-config/users or administrator-related stanzas
+  - type: public_interface
+    path: web UI / CLI / API
+    detail: Management surfaces accepting local administrator credentials
+  - type: secret_store
+    detail: password managers, Panorama secrets, and deployment vaults
+  - type: artifact
+    detail: configuration snapshots and tech-support bundles
+- id: api-key
+  name: XML / REST API Key
+  description: PAN-OS supports API keys for XML API and REST API automation. API keys are
+    generated for administrative users and used by clients in request parameters or headers.
+  type: api_key
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - pattern: key=[A-Za-z0-9%._~+/=-]{20,}
+    detail: PAN-OS API key in URL query or request body parameter
+  location:
+  - type: http_header
+    path: X-PAN-KEY
+    detail: PAN-OS REST API key header used by some clients
+  - type: config_file
+    detail: automation scripts, Terraform provider config, Ansible inventory, and .env files
+  - type: environment
+    path: PANOS_API_KEY, PANOS_API_TOKEN, PANOS_PASSWORD
+  - type: secret_store
+    detail: CI/CD variables, cloud secret managers, and vault entries
+  - type: source_code
+    detail: network automation repositories and test fixtures
+  - type: logs
+    detail: HTTP traces, debug logs, and CI output containing API requests
+- id: vpn-and-ike-secrets
+  name: IKE/IPsec and GlobalProtect Shared Secrets
+  description: PAN-OS stores IKE pre-shared keys, GlobalProtect portal/gateway secrets, and
+    related VPN authentication secrets in configuration objects.
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: <pre-shared-key>[^<]+</pre-shared-key>
+    detail: PAN-OS XML element for IKE/IPsec pre-shared key
+  - pattern: <shared-secret>[^<]+</shared-secret>
+    detail: PAN-OS XML element for VPN or integration shared secret
+  location:
+  - type: config_file
+    detail: PAN-OS XML configuration under network/ike/gateway/portal related objects
+  - type: artifact
+    detail: configuration backups, device-state bundles, and Panorama exports
+  - type: source_code
+    detail: network-as-code templates and lab configs
+- id: snmp-and-aaa-secrets
+  name: SNMP / RADIUS / TACACS+ Shared Secrets
+  description: PAN-OS configurations can include SNMP community strings and RADIUS/TACACS+/LDAP
+    server profile bind or shared secrets used by monitoring and authentication integrations.
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: <community>[^<]+</community>
+    detail: SNMP community value in PAN-OS XML configuration
+  - pattern: <secret>[^<]+</secret>
+    detail: AAA or integration shared secret field in PAN-OS XML configuration
+  location:
+  - type: config_file
+    detail: PAN-OS XML deviceconfig/system/snmp and server profile configuration
+  - type: artifact
+    detail: configuration backups and tech-support bundles
+  - type: source_code
+    detail: monitoring and AAA provisioning templates
+references:
+- type: docs
+  url: https://docs.paloaltonetworks.com/ngfw/getting-started/initial-setup-configuration-ngfws
+- type: docs
+  url: https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-panorama-api/get-started-with-the-pan-os-rest-api/access-the-pan-os-rest-api
+- type: docs
+  url: https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-admin

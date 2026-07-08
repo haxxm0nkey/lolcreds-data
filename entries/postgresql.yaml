@@ -1,0 +1,106 @@
+id: postgresql
+name: PostgreSQL
+category: database
+vendor: PostgreSQL Global Development Group
+author: haxxm0nkey
+
+credentials:
+
+  - id: role-password
+    name: Database Role Password
+    description: >
+      PostgreSQL supports password-based authentication methods including
+      scram-sha-256 and md5. PostgreSQL documents managing role passwords with
+      CREATE ROLE, ALTER ROLE, and psql \password, and stores password material
+      for database users in the pg_authid system catalog.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: 'CREATE\s+ROLE\s+\S+\s+WITH\s+LOGIN\s+PASSWORD\s+''[^''\r\n]+'''
+        detail: SQL statement assigning a PostgreSQL role password; the password itself has no PostgreSQL-specific shape
+      - pattern: 'ALTER\s+ROLE\s+\S+\s+(?:WITH\s+)?PASSWORD\s+''[^''\r\n]+'''
+        detail: SQL statement changing a PostgreSQL role password
+    location:
+      - type: database
+        path: pg_authid.rolpassword
+        detail: PostgreSQL system catalog storing SCRAM or MD5 password verifier material for roles
+      - type: config_file
+        detail: application config, .env files, connection strings, service files, and deployment manifests
+      - type: environment
+        path: PGPASSWORD, PGUSER, PGDATABASE, DATABASE_URL, POSTGRES_PASSWORD
+      - type: secret_store
+        detail: Kubernetes Secrets, cloud secret managers, CI/CD variables, and password vault entries
+      - type: source_code
+        detail: application connection strings, migration scripts, tests, and accidentally committed configs
+      - type: logs
+        detail: failed connection traces, ORM debug logs, and CI output
+      - type: public_interface
+        path: tcp/5432
+        detail: PostgreSQL client authentication endpoint governed by pg_hba.conf
+    notes: >
+      There is no universal PostgreSQL default password. Packaged images or
+      hosted services may generate or require per-install passwords; model those
+      as distribution-specific credentials if documented.
+
+  - id: pgpass-file-entry
+    name: libpq Password File Entry
+    description: >
+      PostgreSQL libpq clients can read passwords from a password file instead
+      of prompting interactively. PostgreSQL documents the password file as a
+      client-side credential store used by libpq applications.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '^[^:\r\n]*:[^:\r\n]*:[^:\r\n]*:[^:\r\n]*:[^\r\n]+$'
+        detail: .pgpass host:port:database:user:password line; context identifies it as PostgreSQL
+    location:
+      - type: config_file
+        path: ~/.pgpass, %APPDATA%\postgresql\pgpass.conf
+        detail: libpq password file used by psql and many PostgreSQL clients
+      - type: environment
+        path: PGPASSFILE
+        detail: environment variable overriding the password file location
+      - type: secret_store
+        detail: workstation credential stores and deployment secrets that materialize .pgpass files
+      - type: source_code
+        detail: accidentally committed .pgpass files, test fixtures, and container build contexts
+      - type: logs
+        detail: debug output showing connection parameters or generated password files
+    notes: >
+      A .pgpass entry can grant database access anywhere the referenced host,
+      port, database, and user are reachable.
+
+  - id: pg-hba-trust-auth
+    name: Trust Authentication Rule
+    description: >
+      PostgreSQL pg_hba.conf can use the trust authentication method, which
+      allows anyone who can connect to the server to log in as any matching
+      PostgreSQL user without a password. PostgreSQL documents this as an
+      unconditional login method for matching clients.
+    type: other
+    nature: [user_defined]
+    sensitivity: context_dependent
+    looks_like:
+      - pattern: '^(?:local|host)\s+\S+\s+\S+(?:\s+\S+\s+\S+)?\s+trust(?:\s|$)'
+        detail: pg_hba.conf trust authentication record; not a password but a credential-bypass condition
+    location:
+      - type: config_file
+        path: pg_hba.conf
+        detail: PostgreSQL host-based authentication configuration
+      - type: source_code
+        detail: container images, Helm charts, local dev configs, and committed database setup files
+      - type: image
+        detail: container images or VM images containing insecure pg_hba.conf rules
+    notes: >
+      Trust rules are not credentials, but they create passwordless access for
+      matching connection sources and database users.
+
+references:
+  - type: docs
+    url: https://www.postgresql.org/docs/current/auth-password.html
+  - type: docs
+    url: https://www.postgresql.org/docs/current/auth-pg-hba-conf.html
+  - type: docs
+    url: https://www.postgresql.org/docs/current/libpq-pgpass.html

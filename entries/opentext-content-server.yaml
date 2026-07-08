@@ -1,0 +1,96 @@
+id: opentext-content-server
+name: OpenText Content Server
+category: enterprise_app
+vendor: OpenText
+author: haxxm0nkey
+credentials:
+- id: admin-user-password
+  name: Administrator/User Password
+  description: OpenText Content Server users authenticate to the web UI, REST API, WebDAV,
+    and integrations through local, directory, or SSO-backed accounts. The administrative
+    account password is set during installation or provisioning.
+  type: username_password
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: Content Server web UI, REST API, WebDAV, and OTDS login flows
+  - type: database
+    detail: Content Server user/security tables and OTDS identity records
+  - type: config_file
+    detail: opentext.ini, deployment files, OTDS settings, and web server auth config
+  - type: secret_store
+    detail: OpenText Directory Services secrets, password vaults, and deployment stores
+  - type: logs
+    detail: thread logs, connect logs, web server logs, and authentication traces
+  notes: No universal Content Server administrator password is modeled; it is installation-specific.
+- id: rest-ticket-and-token
+  name: OTCSTicket / REST Session Token
+  description: Content Server REST API logins return OTCSTicket or related session tokens
+    that act as bearer credentials for API calls.
+  type: token
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: OTCSTicket
+    detail: OpenText Content Server REST API authentication ticket header
+  - type: http_header
+    path: Cookie
+    detail: web session cookies for Content Server/OTDS authenticated sessions
+  - type: http_response
+    detail: authentication responses containing ticket/session token material
+  - type: config_file
+    detail: API client caches, integration configs, Postman collections, and .env files
+  - type: logs
+    detail: REST client traces and web server access/debug logs
+- id: otds-client-secret
+  name: OTDS / OAuth Client Secret
+  description: OpenText Content Server deployments commonly integrate with OTDS, OAuth/OIDC
+    clients, SAML, LDAP, and enterprise identity systems using client secrets, bind passwords,
+    and signing keys.
+  type: secret_value
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: config_file
+    detail: OTDS configuration, OAuth client settings, SAML config, LDAP config, and web app
+      properties
+  - type: database
+    detail: OTDS and Content Server configuration stores containing client and integration
+      secrets
+  - type: secret_store
+    detail: OTDS credential store, password vaults, and certificate stores
+  - type: source_code
+    detail: integration services and deployment automation
+  - type: logs
+    detail: OTDS, OAuth, SAML, and LDAP debug logs
+- id: database-and-storage-secrets
+  name: Database, Storage, and Archive Secrets
+  description: Content Server stores database credentials, archive/storage provider credentials,
+    Enterprise Connect/integration secrets, and rendition/records-management service account
+    passwords.
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: config_file
+    detail: opentext.ini, database connection files, archive/storage provider config, and
+      service configs
+  - type: database
+    detail: Content Server configuration records and encrypted credential stores
+  - type: secret_store
+    detail: vaults, Kubernetes/Docker secrets, and storage credential stores
+  - type: artifact
+    detail: database dumps, content server backups, and support packages
+references:
+- type: docs
+  url: https://developer.opentext.com/ce/products/extended-ecm/apis/content-server-rest-api
+- type: docs
+  url: https://knowledge.opentext.com/knowledge/llisapi.dll/open/76844091

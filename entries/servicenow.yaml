@@ -1,0 +1,95 @@
+id: servicenow
+name: ServiceNow
+category: saas
+vendor: ServiceNow
+author: haxxm0nkey
+credentials:
+- id: local-user-password
+  name: Local/User Password
+  description: ServiceNow users authenticate through local passwords, SSO, LDAP, or external
+    identity providers. Local admin/service users and integration users remain important credentials
+    for UI, REST, SOAP, and MID Server operations.
+  type: username_password
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: ServiceNow UI, REST API, SOAP API, and inbound integrations
+  - type: database
+    detail: sys_user and related authentication records within the instance
+  - type: secret_store
+    detail: enterprise password vaults and integration credential stores
+  - type: source_code
+    detail: integration scripts, MID Server configs, and CI/CD variables
+  - type: logs
+    detail: system logs, transaction logs, and integration debug logs
+- id: personal-access-token-oauth
+  name: OAuth / Personal Access Token
+  description: ServiceNow supports OAuth applications, bearer tokens, refresh tokens, and
+    API key-style credentials for integrations.
+  type: token
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Bearer token or Basic credentials used by REST/SOAP clients
+  - type: database
+    detail: OAuth application, token, and refresh token records in the instance
+  - type: config_file
+    detail: integration configs, appsettings, scripts, Postman collections, and .env files
+  - type: environment
+    path: SERVICENOW_TOKEN, SN_TOKEN, SNOW_TOKEN, SERVICENOW_CLIENT_SECRET
+  - type: secret_store
+    detail: CI/CD variables, credential stores, and vaults
+  - type: logs
+    detail: REST debug logs, integration logs, and MID Server logs
+- id: api-key
+  name: API Key
+  description: ServiceNow API key records can authenticate selected integrations or protect
+    scripted APIs depending on plugin and configuration.
+  type: api_key
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: x-sn-apikey
+    detail: ServiceNow API key header used by API key authentication
+  - type: database
+    detail: API key records and access policy configuration
+  - type: config_file
+    detail: client scripts, integration settings, and API collections
+  - type: secret_store
+    detail: password vaults and CI/CD secret variables
+  - type: logs
+    detail: HTTP traces and integration debug logs
+- id: mid-server-and-credential-store
+  name: MID Server / Credential Store Secret
+  description: ServiceNow stores discovery/orchestration credentials and MID Server secrets
+    for LDAP, SSH, Windows, SNMP, cloud, and application integrations.
+  type: secret_value
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: database
+    detail: credential tables, discovery credentials, OAuth profiles, and MID Server configuration
+      records
+  - type: secret_store
+    detail: ServiceNow credential store, external credential resolvers, and enterprise vaults
+  - type: config_file
+    detail: MID Server config.xml, wrapper config, and integration property files
+  - type: logs
+    detail: MID Server agent logs, ECC queue payload traces, and discovery logs
+references:
+- type: docs
+  url: https://www.servicenow.com/docs/bundle/washingtondc-platform-administration/page/administer/security/concept/api-keys.html
+- type: docs
+  url: https://www.servicenow.com/docs/bundle/washingtondc-application-development/page/integrate/inbound-rest/concept/c_RESTAPI.html

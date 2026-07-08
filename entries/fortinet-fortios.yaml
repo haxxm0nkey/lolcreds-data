@@ -1,0 +1,246 @@
+id: fortinet-fortios
+name: Fortinet FortiOS
+category: network
+vendor: Fortinet
+author: lolcreds
+
+credentials:
+
+  - id: factory-default-admin
+    name: Factory Default Admin Login
+    description: >
+      Out of the box, FortiGate/FortiOS ships with a single administrator
+      account named "admin" and no password set. On FortiOS 6.2.1+ the
+      login flow forces a password change on first sign-in; older builds
+      allowed direct login and left the account passwordless until an
+      operator set one.
+    type: username_password
+    nature: [static_default]
+    sensitivity: secret
+    default:
+      username: admin
+      password: (empty)
+    location:
+      - type: public_interface
+        detail: >
+          HTTPS/SSH management on the default management interface
+          (192.168.1.99/24 on most FortiGate models, 10.10.10.1/24 on
+          some legacy units)
+    notes: >
+      The "no password" default matters because operators still
+      periodically expose freshly-imaged or RMA'd units to a network
+      before the first-login prompt fires — including HA replacement
+      units, which per Fortinet documentation are sometimes intentionally
+      left blank so the primary can push configuration. On builds before
+      6.2.1 there is no forced change: an internet-reachable
+      management interface plus a passwordless admin equals full
+      device compromise.
+
+  - id: maintainer-recovery-account
+    name: maintainer Recovery Account
+    description: >
+      "maintainer" is a Fortinet-documented recovery account for
+      resetting a lost admin password. Access requires physical console
+      access plus a reboot: during a short window after boot, logging in
+      as "maintainer" with a password of "bcpb" followed by the device's
+      serial number resets the admin password.
+    type: username_password
+    nature: [static_default]
+    sensitivity: secret
+    default:
+      username: maintainer
+      password: bcpb <serial-number>
+    location:
+      - type: public_interface
+        detail: >
+          serial console only, during a ~30-60 second window after boot
+          (60 s in newer BIOS revisions)
+    notes: >
+      The password format is documented by Fortinet as bcpb<serial-number>
+      — the serial appears on the device chassis. The account cannot be
+      renamed, and its only capability is resetting super_admin passwords.
+      Fortinet lets operators disable it via
+      `config system global; set admin-maintainer disable; end`; if
+      "PASSWORD RECOVERY FUNCTIONALITY IS DISABLED" appears at the
+      console banner, it's off. Frequently left on in the field because
+      support teams rely on it. Physical/console access is required, so
+      it isn't remote in the usual sense — but a colo-managed appliance
+      with unrestricted serial console access is effectively remote for
+      whoever runs the colo.
+
+  - id: sslvpn-user-credentials
+    name: SSL VPN User Credentials
+    description: >
+      Local or LDAP-backed usernames and passwords used to authenticate
+      SSL VPN sessions against the FortiGate. User-defined, but included
+      here because their storage locations are LOLCreds-relevant: they
+      live inside FortiOS config and — historically — in the plaintext
+      sslvpn_websession file for currently connected users.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    location:
+      - type: config_file
+        detail: >
+          local users defined under `config user local` in the FortiOS
+          configuration; passwords are hashed at rest but present in
+          plaintext during any `execute backup config` before the
+          encryption key was fixed (see config-backup-hardcoded-key
+          below)
+      - type: source_code
+        detail: >
+          hardcoded into FortiClient VPN profile XML, MSI installers,
+          and MDM-pushed VPN configuration bundles
+    notes: >
+      Two operational realities matter here. First, VPN credentials get
+      embedded in client-side deployment artifacts (MSI wrappers,
+      per-user config XML) that end up in software repositories, shared
+      drives, and image golden masters — normal-looking config files
+      that carry live creds. Second, before FortiOS 7.4.x, admin
+      password hashes in config backups were stored using unsalted
+      SHA-256, making them cheap to crack offline once a backup leaked;
+      Fortinet migrated the format to PBKDF2 in 7.2.11, 7.4.8, and
+      7.6.1.
+
+  - id: fortimanager-access-ssh
+    name: Fortimanager_Access SSH Backdoor
+    description: >
+      Undocumented management account "Fortimanager_Access" present in
+      certain FortiOS, FortiSwitch, and FortiAnalyzer builds, reachable
+      over SSH. Authenticated via a fixed challenge-response derived from
+      a hardcoded string rather than a stored password, effectively
+      granting remote root-equivalent CLI access.
+    type: username_password
+    nature: [undocumented, static_default]
+    sensitivity: secret
+    default:
+      username: Fortimanager_Access
+      password: (empty)
+    location:
+      - type: public_interface
+        detail: SSH management interface (any interface with mgmt access enabled)
+    notes: >
+      Not a shipped password in the ordinary sense — the account uses a
+      custom challenge-response with a hardcoded value. Patched by
+      removing the account entirely; no "change the password" mitigation
+      exists. Fixed builds: FortiOS 5.0.8+, 5.2.x, 5.4.x, with
+      corresponding FortiSwitch and FortiAnalyzer releases.
+
+  - id: sslvpn-magic-password
+    name: SSL VPN "Magic" Password Bypass
+    description: >
+      Undocumented "magic" string in the FortiOS SSL VPN portal that,
+      when supplied as the value of a specific POST parameter to
+      /remote/logincheck, bypassed normal authentication and let an
+      attacker log in as any user. Fortinet's own advisory language
+      describes it as a "magic value" left in the codebase from a
+      customer-driven password-expiry feature.
+    type: password
+    nature: [undocumented]
+    sensitivity: secret
+    default:
+      username: (empty)
+      password: (empty)
+    location:
+      - type: public_interface
+        path: /remote/logincheck
+        detail: POST request against the SSL VPN web portal (default port 10443)
+    notes: >
+      Fortinet describes this as an "errant code string" originally
+      created for a password-change flow. The bypass is triggered by
+      supplying the magic value as the "magic" parameter — no username
+      or password verification occurs. Removed from the code base in the
+      fixed FortiOS builds; no operator-side mitigation exists short of
+      upgrading or disabling the SSL VPN entirely.
+
+  - id: sslvpn-websession-plaintext
+    name: SSL VPN Websession File (plaintext session credentials)
+    description: >
+      /dev/cmdb/sslvpn_websession is an internal FortiOS file storing
+      currently connected SSL VPN users' usernames and passwords in
+      plaintext. Not a shipped credential per se, but a documented
+      storage location that a well-known unauthenticated path traversal
+      (CVE-2018-13379) made remotely readable.
+    type: secret_value
+    nature: [generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - pattern: '[A-Za-z0-9._\-]+:[^\r\n]+'
+        detail: >
+          username:plaintext-password pairs written into the session file
+          for every active SSL VPN login; format is internal to FortiOS
+    location:
+      - type: config_file
+        path: /dev/cmdb/sslvpn_websession
+        detail: internal FortiOS session file, on-device
+      - type: http_response
+        detail: >
+          exposed via GET /remote/fgt_lang?lang=<traversal> on FortiOS
+          5.4.6–5.4.12, 5.6.3–5.6.7, 6.0.0–6.0.4 (CVE-2018-13379)
+    notes: >
+      The file itself has existed across FortiOS versions as a normal
+      internal artifact. The credential-leak significance comes from the
+      pre-auth path traversal that made it readable over the internet —
+      mass-exploited from 2019 onward, and a foothold in numerous
+      ransomware and APT campaigns. Any device that was internet-facing
+      and unpatched during the exposure window should be assumed to
+      have leaked its active session credentials, and those credentials
+      rotated even after patching.
+
+  - id: config-backup-hardcoded-key
+    name: Configuration Backup Hardcoded Encryption Key
+    description: >
+      Fortinet FortiOS encrypts fields inside configuration backup files
+      using a hardcoded cryptographic key baked into the firmware. An
+      attacker who obtains a backup file can decrypt users' passwords
+      (except the admin's), private-key passphrases, and the HA password
+      using knowledge of the key.
+    type: certificate
+    nature: [undocumented, static_default]
+    sensitivity: secret
+    default:
+      username: (empty)
+      password: (empty)
+    location:
+      - type: config_file
+        detail: >
+          FortiOS configuration backup files (.conf) exported via
+          "Backup" in the GUI or `execute backup config` in the CLI
+      - type: build_artifact
+        detail: >
+          config backups routinely stored in git repos, ticket systems,
+          shared drives, and MSP backup vaults
+    notes: >
+      Not exploitable remotely on its own — the attacker needs the
+      backup file. Backups are commonly emailed, checked into SCM, or
+      sent to MSPs, so exposure is high in practice. CISA added this to
+      the Known Exploited Vulnerabilities catalog in June 2025, with
+      confirmed active exploitation. Mitigation is upgrading to a fixed
+      FortiOS build; existing backups taken before the upgrade should
+      be treated as sensitive going forward. Note that the
+      administrator's own password is stored differently and is NOT
+      decrypted by this key.
+
+references:
+  - type: docs
+    url: https://docs.fortinet.com/document/fortigate/7.6.6/administration-guide/99980/default-administrator-password
+  - type: docs
+    url: https://community.fortinet.com/t5/FortiGate/Technical-Tip-Resetting-a-lost-admin-password/ta-p/197045
+  - type: docs
+    url: https://community.fortinet.com/t5/FortiGate/Technical-Tip-Password-change-prompt-on-the-first-login/ta-p/198655
+  - type: cve
+    url: https://nvd.nist.gov/vuln/detail/CVE-2016-1909
+  - type: advisory
+    url: https://www.fortiguard.com/psirt/FG-IR-16-001
+  - type: cve
+    url: https://nvd.nist.gov/vuln/detail/CVE-2018-13379
+  - type: advisory
+    url: https://www.fortiguard.com/psirt/FG-IR-18-384
+  - type: cve
+    url: https://nvd.nist.gov/vuln/detail/CVE-2018-13382
+  - type: advisory
+    url: https://www.fortiguard.com/psirt/FG-IR-18-389
+  - type: cve
+    url: https://nvd.nist.gov/vuln/detail/CVE-2019-6693
+  - type: advisory
+    url: https://www.fortiguard.com/psirt/FG-IR-19-007

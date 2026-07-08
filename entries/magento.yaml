@@ -1,0 +1,126 @@
+id: magento
+name: Magento / Adobe Commerce
+category: enterprise_app
+vendor: Adobe
+author: haxxm0nkey
+
+credentials:
+
+  - id: admin-password
+    name: Administrator Password
+    description: >
+      Adobe Commerce provides a command to create, edit, or unlock administrator
+      accounts. The admin:user:create command accepts administrator username,
+      email, and password values for the Commerce Admin.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: 'bin/magento\s+admin:user:create[^\r\n]+--admin-password[=\s]+[^\s]+'
+        detail: Magento CLI command creating an administrator account with a password
+    location:
+      - type: database
+        detail: Adobe Commerce admin user tables containing account and password verifier data
+      - type: public_interface
+        path: Admin URL configured for the site
+        detail: Adobe Commerce administrator login interface
+      - type: config_file
+        detail: deployment scripts, test fixtures, and local development config
+      - type: secret_store
+        detail: password vaults, CI/CD variables, and platform secrets
+      - type: source_code
+        detail: installation scripts, tests, and accidentally committed bootstrap commands
+      - type: logs
+        detail: install logs and CI output containing admin:user:create arguments
+    notes: >
+      Admin credentials are created during installation or with CLI tooling;
+      there is no universal Magento administrator password.
+
+  - id: env-db-credentials
+    name: env.php Database Credentials
+    description: >
+      Adobe Commerce env.php contains database connection settings. Adobe
+      documents the db node with host, dbname, username, password, model,
+      engine, initStatements, and active fields.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: >-
+          'password'\s*=>\s*'[^'\r\n]+'
+        detail: Adobe Commerce env.php database password entry
+    location:
+      - type: config_file
+        path: app/etc/env.php
+        detail: Adobe Commerce environment configuration containing database credentials
+      - type: environment
+        path: MAGENTO_DB_PASSWORD, DATABASE_URL
+      - type: secret_store
+        detail: cloud project variables, Kubernetes Secrets, CI/CD variables, and vault entries
+      - type: source_code
+        detail: committed env.php files, deployment bundles, and test fixtures
+      - type: artifact
+        detail: site backups and container images containing app/etc/env.php
+    notes: >
+      Database credentials can expose customers, orders, admin users, integration
+      tokens, and encrypted Commerce configuration values.
+
+  - id: crypt-key
+    name: Commerce Encryption Key
+    description: >
+      Adobe Commerce env.php includes a crypt key generated during installation.
+      Adobe documents that Commerce uses this encryption key to protect passwords
+      and other sensitive data.
+    type: secret_value
+    nature: [generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - pattern: >-
+          'crypt'\s*=>\s*\[[^\]]*'key'\s*=>\s*'[^'\r\n]+'
+        detail: Adobe Commerce env.php crypt key entry
+    location:
+      - type: config_file
+        path: app/etc/env.php
+        detail: Adobe Commerce encryption key under the crypt node
+      - type: secret_store
+        detail: platform variables, cloud secret managers, and deployment vault entries
+      - type: source_code
+        detail: committed env.php files and backups
+      - type: artifact
+        detail: site backups and container images containing env.php
+    notes: >
+      The crypt key can be required to decrypt sensitive Commerce configuration
+      values, including stored integration credentials.
+
+  - id: integration-tokens
+    name: Integration Access Tokens
+    description: >
+      Adobe Commerce integrations generate OAuth-style credentials and tokens.
+      Adobe documents Integration Access Token and Access Token Secret values
+      displayed when activating or reauthorizing integrations.
+    type: token
+    nature: [generated_on_install]
+    sensitivity: secret
+    location:
+      - type: database
+        detail: Adobe Commerce integration and OAuth token tables
+      - type: config_file
+        detail: integration config, .env files, and extension settings
+      - type: secret_store
+        detail: extension secrets, CI/CD variables, and cloud secret managers
+      - type: source_code
+        detail: integration examples, tests, and accidentally committed extension config
+      - type: logs
+        detail: API client traces and integration setup output
+    notes: >
+      Integration tokens inherit the API resource access granted to the
+      integration and should be rotated when exposed.
+
+references:
+  - type: docs
+    url: https://experienceleague.adobe.com/en/docs/commerce-operations/installation-guide/tutorials/admin
+  - type: docs
+    url: https://experienceleague.adobe.com/en/docs/commerce-operations/configuration-guide/files/config-reference-envphp
+  - type: docs
+    url: https://experienceleague.adobe.com/en/docs/commerce-admin/systems/integrations
+

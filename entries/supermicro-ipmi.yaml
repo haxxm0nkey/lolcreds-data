@@ -1,0 +1,96 @@
+id: supermicro-ipmi
+name: Supermicro IPMI / BMC
+category: network
+vendor: Supermicro
+author: haxxm0nkey
+credentials:
+- id: default-admin
+  name: Default ADMIN Account
+  description: Supermicro IPMI/BMC firmware historically ships with a default uppercase ADMIN
+    account for initial management access; newer platforms may use unique passwords or require
+    changes during setup.
+  type: username_password
+  nature:
+  - static_default
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  default:
+    username: ADMIN
+    password: ADMIN
+  location:
+  - type: public_interface
+    path: IPMI web UI, Redfish, IPMI LAN, SSH/SMASH, KVM, and console redirection
+  - type: config_file
+    detail: BMC/IPMI configuration exports, SUM configs, and provisioning scripts
+  - type: artifact
+    detail: support bundles, factory labels, and deployment records
+  notes: ADMIN/ADMIN is a common historical default; verify platform generation because newer
+    devices can use unique default passwords or enforced change policies.
+- id: bmc-user-password
+  name: BMC/IPMI User Password
+  description: Supermicro BMC local users authenticate to IPMI, Redfish, web UI, KVM, virtual
+    media, and management CLIs.
+  type: username_password
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: BMC web UI, Redfish, IPMI v2.0, SSH, KVM, and virtual media
+  - type: config_file
+    detail: ipmitool/SUM config exports, BMC backup files, and provisioning manifests
+  - type: secret_store
+    detail: password managers and out-of-band management vaults
+  - type: source_code
+    detail: datacenter provisioning scripts and monitoring configs
+  - type: logs
+    detail: BMC event logs, Redfish/IPMI client traces, and automation logs
+- id: redfish-session-token
+  name: Redfish / Web Session Token
+  description: Supermicro BMC Redfish and web sessions issue session tokens or cookies that
+    authorize subsequent management actions.
+  type: token
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: X-Auth-Token
+    detail: Redfish session token for BMC API requests
+  - type: http_header
+    path: Cookie
+    detail: web management session cookie
+  - type: http_response
+    path: Location
+    detail: Redfish session resource returned during login
+  - type: logs
+    detail: HTTP traces and Redfish client debug logs
+- id: snmp-ipmi-lan-secrets
+  name: SNMP / IPMI LAN / TLS Secrets
+  description: BMC deployments may contain SNMP community strings, IPMI user hashes, LDAP/RADIUS
+    secrets, SMTP passwords, and TLS private keys for management services.
+  type: secret_value
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - pattern: '-----BEGIN (RSA |EC |ENCRYPTED |)PRIVATE KEY-----'
+    detail: private key material for BMC HTTPS or client certificate authentication
+  location:
+  - type: config_file
+    detail: BMC configuration backups, SNMP/IPMI/LDAP/RADIUS settings, and TLS certificate
+      files
+  - type: secret_store
+    detail: management vaults and certificate stores
+  - type: source_code
+    detail: monitoring and fleet management automation
+  - type: logs
+    detail: BMC event, SNMP, LDAP, and IPMI debug logs
+references:
+- type: docs
+  url: https://www.supermicro.com/manuals/other/IPMI_Users_Guide.pdf
+- type: docs
+  url: https://www.supermicro.com/en/support/resources/downloadcenter/smsdownload?category=IPMI

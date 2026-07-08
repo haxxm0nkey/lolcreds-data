@@ -1,0 +1,119 @@
+id: wso2-identity-server
+name: WSO2 Identity Server
+category: identity
+vendor: WSO2
+author: haxxm0nkey
+
+credentials:
+
+  - id: admin-password
+    name: Administrator Password
+    description: >
+      WSO2 Identity Server has an administrator account used to access the
+      Management Console and administrative APIs. WSO2 documents changing the
+      default administrator password during secure deployment.
+    type: username_password
+    nature: [generated_on_install, user_defined]
+    sensitivity: secret
+    location:
+      - type: config_file
+        detail: deployment.toml, user-mgt.xml, carbon.xml, and provisioning files
+      - type: public_interface
+        path: /carbon, management APIs
+        detail: WSO2 Management Console and administrative endpoints
+      - type: database
+        detail: WSO2 user store and registry databases containing user and credential verifier data
+      - type: environment
+        path: WSO2_ADMIN_USERNAME, WSO2_ADMIN_PASSWORD
+      - type: secret_store
+        detail: Secure Vault, Kubernetes Secrets, cloud secret managers, and CI/CD variables
+      - type: source_code
+        detail: deployment manifests, Helm values, Docker Compose files, and committed config
+      - type: logs
+        detail: startup logs, installer output, and authentication traces
+    notes: >
+      Do not rely on example admin credentials as a universal default. Treat the
+      administrator credential as deployment-specific and rotate it after setup.
+
+  - id: oidc-client-secret
+    name: OIDC Application Client Secret
+    description: >
+      WSO2 Identity Server service providers and OIDC applications use OAuth
+      client credentials, including a client secret, to authenticate token
+      requests and relying-party integrations.
+    type: secret_value
+    nature: [generated_on_install]
+    sensitivity: secret
+    location:
+      - type: database
+        detail: WSO2 registry/user-store database records for service provider and OAuth application configuration
+      - type: config_file
+        detail: service provider exports, application config, .env files, and deployment manifests
+      - type: environment
+        path: WSO2_CLIENT_ID, WSO2_CLIENT_SECRET
+      - type: secret_store
+        detail: Secure Vault, application secret stores, CI/CD variables, and cloud secret managers
+      - type: source_code
+        detail: OAuth examples, tests, and committed relying-party config
+      - type: logs
+        detail: OAuth token exchange and OIDC troubleshooting logs
+    notes: >
+      Client secret exposure can allow impersonation of the WSO2 OIDC/OAuth
+      application in supported token flows.
+
+  - id: database-credentials
+    name: Database / User Store Credentials
+    description: >
+      WSO2 Identity Server stores identity, registry, and user-management data in
+      configured databases and user stores. Deployment configuration can include
+      database usernames, passwords, and LDAP bind credentials.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    location:
+      - type: config_file
+        detail: deployment.toml, master-datasources.xml, user-mgt.xml, and LDAP user store config
+      - type: environment
+        path: WSO2_DB_USERNAME, WSO2_DB_PASSWORD, WSO2_LDAP_BIND_PASSWORD
+      - type: secret_store
+        detail: WSO2 Secure Vault, Kubernetes Secrets, database vault entries, and cloud secret managers
+      - type: source_code
+        detail: committed deployment configs, Helm values, and Docker Compose files
+      - type: logs
+        detail: datasource connection logs and LDAP troubleshooting output
+    notes: >
+      These credentials can expose identity data, service provider secrets, user
+      accounts, and token/session stores.
+
+  - id: keystore-password
+    name: Keystore / Truststore Password
+    description: >
+      WSO2 deployments use Java keystores and truststores for TLS, signing, and
+      encryption. Keystore passwords protect private keys used by the Identity
+      Server.
+    type: password
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '(?:keystore|truststore|keyStore|trustStore).*password\s*=\s*[^\r\n]+'
+        detail: WSO2 deployment configuration containing keystore or truststore password
+    location:
+      - type: config_file
+        detail: deployment.toml, carbon.xml, axis2.xml, and Java keystore configuration
+      - type: secret_store
+        detail: WSO2 Secure Vault, Java keystores, Kubernetes Secrets, and cloud secret managers
+      - type: source_code
+        detail: committed deployment configs and container build contexts
+      - type: image
+        detail: images containing keystores and deployment configuration
+    notes: >
+      Keystore credentials may unlock SAML/OIDC signing keys and TLS private
+      keys trusted by identity clients.
+
+references:
+  - type: docs
+    url: https://is.docs.wso2.com/en/latest/deploy/security/change-default-admin-password/
+  - type: docs
+    url: https://is.docs.wso2.com/en/latest/references/app-settings/oidc-settings-for-app/
+  - type: docs
+    url: https://is.docs.wso2.com/en/latest/deploy/get-started/install/

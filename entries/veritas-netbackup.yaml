@@ -1,0 +1,113 @@
+id: veritas-netbackup
+name: Veritas NetBackup
+category: storage_backup
+vendor: Veritas
+author: haxxm0nkey
+credentials:
+- id: administrator-user-password
+  name: NetBackup Administrator/User Password
+  description: NetBackup administration uses local OS/domain users, RBAC principals, and web
+    UI/API users to manage master/media servers, policies, storage, and backups.
+  type: username_password
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: NetBackup web UI, Java Administration Console, CLI, REST API, and OpsCenter/IT Analytics
+      integrations
+  - type: database
+    detail: NetBackup security/RBAC database and identity mappings
+  - type: config_file
+    detail: bp.conf, registry/config files, web service config, and deployment scripts
+  - type: secret_store
+    detail: credential stores, password vaults, and OS/domain identity stores
+  - type: logs
+    detail: nbwebservice, auth, bpjava, and admin logs
+- id: api-token-and-session
+  name: REST API Token / Session
+  description: NetBackup web services and REST APIs issue authentication tokens or session
+    cookies for API and web console access.
+  type: token
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Bearer token or Basic credentials used by NetBackup APIs
+  - type: http_header
+    path: Cookie
+    detail: web UI/API session cookies
+  - type: config_file
+    detail: API client caches, scripts, and automation .env files
+  - type: environment
+    path: NETBACKUP_TOKEN, NBU_TOKEN, NB_API_TOKEN
+  - type: secret_store
+    detail: CI/CD variables and automation vaults
+  - type: logs
+    detail: REST client traces and nbwebservice logs
+- id: host-certificate-and-private-key
+  name: Host Certificate / Private Key
+  description: Modern NetBackup uses host ID-based certificates, certificate authorities,
+    and trust stores for secure communication between master, media, and client hosts.
+  type: key_pair
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: '-----BEGIN (RSA |EC |ENCRYPTED |)PRIVATE KEY-----'
+    detail: private key material for NetBackup host certificates or web service TLS
+  location:
+  - type: config_file
+    detail: NetBackup certificate stores, web service keystores, trust stores, and host ID
+      certificate files
+  - type: secret_store
+    detail: NetBackup certificate/key stores, keystores, and backup vaults
+  - type: artifact
+    detail: catalog backups, support bundles, and server migration packages
+- id: storage-cloud-credential
+  name: Storage Unit / Cloud / Client Credential
+  description: NetBackup stores credentials for storage servers, deduplication, cloud storage,
+    NDMP/NAS, VMware/vCenter, databases, and application agents used during backup and restore.
+  type: secret_value
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: database
+    detail: NetBackup credential, policy, storage server, and catalog databases
+  - type: config_file
+    detail: storage server configs, cloud provider configs, agent options, and backup policy
+      scripts
+  - type: secret_store
+    detail: NetBackup credential store, KMS, cloud secret managers, and password vaults
+  - type: source_code
+    detail: backup automation scripts and policy-as-code repositories
+  - type: logs
+    detail: backup/restore job logs, bpbrm/bptm logs, cloud connector logs, and agent traces
+- id: kms-encryption-key
+  name: KMS / Backup Encryption Key
+  description: NetBackup KMS and backup encryption features use key groups, key records, passphrases,
+    and certificates required to decrypt protected backup images.
+  type: secret_value
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: secret_store
+    detail: NetBackup KMS database, key backups, HSM/KMIP integrations, and recovery vaults
+  - type: artifact
+    detail: catalog backups, key export files, disaster recovery packages, and encrypted backup
+      images
+  - type: config_file
+    detail: KMS configuration and key management scripts
+references:
+- type: docs
+  url: https://www.veritas.com/support/en_US/doc/21733320-149123528-0/v14660773-149123528
+- type: docs
+  url: https://www.veritas.com/support/en_US/doc/21733320-149123528-0/v14660781-149123528

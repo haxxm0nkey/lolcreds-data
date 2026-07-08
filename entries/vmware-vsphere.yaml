@@ -1,0 +1,119 @@
+id: vmware-vsphere
+name: VMware ESXi / vCenter Server
+category: ci_cd
+vendor: VMware / Broadcom
+author: haxxm0nkey
+credentials:
+- id: esxi-root-password
+  name: ESXi Root Password
+  description: ESXi hosts use a local root account for direct host administration. The root
+    password is set during installation or deployment and is governed by ESXi password complexity
+    and account lockout policy.
+  type: username_password
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: ESXi Host Client, DCUI, SSH, ESXi Shell, and API
+  - type: config_file
+    detail: /etc/shadow on ESXi host backups and host profiles where applicable
+  - type: secret_store
+    detail: password managers, Auto Deploy/host profile secrets, and deployment vaults
+  - type: source_code
+    detail: Kickstart scripts, Terraform/Ansible inventories, and lab automation
+  - type: logs
+    detail: installer logs, host connection errors, and automation traces
+  notes: There is no universal ESXi root password; it is chosen during installation, scripted
+    deployment, or image provisioning.
+- id: vcenter-sso-administrator
+  name: vCenter Single Sign-On Administrator Password
+  description: vCenter Server creates a Single Sign-On domain during installation. The administrator
+    account, commonly administrator@vsphere.local, has vCenter SSO administrative privileges
+    and its password is set during deployment.
+  type: username_password
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: vSphere Client, vCenter API, and SSO endpoints
+  - type: database
+    detail: vCenter identity/SSO stores and appliance configuration state
+  - type: config_file
+    detail: VCSA deployment JSON, installer answer files, and backup/restore configuration
+  - type: secret_store
+    detail: password managers and deployment vaults
+  - type: source_code
+    detail: VCSA unattended install templates and lab automation
+  - type: logs
+    detail: installer logs, SSO setup logs, and API client traces
+- id: vcenter-session-token
+  name: vCenter API Session Token
+  description: vCenter REST and SOAP clients obtain session tokens/cookies for API access.
+    Leaked sessions can allow operations as the authenticated user until expiration or revocation.
+  type: token
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: vmware-api-session-id
+    detail: vCenter REST API session identifier header
+  - type: http_header
+    path: Cookie
+    detail: SOAP/VI SDK session cookie such as vmware_soap_session
+  - type: logs
+    detail: API client debug logs, HTTP traces, and CI output
+  - type: config_file
+    detail: CLI caches and automation client state
+- id: host-vcenter-integration-secrets
+  name: Host, vCenter, and Integration Secrets
+  description: vSphere environments store credentials for ESXi host connections, vCenter extensions,
+    backup products, vpxuser host management, and external identity/LDAP integrations.
+  type: secret_value
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: database
+    detail: vCenter Server database and SSO/solution user stores
+  - type: config_file
+    detail: VCSA configuration files, extension registrations, backup configs, and identity
+      source settings
+  - type: secret_store
+    detail: solution user certificates, key stores, and password vaults
+  - type: source_code
+    detail: automation manifests and integration test configs
+  - type: logs
+    detail: vpxd, SSO, LDAP, backup, and extension logs when debug output is enabled
+- id: ssh-private-keys-and-certificates
+  name: ESXi/vCenter SSH Keys and Solution Certificates
+  description: ESXi and vCenter appliances use SSH keys, machine SSL certificates, solution
+    user certificates, and trust-store secrets for administrative access and service-to-service
+    authentication.
+  type: key_pair
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: '-----BEGIN (RSA |OPENSSH |EC |)PRIVATE KEY-----'
+    detail: private key material from ESXi/vCenter appliance or automation key files
+  location:
+  - type: config_file
+    detail: VCSA and ESXi appliance key stores, SSH config, and certificate directories
+  - type: secret_store
+    detail: VECS certificate stores, backup vaults, and password managers
+  - type: artifact
+    detail: support bundles, backups, and exported certificates/keys
+references:
+- type: docs
+  url: https://knowledge.broadcom.com/external/article/313586/root-password-requirements-for-esxi-host.html
+- type: docs
+  url: https://knowledge.broadcom.com/external/article/322332/vcenter-single-signon-domain.html
+- type: docs
+  url: https://developer.broadcom.com/xapis/vsphere-automation-api/latest/

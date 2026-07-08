@@ -1,0 +1,162 @@
+id: slack
+name: Slack
+category: saas
+vendor: Slack Technologies / Salesforce
+author: haxxm0nkey
+
+credentials:
+
+  - id: bot-user-token
+    name: Bot User OAuth Token
+    description: >
+      Slack bot tokens authenticate Web API calls as an app's bot user. Slack
+      documents that bot token strings begin with xoxb- and recommends storing
+      them as secrets such as SLACK_BOT_TOKEN.
+    type: token
+    nature: [generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - example: 'xoxb-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'xoxb-[A-Za-z0-9-]{20,}'
+        detail: Slack bot token prefix
+    location:
+      - type: environment
+        path: SLACK_BOT_TOKEN, SLACK_TOKEN
+      - type: http_header
+        path: Authorization
+        detail: Bearer token used for Slack Web API calls
+      - type: config_file
+        detail: .env, Bolt app config, deployment manifests, Slack app config files
+      - type: secret_store
+        detail: CI/CD variables, Kubernetes Secrets, cloud secret managers, hosted app secrets
+      - type: source_code
+        detail: Bolt apps, bot scripts, workflow automation, committed examples
+      - type: logs
+        detail: Web API debug logs, request traces, CI logs, and stack traces
+    notes: >
+      Bot token blast radius depends on installed scopes and channel
+      membership. Rotate tokens found outside the intended app secret store.
+
+  - id: user-token
+    name: User OAuth Token
+    description: >
+      Slack user tokens let apps act directly on behalf of a user. Slack
+      documents that user token strings begin with xoxp-.
+    type: token
+    nature: [generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - example: 'xoxp-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'xoxp-[A-Za-z0-9-]{20,}'
+        detail: Slack user token prefix
+    location:
+      - type: environment
+        path: SLACK_USER_TOKEN
+      - type: http_header
+        path: Authorization
+        detail: Bearer token used for Slack Web API calls
+      - type: database
+        detail: app OAuth installation tables and token stores
+      - type: config_file
+        detail: OAuth app config, local development .env files
+      - type: secret_store
+        detail: app secret stores, CI/CD variables, cloud secret managers
+      - type: logs
+        detail: OAuth exchange logs and application debug output
+    notes: >
+      User tokens inherit the user's visibility and perform write actions as
+      that user. Treat them as user-account delegation credentials.
+
+  - id: app-level-token
+    name: App-Level Token
+    description: >
+      Slack app-level tokens authenticate app-wide features such as Socket
+      Mode. Slack documents that app-level token strings begin with xapp-.
+    type: token
+    nature: [generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - example: 'xapp-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'xapp-[A-Za-z0-9-]{20,}'
+        detail: Slack app-level token prefix
+    location:
+      - type: environment
+        path: SLACK_APP_TOKEN
+      - type: config_file
+        detail: Socket Mode app config, .env files, deployment manifests
+      - type: secret_store
+        detail: CI/CD variables, Kubernetes Secrets, cloud secret managers
+      - type: source_code
+        detail: Bolt apps, Socket Mode examples, committed test configs
+      - type: logs
+        detail: Socket Mode startup logs, CI logs, application debug logs
+    notes: >
+      App-level tokens are separate from bot tokens. Socket Mode apps often
+      require both SLACK_APP_TOKEN and SLACK_BOT_TOKEN.
+
+  - id: incoming-webhook-url
+    name: Incoming Webhook URL
+    description: >
+      Slack incoming webhooks are channel-specific URLs that contain a secret
+      path component. Slack documents that webhook URLs contain a secret and
+      should not be shared online or checked into public repositories.
+    type: token
+    nature: [generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - example: 'https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'https://hooks\.slack\.com/services/T[A-Z0-9]+/B[A-Z0-9]+/[A-Za-z0-9]{20,}'
+        detail: Slack incoming webhook URL
+    location:
+      - type: config_file
+        detail: .env files, notification configs, CI/CD webhook settings
+      - type: secret_store
+        detail: CI/CD variables, hosted app settings, cloud secret managers
+      - type: source_code
+        detail: deployment scripts, monitoring rules, committed notification examples
+      - type: logs
+        detail: webhook POST traces, CI logs, application debug output
+      - type: http_response
+        detail: OAuth install responses containing incoming_webhook.url
+    notes: >
+      Webhook URLs are bound to a channel and can post messages without a bot
+      token. Slack actively revokes leaked secrets it discovers.
+
+  - id: signing-secret
+    name: Signing Secret
+    description: >
+      Slack signs requests sent to apps using a signing secret unique to the
+      app. Apps use it to validate X-Slack-Signature and X-Slack-Request-Timestamp
+      headers on incoming requests.
+    type: secret_value
+    nature: [generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - example: 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: '[A-Za-z0-9]{32}'
+        detail: Slack signing secret specimen from request-verification examples
+    location:
+      - type: environment
+        path: SLACK_SIGNING_SECRET
+      - type: http_header
+        path: X-Slack-Signature, X-Slack-Request-Timestamp
+        detail: incoming request headers verified with the signing secret; the secret itself is not sent
+      - type: config_file
+        detail: .env files, app config, deployment manifests
+      - type: secret_store
+        detail: CI/CD variables, cloud secret managers, hosted app settings
+      - type: source_code
+        detail: Bolt examples, tests, committed local config
+    notes: >
+      A leaked signing secret lets an attacker forge Slack-originated requests
+      to endpoints that trust Slack signature verification.
+
+references:
+  - type: docs
+    url: https://api.slack.com/authentication/token-types
+  - type: docs
+    url: https://api.slack.com/authentication/basics
+  - type: docs
+    url: https://api.slack.com/messaging/webhooks
+  - type: docs
+    url: https://api.slack.com/authentication/verifying-requests-from-slack

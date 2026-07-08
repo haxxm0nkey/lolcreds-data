@@ -1,0 +1,125 @@
+id: salesforce
+name: Salesforce
+category: saas
+vendor: Salesforce
+author: haxxm0nkey
+
+credentials:
+
+  - id: oauth-access-refresh-token
+    name: OAuth Access / Refresh Token
+    description: >
+      Salesforce Connected Apps use OAuth flows to issue access tokens and, for
+      supported flows, refresh tokens. Salesforce REST API requests authenticate
+      with OAuth bearer tokens.
+    type: token
+    nature: [generated_on_install]
+    sensitivity: secret
+    location:
+      - type: http_header
+        path: Authorization
+        detail: Bearer token used for Salesforce REST API requests
+      - type: http_response
+        detail: OAuth token endpoint responses containing access_token and refresh_token
+      - type: database
+        detail: connected app token stores and integration credential tables
+      - type: environment
+        path: SALESFORCE_ACCESS_TOKEN, SALESFORCE_REFRESH_TOKEN, SF_ACCESS_TOKEN
+      - type: config_file
+        detail: integration config, local token caches, .env files, and deployment manifests
+      - type: secret_store
+        detail: cloud secret managers, CI/CD variables, and integration platform secrets
+      - type: logs
+        detail: OAuth callback logs, API client traces, and failed login output
+    notes: >
+      Token blast radius depends on Connected App policies, scopes, user profile,
+      permission sets, and session controls.
+
+  - id: connected-app-consumer-secret
+    name: Connected App Consumer Secret
+    description: >
+      Salesforce Connected Apps created for API integration have a consumer key
+      and consumer secret. The consumer secret authenticates confidential OAuth
+      clients during token exchange.
+    type: secret_value
+    nature: [generated_on_install]
+    sensitivity: secret
+    location:
+      - type: environment
+        path: SALESFORCE_CLIENT_ID, SALESFORCE_CLIENT_SECRET, SF_CLIENT_ID, SF_CLIENT_SECRET
+      - type: config_file
+        detail: Connected App OAuth config, .env files, integration settings, and deployment manifests
+      - type: secret_store
+        detail: cloud secret managers, CI/CD variables, and integration platform secrets
+      - type: source_code
+        detail: OAuth examples, middleware config, tests, and accidentally committed settings
+      - type: logs
+        detail: token exchange request dumps and OAuth troubleshooting output
+    notes: >
+      The consumer key identifies the Connected App; the consumer secret is
+      confidential and can be used to impersonate the app in OAuth flows that
+      require it.
+
+  - id: username-password-security-token
+    name: Username / Password / Security Token
+    description: >
+      Salesforce API integrations may use username-password OAuth or SOAP login
+      patterns where a user's password is combined with a Salesforce security
+      token. Salesforce documents user security tokens and OAuth username-password
+      flows for API authentication.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    location:
+      - type: environment
+        path: SALESFORCE_USERNAME, SALESFORCE_PASSWORD, SALESFORCE_SECURITY_TOKEN, SF_USERNAME, SF_PASSWORD, SF_SECURITY_TOKEN
+      - type: config_file
+        detail: ETL connector config, middleware config, .env files, and deployment manifests
+      - type: secret_store
+        detail: cloud secret managers, CI/CD variables, and iPaaS credential stores
+      - type: source_code
+        detail: integration scripts, data loaders, tests, and accidentally committed credentials
+      - type: logs
+        detail: failed login traces, connector debug logs, and CI output
+      - type: public_interface
+        path: /services/oauth2/token
+        detail: OAuth username-password token endpoint context
+    notes: >
+      This is a user-defined credential flow, not a shipped default. The security
+      token is an additional Salesforce user credential commonly concatenated to
+      the password by legacy integrations.
+
+  - id: jwt-bearer-private-key
+    name: JWT Bearer Private Key
+    description: >
+      Salesforce Connected Apps can use JWT bearer flow with a certificate and
+      private key to authenticate server-to-server integrations. The private key
+      signs the JWT assertion submitted to Salesforce.
+    type: key_pair
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '-----BEGIN (?:RSA |EC |)PRIVATE KEY-----'
+        detail: PEM private key used to sign Salesforce JWT bearer assertions
+    location:
+      - type: config_file
+        detail: PEM files, keystores, integration config, .env files, and deployment manifests
+      - type: environment
+        path: SALESFORCE_PRIVATE_KEY, SF_JWT_PRIVATE_KEY
+      - type: secret_store
+        detail: cloud KMS, secret managers, CI/CD variables, and integration platform secrets
+      - type: source_code
+        detail: JWT bearer examples, tests, and accidentally committed PEM files
+      - type: logs
+        detail: JWT assertion generation debug logs and CI traces
+    notes: >
+      The uploaded certificate is public verification material; the private key
+      is the credential that can mint signed assertions for the Connected App.
+
+references:
+  - type: docs
+    url: https://help.salesforce.com/s/articleView?id=sf.connected_app_create_api_integration.htm&type=5
+  - type: docs
+    url: https://help.salesforce.com/s/articleView?id=sf.remoteaccess_oauth_username_password_flow.htm&type=5
+  - type: docs
+    url: https://help.salesforce.com/s/articleView?id=sf.user_security_token.htm&type=5

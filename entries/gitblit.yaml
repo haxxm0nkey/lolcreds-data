@@ -1,0 +1,72 @@
+id: gitblit
+name: Gitblit
+category: ci_cd
+vendor: Gitblit
+author: haxxm0nkey
+credentials:
+- id: default-admin
+  name: Default Administrator Login
+  description: Gitblit GO documentation describes an initial administrator account used to
+    sign in and configure the service.
+  type: username_password
+  nature:
+  - static_default
+  - user_defined
+  sensitivity: secret
+  default:
+    username: admin
+    password: admin
+  location:
+  - type: public_interface
+    path: Gitblit web UI, Git over HTTP, SSH, and RPC
+  - type: config_file
+    detail: users.conf, users.properties, or backing user service configuration
+  - type: artifact
+    detail: Gitblit data directory backups and support bundles
+  notes: Change the default admin/admin credential during installation.
+- id: user-password-hash
+  name: Local User Password Hash
+  description: Gitblit local user services store user credentials for web, Git, and RPC access.
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: ^[^=\s]+\s*=\s*[^,\r\n]+,.*$
+    detail: Gitblit properties-style user entry; exact password/hash format depends on configured
+      user service
+  location:
+  - type: config_file
+    path: users.conf, users.properties
+    detail: local user credential storage
+  - type: public_interface
+    path: web UI / Git HTTP / SSH / RPC
+  - type: secret_store
+    detail: deployment vaults and password managers
+  - type: artifact
+    detail: data directory backups
+- id: rpc-and-integration-secret
+  name: RPC, Federation, and Mail/LDAP Secrets
+  description: Gitblit deployments may contain RPC credentials, federation tokens, SMTP passwords,
+    LDAP bind passwords, and Git hook integration secrets.
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: config_file
+    path: gitblit.properties
+    detail: server, RPC, federation, mail, and authentication settings
+  - type: environment
+    path: GITBLIT_ADMIN_PASSWORD, GITBLIT_HOME
+  - type: source_code
+    detail: Docker Compose files, provisioning scripts, and test configs
+  - type: secret_store
+    detail: Kubernetes Secrets and CI/CD variables
+  - type: logs
+    detail: RPC, mail, LDAP, and Git hook debug logs
+references:
+- type: docs
+  url: https://www.gitblit.com/setup_go.html
+- type: docs
+  url: https://www.gitblit.com/rpc.html

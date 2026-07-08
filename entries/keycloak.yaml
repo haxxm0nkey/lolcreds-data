@@ -1,0 +1,116 @@
+id: keycloak
+name: Keycloak
+category: identity
+vendor: Keycloak
+author: haxxm0nkey
+
+credentials:
+
+  - id: bootstrap-admin-password
+    name: Bootstrap Admin Password
+    description: >
+      Keycloak container deployments bootstrap an administrator with environment
+      variables. Keycloak documents KC_BOOTSTRAP_ADMIN_USERNAME and
+      KC_BOOTSTRAP_ADMIN_PASSWORD for the initial admin user when starting a
+      container.
+    type: username_password
+    nature: [generated_on_install, user_defined]
+    sensitivity: secret
+    location:
+      - type: environment
+        path: KC_BOOTSTRAP_ADMIN_USERNAME, KC_BOOTSTRAP_ADMIN_PASSWORD, KEYCLOAK_ADMIN, KEYCLOAK_ADMIN_PASSWORD
+      - type: public_interface
+        path: /admin
+        detail: Keycloak Admin Console login
+      - type: secret_store
+        detail: Kubernetes Secrets, container environment secrets, Helm values, and cloud secret managers
+      - type: source_code
+        detail: Docker Compose files, Helm charts, tests, and committed deployment manifests
+      - type: logs
+        detail: container startup logs and provisioning output
+    notes: >
+      The documented admin/change_me values are examples, not shipped universal
+      defaults. Treat the bootstrap password as deployment-specific.
+
+  - id: database-credentials
+    name: Database Credentials
+    description: >
+      Keycloak supports external databases and container documentation shows
+      database configuration through KC_DB, KC_DB_URL, KC_DB_USERNAME, and
+      KC_DB_PASSWORD. These credentials back the Keycloak realm and user store.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    location:
+      - type: environment
+        path: KC_DB_USERNAME, KC_DB_PASSWORD, KC_DB_URL
+      - type: config_file
+        detail: keycloak.conf, Docker Compose files, Helm values, and operator custom resources
+      - type: secret_store
+        detail: Kubernetes Secrets, cloud secret managers, and database password vault entries
+      - type: source_code
+        detail: committed container definitions, test configs, and deployment manifests
+      - type: logs
+        detail: database connection errors and startup traces
+    notes: >
+      Database access can expose realm configuration, users, credential hashes,
+      clients, sessions, and identity-provider configuration.
+
+  - id: client-secret
+    name: OIDC Client Secret
+    description: >
+      Keycloak OpenID Connect confidential clients use client credentials.
+      Keycloak documents confidential client credentials and client secret
+      rotation policies in the server administration guide.
+    type: secret_value
+    nature: [generated_on_install]
+    sensitivity: secret
+    location:
+      - type: database
+        detail: Keycloak realm database storing client configuration and credentials
+      - type: environment
+        path: KEYCLOAK_CLIENT_SECRET, OIDC_CLIENT_SECRET
+      - type: config_file
+        detail: application config, adapter config, .env files, and deployment manifests
+      - type: secret_store
+        detail: Kubernetes Secrets, cloud secret managers, CI/CD variables, and app secrets
+      - type: source_code
+        detail: committed adapter configs, examples, tests, and Helm values
+      - type: logs
+        detail: token exchange traces and OIDC client debug logs
+    notes: >
+      A client secret can authenticate the application to Keycloak token
+      endpoints and should be rotated if exposed.
+
+  - id: realm-signing-key
+    name: Realm Signing Private Key / Keystore Secret
+    description: >
+      Keycloak realms use keys to sign tokens and can load or rotate generated
+      key pairs and Java keystores. Private keys and keystore passwords protect
+      token signing material.
+    type: key_pair
+    nature: [generated_on_install, user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '-----BEGIN (?:RSA |EC |)PRIVATE KEY-----'
+        detail: PEM private key for token signing or realm key import
+    location:
+      - type: database
+        detail: Keycloak realm key provider and component configuration
+      - type: config_file
+        detail: Java keystores, realm exports, key provider config, and deployment manifests
+      - type: secret_store
+        detail: Kubernetes Secrets, HSM/KMS-backed stores, Java keystores, and cloud secret managers
+      - type: source_code
+        detail: committed realm exports, test keys, and container build contexts
+    notes: >
+      Signing private keys can mint tokens trusted by clients for the affected
+      realm until keys are rotated and clients refresh metadata.
+
+references:
+  - type: docs
+    url: https://www.keycloak.org/server/containers
+  - type: docs
+    url: https://www.keycloak.org/docs/latest/server_admin/#_clients
+  - type: docs
+    url: https://www.keycloak.org/docs/latest/server_admin/#_user_credentials

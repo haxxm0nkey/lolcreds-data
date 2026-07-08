@@ -1,0 +1,119 @@
+id: juniper-junos
+name: Juniper Junos OS
+category: network
+vendor: Juniper Networks
+author: haxxm0nkey
+credentials:
+- id: root-authentication
+  name: Root Authentication Password / SSH Key
+  description: Junos stores the root login authentication material under system root-authentication.
+    Deployments commonly use an encrypted root password and/or SSH public keys for emergency
+    and direct device administration.
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: ^\s*root-authentication\s*\{
+    detail: Junos configuration stanza that contains root encrypted-password or ssh-rsa/ssh-ed25519
+      keys
+  - pattern: ^\s*encrypted-password\s+"?\$[156y]\$[^";]+"?;
+    detail: Junos encrypted password hash line; context determines root versus named user
+  location:
+  - type: config_file
+    detail: Junos candidate/active configuration under system root-authentication
+  - type: public_interface
+    path: SSH / console / J-Web
+    detail: Administrative login interfaces using the configured root authentication
+  - type: artifact
+    detail: configuration backups, rescue configs, network automation exports
+  notes: No universal Junos root password is modeled here; operators configure root authentication
+    during installation or deployment.
+- id: local-user-password
+  name: Local User Password / SSH Key
+  description: Junos local login users are configured under system login user with class/uid
+    and password or SSH key authentication. These accounts are used for CLI, SSH, J-Web, NETCONF,
+    and automation access.
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: ^\s*user\s+\S+\s*\{
+    detail: Junos system login user stanza
+  - pattern: ^\s*encrypted-password\s+"?\$[156y]\$[^";]+"?;
+    detail: encrypted password hash inside a system login user authentication stanza
+  - pattern: ^\s*ssh-(rsa|dss|ecdsa|ed25519)\s+"?[^";]+"?;
+    detail: SSH public key associated with a local Junos user
+  location:
+  - type: config_file
+    detail: system login user authentication stanzas in Junos configuration
+  - type: public_interface
+    path: SSH / J-Web / NETCONF
+    detail: Administrative interfaces that accept local user credentials
+  - type: artifact
+    detail: config archives, golden configs, lab configs, and network-as-code repositories
+- id: snmp-community
+  name: SNMP Community String
+  description: Junos SNMPv1/v2c community names are shared secrets that provide read-only
+    or read-write monitoring access depending on authorization configuration.
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: ^\s*community\s+\S+\s*\{
+    detail: SNMP community stanza in Junos configuration; the community name is the shared
+      secret
+  location:
+  - type: config_file
+    detail: snmp community configuration in Junos
+  - type: source_code
+    detail: monitoring templates and network automation configs
+  - type: artifact
+    detail: device configuration backups
+- id: aaa-shared-secret
+  name: RADIUS / TACACS+ Shared Secret
+  description: Junos devices use shared secrets when talking to RADIUS or TACACS+ servers
+    for AAA. The secret authenticates the network device to the AAA server and commonly appears
+    in reusable configuration templates.
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: ^\s*(radius-server|tacplus-server)\s+\S+\s+secret\s+"?[^";]+"?;
+    detail: Junos AAA server shared secret line; the secret follows the secret keyword
+  location:
+  - type: config_file
+    detail: access radius-server / tacplus-server or system authentication-order related AAA
+      configuration
+  - type: source_code
+    detail: AAA bootstrap templates and network-as-code repositories
+  - type: artifact
+    detail: configuration backups and migration exports
+- id: vpn-routing-shared-secret
+  name: VPN / Routing Protocol Shared Secret
+  description: Junos configurations can contain IKE/IPsec pre-shared keys and routing protocol
+    authentication keys for BGP, OSPF, IS-IS, and other peer relationships.
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: pre-shared-key\s+(ascii-text|hexadecimal)\s+"?[^";]+"?;
+    detail: Junos IKE/IPsec pre-shared key in security ike policy/keyring context
+  - pattern: authentication-key\s+"?[^";]+"?;
+    detail: routing protocol authentication key; surrounding protocol stanza identifies BGP/OSPF/IS-IS/etc.
+  location:
+  - type: config_file
+    detail: security ike/ipsec and protocol authentication stanzas in Junos configuration
+  - type: artifact
+    detail: config backups, migration bundles, and HA replacement configs
+references:
+- type: docs
+  url: https://www.juniper.net/documentation/us/en/software/junos/cli-reference/topics/ref/statement/root-authentication-edit-system.html
+- type: docs
+  url: https://www.juniper.net/documentation/us/en/software/junos/cli-reference/topics/ref/statement/user-edit-system-login.html
+- type: docs
+  url: https://www.juniper.net/documentation/us/en/software/junos/cli-reference/topics/ref/statement/community-edit-snmp.html

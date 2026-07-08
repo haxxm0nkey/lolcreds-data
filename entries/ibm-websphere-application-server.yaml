@@ -1,0 +1,92 @@
+id: ibm-websphere-application-server
+name: IBM WebSphere Application Server
+category: middleware
+vendor: IBM
+author: haxxm0nkey
+credentials:
+- id: administrative-user-password
+  name: Administrative User Password
+  description: WebSphere Application Server administrative security uses users and groups
+    from a local file registry, LDAP, federated repository, or OS registry to protect the
+    admin console, wsadmin, and management APIs.
+  type: username_password
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: Integrated Solutions Console, wsadmin, JMX, REST management, and SOAP connector
+  - type: config_file
+    detail: security.xml, fileRegistry.xml, soap.client.props, sas.client.props, and deployment
+      response files
+  - type: database
+    detail: registry or LDAP backend storing local/federated user password verifier data
+  - type: secret_store
+    detail: WebSphere credential stores, password vaults, and deployment secrets
+  - type: logs
+    detail: SystemOut/SystemErr, security audit, wsadmin, and FFDC logs
+- id: wasadmin-script-password
+  name: wsadmin / SOAP Client Password
+  description: Administrative scripts often store WebSphere usernames and passwords for wsadmin,
+    SOAP connector, deployment automation, and CI/CD tasks.
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: config_file
+    path: soap.client.props, sas.client.props, wsadmin.properties
+    detail: administrative client credential files and scripts
+  - type: environment
+    path: WAS_USER, WAS_PASSWORD, WEBSPHERE_USER, WEBSPHERE_PASSWORD
+  - type: secret_store
+    detail: CI/CD variables, Ansible Vault, password vaults, and deployment managers
+  - type: source_code
+    detail: Jython/Jacl wsadmin scripts, pipelines, and deployment repos
+  - type: logs
+    detail: wsadmin traces and deployment logs
+- id: ltpa-and-cell-secrets
+  name: LTPA Keys / Cell Signing Secrets
+  description: WebSphere uses LTPA keys, cell/node secrets, and token keys for SSO and trust
+    between servers. Leaked keys can enable token forgery or trust abuse within the cell/domain.
+  type: secret_value
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: config_file
+    detail: security.xml, ltpa.keys exports, cell/node config repositories, and backupConfig
+      archives
+  - type: secret_store
+    detail: WebSphere key stores, credential stores, and backup vaults
+  - type: artifact
+    detail: profile backups, support bundles, and configuration archives
+- id: keystore-and-datasource-secrets
+  name: Keystore, Data Source, JMS, and JAAS Secrets
+  description: WebSphere stores data source passwords, JAAS auth aliases, JMS provider credentials,
+    LDAP bind passwords, and SSL keystore/truststore passwords in cell configuration.
+  type: secret_value
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - pattern: \{xor\}[A-Za-z0-9+/=]+
+    detail: WebSphere XOR-obfuscated password value often found in configuration files
+  location:
+  - type: config_file
+    detail: resources.xml, security.xml, ssl.client.props, key.p12/trust.p12 settings, and
+      JAAS auth data
+  - type: secret_store
+    detail: WebSphere configuration repository, keystores, and external vaults
+  - type: source_code
+    detail: application server configuration as code and deployment scripts
+  - type: logs
+    detail: connection pool, JMS, LDAP, and SSL debug logs
+references:
+- type: docs
+  url: https://www.ibm.com/docs/en/was/9.0.5?topic=security-securing-applications-their-environment
+- type: docs
+  url: https://www.ibm.com/docs/en/was/9.0.5?topic=users-managing-administrative

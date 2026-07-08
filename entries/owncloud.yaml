@@ -1,0 +1,98 @@
+id: owncloud
+name: ownCloud
+category: collaboration
+vendor: ownCloud
+author: haxxm0nkey
+
+credentials:
+
+  - id: config-secret-and-salt
+    name: Instance Secret / Password Salt
+    description: >
+      ownCloud config.php contains instance-specific values including
+      passwordsalt and secret. ownCloud documents these configuration parameters
+      alongside database and server settings.
+    type: secret_value
+    nature: [generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - pattern: >-
+          '(?:passwordsalt|secret)'\s*=>\s*'[^']+'\s*[,;]
+        detail: ownCloud config.php passwordsalt or secret entry
+    location:
+      - type: config_file
+        path: config/config.php
+        detail: ownCloud instance configuration containing secret and passwordsalt
+      - type: secret_store
+        detail: deployment vaults, Kubernetes Secrets, and cloud secret managers
+      - type: source_code
+        detail: committed config.php files, Helm values, and backups
+      - type: artifact
+        detail: instance backups and container images containing config.php
+    notes: >
+      These values are not user passwords, but they are instance secret material
+      used by ownCloud security mechanisms.
+
+  - id: database-credentials
+    name: Database Credentials
+    description: >
+      ownCloud config.php stores database settings such as dbtype, dbhost,
+      dbname, dbuser, and dbpassword. These credentials connect the application
+      to its database.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: >-
+          'dbpassword'\s*=>\s*'[^']+'\s*[,;]
+        detail: ownCloud config.php database password entry
+    location:
+      - type: config_file
+        path: config/config.php
+        detail: ownCloud database connection configuration
+      - type: environment
+        path: MYSQL_PASSWORD, POSTGRES_PASSWORD, OWNCLOUD_DB_PASSWORD, DATABASE_URL
+      - type: secret_store
+        detail: Docker/Kubernetes secrets, cloud secret managers, and database password vaults
+      - type: source_code
+        detail: committed config.php files, Docker Compose files, Helm values, and tests
+      - type: artifact
+        detail: backups and container images containing config.php
+      - type: logs
+        detail: installer logs and database connection troubleshooting output
+    notes: >
+      Database access can expose files metadata, user records, app passwords,
+      shares, tokens, and application configuration.
+
+  - id: user-password-app-token
+    name: User Password / App Token
+    description: >
+      ownCloud users authenticate to the web UI and clients with user passwords
+      or token-only authentication for apps and clients depending on policy.
+      ownCloud documentation covers user management and reset workflows.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    location:
+      - type: database
+        detail: ownCloud database tables storing user, session, and app token verifier data
+      - type: public_interface
+        path: /login, WebDAV, OCS APIs
+        detail: ownCloud login, sync, and API endpoints
+      - type: config_file
+        detail: client sync config, app integration config, and local credential caches
+      - type: secret_store
+        detail: password managers, CI/CD variables, and cloud secret managers
+      - type: source_code
+        detail: integration scripts, tests, and accidentally committed client configs
+      - type: logs
+        detail: web server logs, sync client logs, and authentication troubleshooting output
+    notes: >
+      App tokens should be revoked independently from the user's main password
+      if exposed.
+
+references:
+  - type: docs
+    url: https://doc.owncloud.com/server/next/admin_manual/configuration/server/config_sample_php_parameters.html
+  - type: docs
+    url: https://doc.owncloud.com/server/next/admin_manual/configuration/user/user_management.html

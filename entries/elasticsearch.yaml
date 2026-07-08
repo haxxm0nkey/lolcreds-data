@@ -1,0 +1,125 @@
+id: elasticsearch
+name: Elasticsearch
+category: database
+vendor: Elastic
+author: haxxm0nkey
+
+credentials:
+
+  - id: elastic-built-in-user
+    name: elastic Built-in Superuser Password
+    description: >
+      Elasticsearch includes built-in users for the Elastic Stack. The elastic
+      user is a built-in superuser used to set other built-in user passwords
+      and to bootstrap administrative access on self-managed clusters.
+    type: username_password
+    nature: [generated_on_install, user_defined]
+    sensitivity: secret
+    default:
+      username: elastic
+      password: (empty)
+    location:
+      - type: public_interface
+        path: Elasticsearch HTTP API, Kibana login
+      - type: config_file
+        detail: bootstrap password may be set in the Elasticsearch keystore as bootstrap.password
+      - type: environment
+        path: ELASTIC_PASSWORD
+        detail: commonly used by Docker and orchestration examples to set the initial elastic password
+      - type: secret_store
+        detail: Kubernetes Secrets, Docker secrets, Elastic Cloud orchestration secrets, CI/CD variables
+      - type: logs
+        detail: initial startup/setup logs, installation notes, and bootstrap tooling output
+    notes: >
+      The default block records the built-in username, not a static password.
+      Elastic documents that built-in users cannot authenticate until their
+      passwords have been set; if elastic has no password, a transient
+      bootstrap password is used to run password-setup tooling.
+
+  - id: built-in-service-user-passwords
+    name: Built-in Service User Passwords
+    description: >
+      Elasticsearch built-in service users such as kibana_system,
+      logstash_system, beats_system, apm_system, and remote_monitoring_user
+      have fixed privileges and require operator-set passwords before use.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '(xpack\.[A-Za-z0-9_.-]+\.elasticsearch\.(username|password)|elasticsearch\.(username|password)):\s*[^\s]+'
+        detail: Elastic Stack component configuration that stores Elasticsearch usernames or passwords
+    location:
+      - type: config_file
+        detail: kibana.yml, logstash.yml, beats.yml, apm-server.yml, metricbeat.yml
+      - type: environment
+        path: ELASTICSEARCH_USERNAME, ELASTICSEARCH_PASSWORD, KIBANA_PASSWORD
+      - type: secret_store
+        detail: Kubernetes Secrets, Docker secrets, Elastic Cloud orchestration secrets
+      - type: source_code
+        detail: Helm values, docker-compose.yml, Ansible inventories, committed stack configs
+    notes: >
+      These accounts are not intended for human login. A leaked service-user
+      password grants the component privileges assigned to that built-in user.
+
+  - id: api-key
+    name: Elasticsearch API Key
+    description: >
+      Elasticsearch API keys authenticate requests to Elasticsearch APIs. The
+      create API key endpoint returns an id, api_key value, and an encoded
+      representation for Authorization headers.
+    type: api_key
+    nature: [generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - pattern: 'ApiKey\s+[A-Za-z0-9+/=_\-]+'
+        detail: HTTP Authorization value for Elasticsearch API key authentication
+    location:
+      - type: http_header
+        path: Authorization
+        detail: ApiKey authorization scheme
+      - type: http_response
+        detail: create API key responses containing id, api_key, and encoded fields
+      - type: environment
+        path: ELASTICSEARCH_API_KEY
+      - type: config_file
+        detail: Beats, Logstash, agents, Elastic clients, and application config
+      - type: secret_store
+        detail: Kubernetes Secrets, CI/CD variables, application secret stores
+      - type: source_code
+        detail: ingestion scripts, notebooks, app config, committed examples
+    notes: >
+      API key privileges are derived from the creating user and requested role
+      descriptors. Treat encoded API key values as bearer credentials.
+
+  - id: service-account-token
+    name: Service Account Token
+    description: >
+      Elasticsearch service account tokens authenticate Elastic Stack services
+      to Elasticsearch without using built-in user passwords. Tokens can be
+      file-backed or index-backed depending on how they are created.
+    type: token
+    nature: [generated_on_install]
+    sensitivity: secret
+    location:
+      - type: http_header
+        path: Authorization
+        detail: Bearer token for Elasticsearch service account authentication
+      - type: config_file
+        detail: service_tokens file and Elastic component configuration
+      - type: secret_store
+        detail: Kubernetes Secrets and orchestration-managed service token stores
+      - type: environment
+        detail: service token variables used by containers or Helm charts
+    notes: >
+      Service account tokens are bearer secrets scoped to a service account.
+      Rotate and invalidate tokens found in config backups or deployment logs.
+
+references:
+  - type: docs
+    url: https://www.elastic.co/guide/en/elasticsearch/reference/current/built-in-users.html
+  - type: docs
+    url: https://www.elastic.co/guide/en/elasticsearch/reference/current/security-minimal-setup.html
+  - type: docs
+    url: https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html
+  - type: docs
+    url: https://www.elastic.co/guide/en/elasticsearch/reference/current/service-accounts.html

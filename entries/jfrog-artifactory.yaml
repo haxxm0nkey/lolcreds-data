@@ -1,0 +1,96 @@
+id: jfrog-artifactory
+name: JFrog Artifactory
+category: ci_cd
+vendor: JFrog
+author: haxxm0nkey
+
+credentials:
+
+  - id: access-token
+    name: Access Token
+    description: >
+      JFrog Platform supports access tokens for authentication and authorization
+      across JFrog services. JFrog administration docs cover access tokens as a
+      central security mechanism.
+    type: token
+    nature: [generated_on_install]
+    sensitivity: secret
+    location:
+      - type: http_header
+        path: Authorization
+        detail: Bearer token used for JFrog Platform and Artifactory APIs
+      - type: database
+        detail: JFrog access service database and token metadata stores
+      - type: environment
+        path: JFROG_ACCESS_TOKEN, ARTIFACTORY_ACCESS_TOKEN
+      - type: config_file
+        detail: jfrog CLI config, build tool settings, .env files, and CI manifests
+      - type: secret_store
+        detail: CI/CD variables, build platform secrets, cloud secret managers, and vault entries
+      - type: source_code
+        detail: pipelines, build scripts, tests, and committed CLI configs
+      - type: logs
+        detail: build logs, API client traces, and CI output
+    notes: >
+      Token privileges depend on scopes, audience, user/service identity, and
+      expiration.
+
+  - id: api-key
+    name: Legacy API Key
+    description: >
+      JFrog Artifactory historically supported API keys, and current JFrog docs
+      distinguish API keys from access tokens. Legacy API keys may still appear
+      in build and deployment automation.
+    type: api_key
+    nature: [user_defined]
+    sensitivity: secret
+    location:
+      - type: http_header
+        path: X-JFrog-Art-Api
+        detail: Artifactory API key header
+      - type: environment
+        path: ARTIFACTORY_API_KEY, JFROG_API_KEY
+      - type: config_file
+        detail: Maven/Gradle/npm/pip build config, jfrog CLI config, and .env files
+      - type: secret_store
+        detail: CI/CD variables, build secrets, and cloud secret managers
+      - type: source_code
+        detail: build scripts, dependency manager config, tests, and committed examples
+      - type: logs
+        detail: package manager debug logs and CI traces
+    notes: >
+      Prefer access tokens where supported, but leaked API keys remain useful
+      bearer credentials in older deployments.
+
+  - id: master-join-key-database
+    name: Master Key / Join Key / Database Password
+    description: >
+      Self-hosted JFrog Platform deployments use sensitive shared keys and
+      database credentials for node clustering, encryption, and persistence.
+      Administration docs include centrally securing passwords and changing the
+      Postgres database password.
+    type: secret_value
+    nature: [generated_on_install, user_defined]
+    sensitivity: secret
+    location:
+      - type: config_file
+        detail: system.yaml, db.properties, artifactory.config.xml, and deployment manifests
+      - type: environment
+        path: JF_SHARED_DATABASE_PASSWORD, JF_SHARED_SECURITY_MASTERKEY, JF_SHARED_SECURITY_JOINKEY
+      - type: secret_store
+        detail: Kubernetes Secrets, Helm secrets, cloud secret managers, and vault entries
+      - type: source_code
+        detail: committed system.yaml, Helm values, and Docker Compose files
+      - type: artifact
+        detail: server backups and container images containing configuration
+      - type: logs
+        detail: startup logs and support bundles
+    notes: >
+      These secrets can enable node impersonation, decryption of stored secrets,
+      or direct database access depending on which value is exposed.
+
+references:
+  - type: docs
+    url: https://jfrog.com/help/r/jfrog-platform-administration-documentation/access-tokens
+  - type: docs
+    url: https://jfrog.com/help/r/jfrog-platform-administration-documentation/api-keys

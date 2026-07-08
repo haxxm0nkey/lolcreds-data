@@ -1,0 +1,277 @@
+id: hashicorp-vault
+name: HashiCorp Vault
+category: identity
+vendor: HashiCorp
+author: haxxm0nkey
+
+credentials:
+
+  - id: vault-token
+    name: Vault Token
+    description: >
+      Vault tokens are the core credential used to authenticate requests to
+      Vault. HashiCorp documents service, batch, and recovery token prefixes,
+      including hvs., hvb., and hvr. for Vault 1.10 and later.
+    type: token
+    nature: [generated_on_install, user_defined]
+    sensitivity: secret
+    looks_like:
+      - example: 'hvs.XXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'hvs\.[A-Za-z0-9]{24,}'
+        detail: Vault 1.10+ service token
+      - example: 'hvb.XXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'hvb\.[A-Za-z0-9]{24,}'
+        detail: Vault 1.10+ batch token
+      - example: 'hvr.XXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'hvr\.[A-Za-z0-9]{24,}'
+        detail: Vault 1.10+ recovery token
+      - example: 's.XXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 's\.[A-Za-z0-9]{24,}'
+        detail: pre-1.10 service token format
+      - example: 'b.XXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'b\.[A-Za-z0-9]{24,}'
+        detail: pre-1.10 batch token format
+      - example: 'r.XXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'r\.[A-Za-z0-9]{24,}'
+        detail: pre-1.10 recovery token format
+    location:
+      - type: environment
+        path: VAULT_TOKEN
+      - type: http_header
+        path: X-Vault-Token, Authorization
+        detail: Vault API accepts X-Vault-Token or Authorization Bearer token headers
+      - type: config_file
+        path: ~/.vault-token
+        detail: default local token helper file used by the Vault CLI
+      - type: config_file
+        detail: Vault Agent token sink files, application config, .env files, deployment manifests
+      - type: secret_store
+        detail: CI/CD variables, Kubernetes Secrets, cloud secret managers, orchestration secrets
+      - type: logs
+        detail: CLI output, HTTP traces, application debug logs, Vault Agent logs
+      - type: source_code
+        detail: automation scripts, Terraform providers, tests, notebooks, committed examples
+    notes: >
+      Root tokens are Vault tokens with root policy. HashiCorp recommends root
+      tokens only for initial setup or emergencies and revoking them when no
+      longer needed. Treat any Vault token as a bearer credential scoped by
+      its policies, TTL, namespace, and renewal properties.
+
+  - id: initial-root-token
+    name: Initial Root Token
+    description: >
+      Vault initialization produces an initial root token for a non-dev server,
+      and the dev server also outputs a root token. This is the first
+      authentication method for a new Vault and carries root privileges until
+      revoked or expired.
+    type: token
+    nature: [generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - example: 'hvs.XXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'hvs\.[A-Za-z0-9]{24,}'
+        detail: generated root token on Vault 1.10+ when token prefixes are enabled
+    location:
+      - type: logs
+        detail: vault operator init output, dev server console output, install transcripts
+      - type: artifact
+        detail: initialization JSON, runbooks, screenshots, bootstrap archives, ticket attachments
+      - type: secret_store
+        detail: break-glass vaults and bootstrap secret stores
+      - type: config_file
+        path: ~/.vault-token
+        detail: CLI login can cache the initial root token locally
+    notes: >
+      Do not treat this as a static default. The value is generated per
+      initialization. Exposure is high impact because root policy bypasses
+      normal least-privilege boundaries.
+
+  - id: unseal-key
+    name: Unseal / Recovery Key Share
+    description: >
+      Vault initialization generates unseal key shares for Shamir-sealed
+      clusters or recovery keys for auto-unseal and recovery workflows. A
+      quorum of key shares can unseal Vault or authorize sensitive operations
+      such as generating a root token.
+    type: secret_value
+    nature: [generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - example: 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: '[A-Za-z0-9+/=]{32,}'
+        detail: >
+          unseal and recovery key shares are high-entropy opaque strings;
+          identify by initialization output or operator-runbook context
+    location:
+      - type: logs
+        detail: vault operator init output and initialization transcripts
+      - type: artifact
+        detail: init JSON files, printed shares, screenshots, ticket attachments, backup bundles
+      - type: secret_store
+        detail: HSM-backed stores, password managers, enterprise vaults, escrow stores
+      - type: config_file
+        detail: unsafe bootstrap files or copied operator notes containing key shares
+    notes: >
+      A single share is usually not enough to unseal Vault, but enough shares
+      or recovery keys can authorize critical operations. Treat leaked shares
+      as incident material and rotate/rekey according to quorum procedures.
+
+  - id: approle-role-id-secret-id
+    name: AppRole RoleID / SecretID
+    description: >
+      The AppRole auth method lets machines authenticate with a RoleID and a
+      SecretID. The RoleID identifies the role; the SecretID is the sensitive
+      credential used during login to receive a Vault token.
+    type: secret_value
+    nature: [generated_on_install, user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: 'role_id\s*[:=]\s*[0-9a-fA-F-]{20,}'
+        detail: AppRole RoleID in config or command output; RoleID is often less sensitive than SecretID
+      - pattern: 'secret_id\s*[:=]\s*[0-9a-fA-F-]{20,}'
+        detail: AppRole SecretID in config or command output; the value is credential material
+    location:
+      - type: config_file
+        detail: Vault Agent auto-auth config, application config, .env files, deployment manifests
+      - type: environment
+        path: VAULT_ROLE_ID, VAULT_SECRET_ID
+      - type: secret_store
+        detail: Kubernetes Secrets, CI/CD variables, cloud secret managers
+      - type: logs
+        detail: provisioning output, curl traces, Vault Agent logs, CI logs
+      - type: source_code
+        detail: bootstrap scripts, Terraform, Ansible, Helm values, committed examples
+    notes: >
+      RoleID alone may be public in some designs, but RoleID plus SecretID is
+      sufficient to authenticate as the AppRole and receive a Vault token.
+      SecretID wrapping is common; unwrap tokens should be treated as bearer
+      credentials during their TTL.
+
+  - id: userpass-password
+    name: Username / Password Auth Credential
+    description: >
+      Vault's userpass auth method allows users to authenticate with a
+      username and password. Successful login returns a Vault token governed
+      by the auth method, policies, and identity mapping.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    location:
+      - type: public_interface
+        path: /ui, /v1/auth/userpass/login/<username>
+      - type: secret_store
+        detail: password managers, identity-provider vaults, enterprise secret stores
+      - type: config_file
+        detail: automation config or test fixtures that store userpass credentials
+      - type: source_code
+        detail: scripts, test suites, demos, notebooks, committed .env files
+      - type: logs
+        detail: CLI command history, debug logs, HTTP traces containing login payloads
+    notes: >
+      No universal Vault userpass default is documented. Userpass passwords
+      are operator-defined and should be rotated if found in automation or logs.
+
+  - id: database-generated-credential
+    name: Database Secrets Engine Credential
+    description: >
+      Vault's database secrets engine can generate dynamic database usernames
+      and passwords or manage static-role passwords for existing database
+      users. Clients read the creds endpoint to receive a leased credential.
+    type: username_password
+    nature: [generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - pattern: 'username\s+v-[A-Za-z0-9_-]+-[A-Za-z0-9_-]+'
+        detail: generated database username shown in Vault database secrets engine output
+      - pattern: 'password\s+[^\s]+'
+        detail: generated database password shown in Vault CLI table output; identify by database/creds context
+    location:
+      - type: http_response
+        detail: database/creds/<role> responses containing username, password, lease_id, and lease_duration
+      - type: logs
+        detail: CLI output, application debug logs, CI job logs, database connection logs
+      - type: environment
+        detail: application runtime variables populated from Vault database credentials
+      - type: secret_store
+        detail: application secret caches and orchestration-managed secret sync targets
+      - type: config_file
+        detail: rendered templates from Vault Agent or sidecars containing leased database credentials
+    notes: >
+      Dynamic credentials expire with the Vault lease. Static-role credentials
+      map one Vault role to one database username and may be rotated by Vault.
+
+  - id: kv-secret-value
+    name: KV Secret Value
+    description: >
+      The key/value secrets engine stores arbitrary operator-defined secrets,
+      including API keys, passwords, certificates, and application tokens.
+      These values are not a Vault authentication credential, but Vault is a
+      primary storage location for other products' credentials.
+    type: secret_value
+    nature: [user_defined]
+    sensitivity: secret
+    location:
+      - type: database
+        detail: Vault storage backend data encrypted by Vault's barrier
+      - type: http_response
+        detail: KV read responses returning data fields
+      - type: config_file
+        detail: Vault Agent templates, rendered config files, synced secret files
+      - type: environment
+        detail: application runtime variables populated from KV secrets
+      - type: logs
+        detail: CLI output, application debug logs, template rendering logs
+      - type: secret_store
+        detail: downstream secret sync targets and external secret stores
+    notes: >
+      Classify recognizable KV values under their underlying product entry as
+      well. In this Vault entry, KV documents the storage location and leak
+      surface for arbitrary secrets.
+
+  - id: tls-client-private-key
+    name: TLS Client Auth Private Key
+    description: >
+      Vault's TLS certificate auth method can authenticate clients using a
+      client certificate and matching private key. The private key is the
+      secret half of the credential.
+    type: key_pair
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '-----BEGIN (RSA |EC |OPENSSH |)PRIVATE KEY-----'
+        detail: PEM private-key header; the full key is multi-line and not useful as an example
+    location:
+      - type: config_file
+        detail: client certificate/key files, Vault Agent config, mTLS client config
+      - type: secret_store
+        detail: Kubernetes TLS Secrets, certificate managers, cloud secret managers
+      - type: source_code
+        detail: accidentally committed test cert bundles, examples, or deployment fixtures
+      - type: artifact
+        detail: backup archives, support bundles, CI artifacts, container/VM images
+    notes: >
+      The public certificate alone is not secret; the private key is. A leaked
+      key can authenticate to Vault where the cert auth role trusts the
+      corresponding certificate identity.
+
+references:
+  - type: docs
+    url: https://developer.hashicorp.com/vault/docs/concepts/tokens
+  - type: docs
+    url: https://developer.hashicorp.com/vault/docs/auth/token
+  - type: docs
+    url: https://developer.hashicorp.com/vault/docs/commands/operator/init
+  - type: docs
+    url: https://developer.hashicorp.com/vault/docs/concepts/seal
+  - type: docs
+    url: https://developer.hashicorp.com/vault/docs/commands/operator/rekey
+  - type: docs
+    url: https://developer.hashicorp.com/vault/docs/auth/approle
+  - type: docs
+    url: https://developer.hashicorp.com/vault/docs/auth/userpass
+  - type: docs
+    url: https://developer.hashicorp.com/vault/docs/secrets/databases
+  - type: docs
+    url: https://developer.hashicorp.com/vault/docs/secrets/kv
+  - type: docs
+    url: https://developer.hashicorp.com/vault/docs/auth/cert

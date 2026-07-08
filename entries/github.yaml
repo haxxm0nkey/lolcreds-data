@@ -1,0 +1,239 @@
+id: github
+name: GitHub
+category: ci_cd
+vendor: GitHub, Inc.
+author: haxxm0nkey
+
+credentials:
+
+  - id: classic-personal-access-token
+    name: Classic Personal Access Token
+    description: >
+      Classic personal access tokens authenticate GitHub API and Git-over-HTTPS
+      requests as the user that created them. GitHub's token format uses the
+      ghp_ prefix for this token type.
+    type: token
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - example: 'ghp_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'ghp_[A-Za-z0-9]{36}'
+    location:
+      - type: source_code
+        detail: git remote URLs, scripts, committed .env files, CI configuration
+      - type: environment
+        path: GITHUB_TOKEN, GH_TOKEN, GITHUB_PAT
+      - type: config_file
+        path: ~/.git-credentials
+        detail: Git credential helper storage for HTTPS remotes
+    notes: >
+      Scope is selected when the token is created. A classic PAT with broad
+      repo or admin scopes should be treated as account-level access to the
+      user's reachable repositories and organization resources.
+
+  - id: fine-grained-personal-access-token
+    name: Fine-Grained Personal Access Token
+    description: >
+      Fine-grained personal access tokens authenticate as a user but are
+      constrained to selected repositories and permissions. GitHub exposes
+      them with the github_pat_ prefix.
+    type: token
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - example: 'github_pat_XXXXXXXXXXXXXXXXXXXXXX_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'github_pat_[A-Za-z0-9_]{50,255}'
+    location:
+      - type: source_code
+        detail: scripts, local tooling config, package publishing automation
+      - type: environment
+        path: GITHUB_TOKEN, GH_TOKEN, GITHUB_PAT
+      - type: secret_store
+        detail: CI/CD secret stores and deployment platforms that call GitHub
+    notes: >
+      Fine-grained PATs reduce blast radius compared with classic PATs, but
+      the token is still bearer material. Treat a leaked token according to
+      the repository and permission set shown in GitHub's token settings.
+
+  - id: oauth-access-token
+    name: OAuth Access Token
+    description: >
+      OAuth applications receive GitHub access tokens after a user completes
+      an OAuth authorization flow. GitHub's token format uses the gho_ prefix
+      for OAuth access tokens.
+    type: token
+    nature: [generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - example: 'gho_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'gho_[A-Za-z0-9]{36}'
+    location:
+      - type: database
+        detail: OAuth application databases and session stores
+      - type: config_file
+        detail: application config and local OAuth client caches
+      - type: logs
+        detail: callback URLs or debug logs in poorly configured OAuth clients
+    notes: >
+      The token's permissions are determined by the OAuth app scopes granted
+      by the user. A leaked OAuth token lets an attacker act through that
+      authorized application context until the grant is revoked or expires.
+
+  - id: github-app-user-token
+    name: GitHub App User-to-Server Token
+    description: >
+      GitHub Apps can authenticate on behalf of a user and receive a
+      user-to-server access token. GitHub's token format uses the ghu_ prefix
+      for this token type.
+    type: token
+    nature: [generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - example: 'ghu_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'ghu_[A-Za-z0-9]{36}'
+    location:
+      - type: database
+        detail: GitHub App backend token stores
+      - type: config_file
+        detail: local app development caches and service configuration
+      - type: logs
+        detail: GitHub App OAuth callback or API debug logs
+    notes: >
+      Access reflects both the GitHub App's permissions and the authorizing
+      user's access. The corresponding refresh token, when present, is a
+      separate long-lived credential and should be rotated independently.
+
+  - id: github-app-installation-token
+    name: GitHub App Installation Token
+    description: >
+      GitHub Apps exchange a signed app JWT for an installation access token
+      scoped to repositories and permissions granted to that installation.
+      GitHub's token format uses the ghs_ prefix for server-to-server tokens.
+    type: token
+    nature: [generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - example: 'ghs_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'ghs_[A-Za-z0-9]{36}'
+    location:
+      - type: environment
+        path: GITHUB_TOKEN
+        detail: automatic token injected into GitHub Actions jobs
+      - type: database
+        detail: GitHub App backend cache for installation tokens
+      - type: logs
+        detail: API client debug output and Actions logs when printed
+    notes: >
+      Installation tokens are short-lived but high-value. In GitHub Actions,
+      the built-in GITHUB_TOKEN is created for each workflow job and expires
+      when the job completes or after GitHub's documented maximum lifetime.
+
+  - id: github-app-refresh-token
+    name: GitHub App Refresh Token
+    description: >
+      GitHub Apps that use expiring user access tokens receive refresh tokens
+      to mint replacement user tokens. GitHub's token format uses the ghr_
+      prefix for refresh tokens.
+    type: token
+    nature: [generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - example: 'ghr_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'ghr_[A-Za-z0-9]{36}'
+    location:
+      - type: database
+        detail: GitHub App backend storage paired with user access tokens
+      - type: config_file
+        detail: local development token caches
+    notes: >
+      A refresh token is persistence material for a GitHub App user grant.
+      Rotate it with the associated user access token after exposure.
+
+  - id: github-app-private-key
+    name: GitHub App Private Key
+    description: >
+      GitHub Apps use a downloaded private key to sign JSON Web Tokens for
+      app authentication. The private half of the key is the credential that
+      allows minting app JWTs and then installation access tokens.
+    type: key_pair
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----'
+        detail: >
+          identified by the PEM private-key header; GitHub App private keys
+          are downloaded as private-key files, so a full example is omitted
+    location:
+      - type: config_file
+        detail: GitHub App .pem files on application servers and developer laptops
+      - type: secret_store
+        detail: CI/CD or cloud secret stores used by GitHub App backends
+      - type: source_code
+        detail: application repositories that accidentally commit the .pem file
+    notes: >
+      The private key does not directly access repositories, but it can sign
+      app JWTs that request installation tokens for every installation and
+      permission granted to the GitHub App.
+
+  - id: deploy-key
+    name: Deploy Key
+    description: >
+      A deploy key is an SSH key attached directly to one repository. GitHub
+      stores the public key; the private key is held by the server or CI job
+      that needs repository access.
+    type: key_pair
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '-----BEGIN (OPENSSH|RSA|EC|DSA) PRIVATE KEY-----'
+        detail: >
+          identified by the private-key header line; a full PEM/OpenSSH key
+          is multi-line and not useful as a compact example
+    location:
+      - type: config_file
+        path: ~/.ssh/*_deploy_key
+        detail: per-repository deploy key files used by Git SSH config aliases
+      - type: secret_store
+        detail: CI/CD variables and deployment secret stores
+      - type: source_code
+        detail: accidentally committed private keys in deployment repos
+    notes: >
+      A deploy key can be read-only or read/write. Read/write deploy keys can
+      push code to the attached repository without a user account, which makes
+      them supply-chain sensitive even though their scope is a single repo.
+
+  - id: actions-secret
+    name: GitHub Actions Secret
+    description: >
+      GitHub Actions secrets store arbitrary user-defined secret values for
+      repositories, environments, and organizations. Workflows can expose
+      those values to jobs as inputs or environment variables.
+    type: secret_value
+    nature: [user_defined]
+    sensitivity: secret
+    location:
+      - type: secret_store
+        detail: repository, environment, and organization Actions secrets
+      - type: environment
+        detail: workflow job environment variables populated from secrets.*
+      - type: logs
+        detail: workflow logs when a secret is printed, transformed, or bypasses masking
+    notes: >
+      Actions secrets have no GitHub-specific textual shape because they are
+      arbitrary values. Identify them by workflow context: secrets.NAME
+      expressions, injected environment variables, or CI logs that reveal the
+      expanded value.
+
+references:
+  - type: blog
+    url: https://github.blog/engineering/platform-security/behind-githubs-new-authentication-token-formats/
+  - type: docs
+    url: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
+  - type: docs
+    url: https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/about-authentication-with-a-github-app
+  - type: docs
+    url: https://docs.github.com/en/actions/security-for-github-actions/security-guides/automatic-token-authentication
+  - type: docs
+    url: https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions
+  - type: docs
+    url: https://docs.github.com/en/authentication/connecting-to-github-with-ssh/managing-deploy-keys

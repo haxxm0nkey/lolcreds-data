@@ -1,0 +1,80 @@
+id: glpi
+name: GLPI
+category: enterprise_app
+vendor: Teclib
+author: haxxm0nkey
+credentials:
+- id: default-local-accounts
+  name: Default Local Accounts
+  description: Fresh GLPI installations include built-in local accounts used to sign in before
+    the operator changes or disables them.
+  type: username_password
+  nature:
+  - static_default
+  - user_defined
+  sensitivity: secret
+  default:
+    username: glpi
+    password: glpi
+  location:
+  - type: public_interface
+    path: GLPI web login and API session init
+  - type: database
+    detail: GLPI users table storing password verifier data
+  - type: config_file
+    detail: deployment inventories, Docker Compose files, and installer notes
+  - type: artifact
+    detail: database dumps and application backups
+  notes: Other documented initial accounts commonly include tech/tech, normal/normal, and
+    post-only/postonly; the default block records the administrative glpi/glpi account.
+- id: api-app-token
+  name: API App Token / Session Token
+  description: GLPI REST API clients can use application tokens and user authentication to
+    obtain session tokens for API access.
+  type: token
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: App-Token
+    detail: Application token used with GLPI API calls
+  - type: http_header
+    path: Session-Token
+    detail: Session token returned by initSession
+  - type: database
+    detail: GLPI API client and session tables
+  - type: config_file
+    detail: integration scripts, .env files, monitoring configs, and CMDB sync jobs
+  - type: environment
+    path: GLPI_APP_TOKEN, GLPI_SESSION_TOKEN, GLPI_USER_TOKEN
+  - type: secret_store
+    detail: CI/CD variables and integration vaults
+  - type: logs
+    detail: API client traces and web server access logs
+- id: ldap-mail-database-secrets
+  name: LDAP, Mail Receiver, and Database Secrets
+  description: GLPI deployments store LDAP bind credentials, mail receiver passwords, and
+    database credentials for runtime and integrations.
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: config_file
+    detail: config/config_db.php, LDAP configuration, mail receiver setup, and deployment
+      manifests
+  - type: database
+    detail: GLPI tables holding encrypted or protected integration settings
+  - type: secret_store
+    detail: Kubernetes Secrets, vault entries, and password managers
+  - type: source_code
+    detail: Docker Compose files, Helm values, and automation repos
+  - type: logs
+    detail: setup logs, sync errors, and mail receiver debug logs
+references:
+- type: docs
+  url: https://glpi-install.readthedocs.io/en/latest/install/index.html
+- type: docs
+  url: https://glpi-developer-documentation.readthedocs.io/en/master/devapi/index.html

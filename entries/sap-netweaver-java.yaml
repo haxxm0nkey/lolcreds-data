@@ -1,0 +1,95 @@
+id: sap-netweaver-java
+name: SAP NetWeaver Application Server Java
+category: enterprise_app
+vendor: SAP
+author: haxxm0nkey
+credentials:
+- id: ume-administrator-password
+  name: UME Administrator/User Password
+  description: SAP NetWeaver AS Java authenticates users through the User Management Engine
+    (UME). Administrator and technical users are created during installation or maintained
+    through identity stores such as the Java database, ABAP UME, LDAP, or SAP Identity Management.
+  type: username_password
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: NetWeaver Administrator, SAP Enterprise Portal, AS Java login pages, and management
+      APIs
+  - type: database
+    detail: UME persistence store for users, groups, password verifier data, and security
+      policy state
+  - type: config_file
+    detail: UME configuration, destination service config, and AS Java deployment/installation
+      files
+  - type: secret_store
+    detail: SAP Secure Storage, password vaults, and deployment secrets
+  - type: logs
+    detail: security audit log, defaultTrace, authentication traces, and installer logs
+  notes: No universal AS Java Administrator password is modeled here; it is set during installation
+    or inherited from the configured user store.
+- id: jco-rfc-destination-password
+  name: JCo / RFC Destination Credential
+  description: AS Java systems store RFC/JCo destination credentials for calls into ABAP systems,
+    including technical users and SNC or password-based destinations.
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: config_file
+    detail: SAP NetWeaver Administrator destination configuration and exported system configuration
+  - type: database
+    detail: AS Java configuration database and destination service records
+  - type: secret_store
+    detail: SAP Secure Storage and deployment vaults
+  - type: logs
+    detail: JCo, RFC, and destination test traces when debug logging is enabled
+- id: secure-storage-key-and-secrets
+  name: Secure Storage Key / Protected Application Secret
+  description: AS Java uses secure storage and configuration services to protect passwords,
+    keys, keystore passwords, and application connector secrets.
+  type: secret_value
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: config_file
+    detail: secure storage configuration, keystore settings, cluster node configuration, and
+      application properties
+  - type: secret_store
+    detail: SAP Secure Storage, Java keystores, PSE files, and external vaults
+  - type: database
+    detail: AS Java configuration database containing encrypted application and service settings
+  - type: artifact
+    detail: system copies, exports, and support archives
+- id: keystore-pse-private-key
+  name: PSE / Java Keystore Private Key
+  description: NetWeaver Java uses PSEs and Java keystores for SSL/TLS, SSO, SNC, and trusted
+    communication. Private keys and keystore passwords are high-impact credentials.
+  type: key_pair
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: '-----BEGIN (RSA |EC |ENCRYPTED |)PRIVATE KEY-----'
+    detail: private key material exported from SAP PSE/JKS/PKCS#12 or deployment automation
+  location:
+  - type: config_file
+    detail: SAPSSLS.pse, keystore files, trust/key manager configuration, and SSL service
+      settings
+  - type: secret_store
+    detail: SAP Cryptographic Library PSEs, Java keystores, and certificate vaults
+  - type: artifact
+    detail: system export/import packages, backups, and support bundles
+references:
+- type: docs
+  url: https://help.sap.com/docs/SAP_NETWEAVER_AS_JAVA/4a368c163b08418890a406d413933ba7/4a288f3a5d594815e10000000a42189c.html
+- type: docs
+  url: https://help.sap.com/docs/SAP_NETWEAVER_AS_JAVA/8d0e372f2ca84d9ba40e925188f548a8/4a288f3a5d594815e10000000a42189c.html
+- type: docs
+  url: https://support.sap.com/en/my-support/keys.html

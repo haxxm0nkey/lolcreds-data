@@ -1,0 +1,126 @@
+id: fortinet-fortigate
+name: Fortinet FortiGate / FortiOS
+category: network
+vendor: Fortinet
+author: haxxm0nkey
+credentials:
+- id: initial-admin-login
+  name: Initial Administrator Login
+  description: FortiGate appliances use a local admin account for first login and management.
+    Fortinet getting-started documentation describes signing in with username admin and no
+    password before the operator sets a password.
+  type: username_password
+  nature:
+  - static_default
+  - user_defined
+  sensitivity: secret
+  default:
+    username: admin
+    password: ''
+  location:
+  - type: public_interface
+    path: FortiGate GUI, console, SSH, and REST API
+    detail: Initial and ongoing administrative login surfaces
+  - type: config_file
+    detail: system admin configuration in FortiOS configuration exports
+  - type: artifact
+    detail: device backups and FortiManager/FortiGate configuration archives
+  notes: The blank-password initial state is only for first access/new deployments and should
+    be changed immediately; many appliances and managed deployments require or enforce a changed
+    password.
+- id: local-admin-password
+  name: Local Administrator Password
+  description: FortiOS local administrators are configured under config system admin. Passwords
+    may appear as encrypted set passwd or password material in configuration backups.
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: ^\s*edit\s+"?[^"]+"?\s*$
+    detail: FortiOS table entry for a local admin; nearby set passwd line carries the password
+      hash/encoded value
+  - pattern: ^\s*set\s+passwd\s+ENC\s+\S+
+    detail: FortiOS encrypted administrator password line in config system admin
+  location:
+  - type: config_file
+    detail: config system admin in FortiOS configuration
+  - type: public_interface
+    path: FortiGate GUI / SSH / CLI / API
+    detail: Management surfaces accepting administrator credentials
+  - type: secret_store
+    detail: password managers, FortiManager managed secrets, and deployment vaults
+  - type: artifact
+    detail: configuration backups and support bundles
+- id: rest-api-admin-token
+  name: REST API Administrator Token
+  description: FortiGate REST API administrators use API keys/tokens for automation access.
+    Tokens are supplied to the FortiOS API and inherit the configured API administrator profile.
+  type: token
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Bearer token or API-token header material used by FortiOS REST API clients
+  - type: config_file
+    detail: automation scripts, Ansible inventory, Terraform provider config, and .env files
+  - type: environment
+    path: FORTIOS_ACCESS_TOKEN, FORTIGATE_TOKEN, FGT_TOKEN
+  - type: secret_store
+    detail: CI/CD variables and automation secret stores
+  - type: source_code
+    detail: network automation repositories and tests
+  - type: logs
+    detail: API client traces and failed request logs
+  notes: FortiOS API tokens provide administrative API access according to the associated
+    API administrator profile and trusthost restrictions.
+- id: vpn-psk
+  name: IPsec VPN Pre-Shared Key
+  description: FortiGate phase1-interface and related VPN objects can contain IPsec pre-shared
+    keys used to authenticate VPN peers.
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: ^\s*set\s+psksecret\s+ENC\s+\S+
+    detail: encrypted IPsec PSK in FortiOS configuration
+  - pattern: ^\s*set\s+psksecret\s+"?[^"\r\n]+"?$
+    detail: plaintext or exported PSK line in a VPN phase1 context
+  location:
+  - type: config_file
+    detail: vpn ipsec phase1-interface / phase1 FortiOS configuration
+  - type: artifact
+    detail: configuration backups, support bundles, and migration exports
+  - type: source_code
+    detail: network-as-code and VPN provisioning templates
+- id: snmp-and-aaa-secrets
+  name: SNMP / RADIUS / TACACS+ Shared Secrets
+  description: FortiOS stores SNMP community strings and AAA server shared secrets for monitoring
+    and centralized authentication.
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: ^\s*set\s+community\s+"?[^"\r\n]+"?$
+    detail: SNMP community string line in FortiOS config
+  - pattern: ^\s*set\s+secret\s+ENC\s+\S+
+    detail: encrypted RADIUS/TACACS+/LDAP-related shared secret in FortiOS config
+  location:
+  - type: config_file
+    detail: system snmp community and user radius/tacacs/ldap server configuration
+  - type: artifact
+    detail: FortiGate configuration backups and FortiManager exports
+  - type: source_code
+    detail: monitoring and AAA provisioning templates
+references:
+- type: docs
+  url: https://docs.fortinet.com/document/fortigate/latest/administration-guide/954635/getting-started
+- type: docs
+  url: https://docs.fortinet.com/document/fortigate/latest/administration-guide/940602/administrator-accounts
+- type: docs
+  url: https://docs.fortinet.com/document/fortigate/latest/administration-guide/399023/rest-api-administrator

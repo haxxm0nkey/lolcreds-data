@@ -1,0 +1,124 @@
+id: grafana
+name: Grafana
+category: monitoring
+vendor: Grafana Labs
+author: haxxm0nkey
+
+credentials:
+
+  - id: default-admin
+    name: Default Admin Login
+    description: >
+      Grafana ships with a default admin user for first sign-in. Grafana
+      documents the default username and password as admin/admin unless
+      changed through configuration or packaging.
+    type: username_password
+    nature: [static_default]
+    sensitivity: secret
+    default:
+      username: admin
+      password: admin
+    location:
+      - type: public_interface
+        path: /login
+        detail: Grafana web UI, default port 3000
+      - type: config_file
+        path: grafana.ini
+        detail: '[security] admin_user and admin_password override defaults'
+      - type: environment
+        path: GF_SECURITY_ADMIN_USER, GF_SECURITY_ADMIN_PASSWORD
+      - type: secret_store
+        detail: Helm/Kubernetes Secrets, Docker secrets, CI/CD variables
+    notes: >
+      The first-login password-change prompt is not a substitute for changing
+      the default before exposure. Admin access can read dashboards, data
+      source configuration, and other stored integration secrets.
+
+  - id: kube-prometheus-stack-admin
+    name: kube-prometheus-stack Default Admin
+    description: >
+      The kube-prometheus-stack Helm chart deploys Grafana with a chart-level
+      admin password override commonly set to prom-operator.
+    type: username_password
+    nature: [static_default]
+    sensitivity: secret
+    default:
+      username: admin
+      password: prom-operator
+    location:
+      - type: public_interface
+        path: /login
+        detail: Grafana web UI deployed by kube-prometheus-stack
+      - type: config_file
+        path: values.yaml
+        detail: grafana.adminPassword
+      - type: secret_store
+        detail: Kubernetes Secret rendered by the Helm release
+    notes: >
+      This is a distribution-specific Grafana credential, not Grafana
+      upstream's own default. It belongs in the Grafana entry because security
+      engineers searching for Grafana defaults expect to find it there.
+
+  - id: local-user-admin-password
+    name: Local User / Administrator Password
+    description: >
+      Grafana local users authenticate with username/email and password unless
+      an external identity provider is used. Admin users are operator-created
+      or bootstrapped from the initial admin account.
+    type: username_password
+    nature: [user_defined]
+    sensitivity: secret
+    location:
+      - type: public_interface
+        path: /login
+      - type: database
+        detail: Grafana user table in the configured database; password hashes are stored server-side
+      - type: config_file
+        path: grafana.ini
+        detail: auth and security settings affecting local login
+      - type: secret_store
+        detail: password managers and identity-provider vaults
+    notes: >
+      Local password blast radius depends on the user's organization role and
+      Grafana permissions. Admin users can usually reach data source secrets
+      and service account tokens.
+
+  - id: service-account-token
+    name: Service Account Token
+    description: >
+      Grafana service account tokens are bearer tokens used by automation and
+      integrations to call Grafana APIs with the permissions assigned to the
+      service account.
+    type: token
+    nature: [generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - example: 'glsa_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: 'glsa_[A-Za-z0-9_\-]{20,}'
+        detail: Grafana service account token prefix used by current Grafana releases
+    location:
+      - type: http_header
+        path: Authorization
+        detail: Bearer token used by Grafana HTTP APIs
+      - type: environment
+        path: GRAFANA_TOKEN, GRAFANA_AUTH, GF_SECURITY_ADMIN_API_KEY
+      - type: secret_store
+        detail: CI/CD variables, Kubernetes Secrets, Terraform variables, cloud secret managers
+      - type: source_code
+        detail: Terraform providers, dashboards-as-code tooling, automation scripts
+      - type: config_file
+        detail: .env files, provisioning jobs, deployment manifests
+    notes: >
+      Grafana deprecated legacy API keys in favor of service accounts and
+      service account tokens. Scope and organization membership determine
+      impact.
+
+references:
+  - type: docs
+    url: https://grafana.com/docs/grafana/latest/setup-grafana/sign-in-to-grafana/
+  - type: docs
+    url: https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/
+  - type: docs
+    url: https://grafana.com/docs/grafana/latest/administration/service-accounts/
+  - type: docs
+    url: https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack
