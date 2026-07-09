@@ -1,0 +1,93 @@
+id: qnap
+name: QNAP QTS / QuTS hero
+category: network
+vendor: QNAP
+author: haxxm0nkey
+credentials:
+- id: admin-user-password
+  name: QNAP Administrator/User Password
+  description: QNAP systems use local and directory users for the web admin UI, SSH, file
+    services, apps, and APIs. Modern firmware may disable the default admin account or require
+    setup-defined credentials.
+  type: username_password
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: QTS/QuTS hero web UI, SSH, SMB/NFS/AFP, WebDAV, apps, and management APIs
+  - type: config_file
+    detail: /etc/config/shadow, account config files, and app configuration
+  - type: database
+    detail: system and application databases storing user/session metadata
+  - type: secret_store
+    detail: password vaults, HBS backup stores, and directory services
+  - type: logs
+    detail: system event logs, auth logs, web logs, and app logs
+  notes: No universal QNAP admin password is modeled; default admin behavior changed across
+    firmware and setup modes.
+- id: api-session-token
+  name: QTS API Session Token
+  description: QNAP web/API clients authenticate with session IDs, cookies, or CSRF-style
+    tokens that authorize management operations until expiry/logout.
+  type: token
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Cookie
+    detail: QTS/QuTS web and API session cookies
+  - type: http_response
+    detail: API login responses containing session ID/token fields
+  - type: config_file
+    detail: automation client caches and scripts
+  - type: logs
+    detail: web access logs, API traces, and reverse proxy logs
+- id: app-backup-cloud-secrets
+  name: App, Backup, Cloud, and Service Secrets
+  description: QNAP apps and services store credentials for HBS/Hybrid Backup Sync, cloud
+    storage, myQNAPcloud, containers, virtualization, surveillance cameras, LDAP/AD, SMTP,
+    VPN, and databases.
+  type: secret_value
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: config_file
+    detail: QPKG app configs, /etc/config, Container Station compose files, VPN and cloud
+      sync configs
+  - type: database
+    detail: QNAP app databases and system credential records
+  - type: secret_store
+    detail: internal app credential stores, backup vaults, and password managers
+  - type: artifact
+    detail: system configuration backups and diagnostic dumps
+  - type: logs
+    detail: HBS, cloud, container, VPN, and app debug logs
+- id: certificate-ssh-vpn-key
+  name: Certificate / SSH / VPN Private Key
+  description: QNAP devices store TLS certificate keys, SSH host/user keys, VPN keys, and
+    app-specific private keys.
+  type: key_pair
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: '-----BEGIN (RSA |EC |OPENSSH |ENCRYPTED |)PRIVATE KEY-----'
+    detail: private key material from QNAP TLS, SSH, VPN, or app configurations
+  location:
+  - type: config_file
+    detail: certificate directories, SSH keys, VPN configs, and QPKG app key files
+  - type: secret_store
+    detail: certificate stores and backup vaults
+  - type: artifact
+    detail: configuration backups, app backups, and support bundles
+references:
+- type: docs
+  url: https://docs.qnap.com/operating-system/qts/5.1.x/en-us/user-management-94015D8B.html
+- type: docs
+  url: https://docs.qnap.com/operating-system/qts/5.1.x/en-us/security-19DF2921.html

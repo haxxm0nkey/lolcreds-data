@@ -1,0 +1,84 @@
+id: harbor
+name: Harbor
+category: ci_cd
+vendor: CNCF / VMware
+author: haxxm0nkey
+credentials:
+- id: admin-password
+  name: Harbor Administrator Password
+  description: Harbor creates a local administrator account for portal, registry, and API
+    administration. The initial password is deployment-configured in harbor.yml or Helm values.
+  type: username_password
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: Harbor portal, REST API, Docker/OCI registry endpoints, and robot/account flows
+  - type: database
+    detail: Harbor database user and auth tables storing password verifier state
+  - type: config_file
+    path: harbor.yml, values.yaml
+    detail: initial admin password, auth mode, database, Redis, and registry settings
+  - type: environment
+    path: HARBOR_ADMIN_PASSWORD
+  - type: secret_store
+    detail: Kubernetes Secrets, Helm secrets, Docker Compose secrets, and password vaults
+  - type: logs
+    detail: core, portal, registry, jobservice, and authentication logs
+  notes: No literal default is modeled; packaged examples often show placeholders, while real
+    deployments set or generate the admin password.
+- id: robot-account-token
+  name: Robot Account Token
+  description: Harbor robot accounts use generated tokens for pull/push automation and CI/CD
+    registry access.
+  type: token
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Basic authentication with robot account name and token for registry/API access
+  - type: database
+    detail: robot account records and token metadata
+  - type: config_file
+    detail: Docker config.json, Kubernetes imagePullSecrets, CI manifests, and Helm values
+  - type: environment
+    path: HARBOR_ROBOT_TOKEN, HARBOR_TOKEN
+  - type: secret_store
+    detail: Kubernetes Secrets, CI/CD variables, and vault entries
+  - type: source_code
+    detail: deployment repos, image pull secret templates, and test configs
+  - type: logs
+    detail: registry auth logs and CI output
+- id: oidc-ldap-database-secrets
+  name: OIDC, LDAP, Database, and Registry Secrets
+  description: Harbor deployments store OIDC client secrets, LDAP bind passwords, database
+    passwords, Redis passwords, registry HTTP secrets, token signing material, and scanner/replication
+    credentials.
+  type: secret_value
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: config_file
+    path: harbor.yml, values.yaml
+    detail: auth, database, Redis, registry, token, scanner, and replication settings
+  - type: database
+    detail: replication endpoints, scanner credentials, OIDC/LDAP settings, and encrypted
+      secrets
+  - type: secret_store
+    detail: Kubernetes Secrets, Docker secrets, external vaults, and Helm secret stores
+  - type: source_code
+    detail: Helm charts, Terraform, and deployment manifests
+  - type: artifact
+    detail: Harbor backups and support bundles
+references:
+- type: docs
+  url: https://goharbor.io/docs/2.10.0/administration/configure-authentication/
+- type: docs
+  url: https://goharbor.io/docs/2.10.0/administration/robot-accounts/

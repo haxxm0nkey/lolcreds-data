@@ -1,0 +1,97 @@
+id: memcached
+name: Memcached
+category: database
+vendor: Memcached
+author: haxxm0nkey
+credentials:
+- id: unauthenticated-default
+  name: Unauthenticated Cache Access
+  description: Memcached commonly accepts client commands without authentication unless SASL,
+    TLS client authentication, or an external access-control wrapper is configured. Anyone
+    with network access can read/write cache entries in such deployments.
+  type: username_password
+  nature:
+  - unauthenticated_default
+  sensitivity: secret
+  default:
+    username: null
+    password: null
+  location:
+  - type: public_interface
+    path: Memcached TCP/UDP listener, commonly :11211
+    detail: text/binary protocol listener accepting commands without SASL authentication
+  - type: config_file
+    path: memcached systemd/init options, container args
+    detail: SASL/TLS/listen-address options determine whether credentials are required and
+      where the service is exposed
+  - type: logs
+    detail: memcached startup logs and service manager output showing SASL/TLS/listen configuration
+  notes: This represents no authentication requirement, not an empty password. Exposure depends
+    on bind address, UDP/TCP exposure, firewalling, SASL build/configuration, TLS client-auth
+    settings, and cloud/security-group controls.
+- id: sasl-user-password
+  name: SASL Username and Password
+  description: Memcached can be built/configured with SASL authentication. Clients authenticate
+    with username/password credentials before cache operations are allowed.
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: Memcached TCP/TLS client port and SASL-enabled client libraries
+  - type: config_file
+    detail: SASL database files, memcached systemd/init options, container env files, and
+      app configs
+  - type: secret_store
+    detail: SASL secret databases, Kubernetes Secrets, and password vaults
+  - type: source_code
+    detail: application configs, tests, and cache client settings
+  - type: logs
+    detail: memcached startup logs and client authentication failures
+  notes: Many memcached deployments historically run without authentication; unauthenticated
+    exposure is not modeled as a default password.
+- id: application-cache-credential
+  name: Application Cache Connection Secret
+  description: Applications may store memcached usernames, passwords, TLS client keys, and
+    connection URIs for SASL/TLS-enabled cache clusters or managed memcached services.
+  type: secret_value
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: config_file
+    detail: application.yml, .env files, Docker Compose, Helm values, and cache client configs
+  - type: environment
+    path: MEMCACHED_USERNAME, MEMCACHED_PASSWORD, MEMCACHED_URI
+  - type: secret_store
+    detail: CI/CD variables, cloud secret managers, and Kubernetes Secrets
+  - type: source_code
+    detail: application repositories and integration tests
+  - type: logs
+    detail: cache client debug output and connection errors
+- id: tls-client-private-key
+  name: TLS Client/Server Private Key
+  description: TLS-enabled memcached deployments use certificate private keys and trust material
+    to secure cache traffic and optionally authenticate clients.
+  type: key_pair
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: '-----BEGIN (RSA |EC |ENCRYPTED |)PRIVATE KEY-----'
+    detail: private key material for memcached TLS server or client authentication
+  location:
+  - type: config_file
+    detail: memcached TLS key/cert options, service units, and container mounts
+  - type: secret_store
+    detail: Kubernetes Secrets, certificate stores, and vaults
+  - type: artifact
+    detail: deployment backups and diagnostics bundles
+references:
+- type: docs
+  url: https://github.com/memcached/memcached/wiki/SASLHowto
+- type: docs
+  url: https://docs.memcached.org/features/tls/

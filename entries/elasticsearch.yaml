@@ -17,7 +17,7 @@ credentials:
     sensitivity: secret
     default:
       username: elastic
-      password: (empty)
+      password: null
     location:
       - type: public_interface
         path: Elasticsearch HTTP API, Kibana login

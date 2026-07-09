@@ -1,0 +1,103 @@
+id: clickhouse
+name: ClickHouse
+category: database
+vendor: ClickHouse
+author: haxxm0nkey
+credentials:
+- id: default-user-blank-password
+  name: Default User with Blank Password
+  description: ClickHouse packages include a default user. Many default/example configurations
+    allow the default user with no password, especially for local or development deployments,
+    until operators configure users.xml/users.d secrets.
+  type: username_password
+  nature:
+  - static_default
+  - user_defined
+  sensitivity: secret
+  default:
+    username: default
+    password: null
+  location:
+  - type: public_interface
+    path: ClickHouse native TCP, HTTP interface, clickhouse-client, JDBC/ODBC, and web integrations
+  - type: config_file
+    path: users.xml, users.d/*.xml
+    detail: user password, password_sha256_hex, networks, profiles, and quotas
+  - type: secret_store
+    detail: Kubernetes Secrets, ClickHouse Keeper/ZooKeeper stores, and password vaults
+  - type: logs
+    detail: query_log, text_log, server logs, and authentication failures
+  notes: 'Treat this as a default/no-password configuration risk: the default user name exists
+    and the password is absent, so `default.password` is null rather than an empty-string
+    credential. Hardened production deployments should set a password or external authentication.'
+- id: user-password-hash
+  name: ClickHouse User Password / Hash
+  description: ClickHouse users can be configured with plaintext passwords, SHA256/double-SHA1
+    hashes, LDAP/Kerberos, or SQL-managed access control.
+  type: username_password
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - pattern: <password(_sha256_hex|_double_sha1_hex)?>[^<]*</password(_sha256_hex|_double_sha1_hex)?>
+    detail: ClickHouse XML user password or password hash field
+  - pattern: IDENTIFIED\s+WITH\s+\w+\s+BY
+    detail: ClickHouse SQL user creation syntax containing an authentication secret
+  location:
+  - type: config_file
+    path: users.xml, users.d/*.xml, config.xml
+    detail: local users, LDAP/Kerberos auth, interserver credentials, and profiles
+  - type: database
+    detail: SQL access-control storage and system tables for users/roles where enabled
+  - type: public_interface
+    path: native TCP, HTTP API, SQL clients, and cluster interserver endpoints
+  - type: secret_store
+    detail: Kubernetes Secrets, cloud secret managers, and password vaults
+  - type: source_code
+    detail: deployment manifests, application configs, and test fixtures
+- id: interserver-replication-secret
+  name: Interserver / Replication / Keeper Secret
+  description: ClickHouse clusters use interserver HTTP credentials, distributed DDL/Keeper/ZooKeeper
+    credentials, macros, TLS keys, and replication secrets for node-to-node operations.
+  type: secret_value
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: config_file
+    path: config.xml, conf.d/*.xml
+    detail: interserver_http_credentials, remote_servers secrets, Keeper/ZooKeeper auth, and
+      cluster config
+  - type: secret_store
+    detail: Kubernetes Secrets, Keeper/ZooKeeper ACL stores, and deployment vaults
+  - type: logs
+    detail: replication, distributed DDL, Keeper, and interserver logs
+- id: tls-private-key
+  name: TLS Private Key
+  description: ClickHouse can use TLS certificates/private keys for native, HTTPS, interserver,
+    and Keeper communication.
+  type: key_pair
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: '-----BEGIN (RSA |EC |ENCRYPTED |)PRIVATE KEY-----'
+    detail: private key material for ClickHouse TLS server/client or interserver authentication
+  location:
+  - type: config_file
+    path: config.xml, certs/
+    detail: openSSL server/client key files and TLS settings
+  - type: secret_store
+    detail: Kubernetes Secrets, certificate stores, and vaults
+  - type: artifact
+    detail: cluster backups and diagnostics bundles
+references:
+- type: docs
+  url: https://clickhouse.com/docs/operations/settings/settings-users
+- type: docs
+  url: https://clickhouse.com/docs/operations/access-rights
+- type: docs
+  url: https://clickhouse.com/docs/guides/sre/configuring-ssl

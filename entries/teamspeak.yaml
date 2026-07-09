@@ -1,0 +1,92 @@
+id: teamspeak
+name: TeamSpeak Server
+category: other
+vendor: TeamSpeak Systems
+author: haxxm0nkey
+credentials:
+- id: serveradmin-password
+  name: serveradmin Query Password
+  description: TeamSpeak Server creates a privileged ServerQuery account named serveradmin
+    at first start and prints its generated password for administration.
+  type: username_password
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: ServerQuery TCP interface, SSH/telnet-style query clients, and management tools
+  - type: database
+    detail: TeamSpeak server database client/server group and query login records
+  - type: config_file
+    detail: startup logs, provisioning scripts, and query client configs
+  - type: logs
+    detail: first-start server logs containing generated serveradmin password and privilege
+      key output
+  notes: The serveradmin password is generated at first launch; if lost it is reset through
+    TeamSpeak server tooling.
+- id: privilege-key
+  name: Privilege Key / Token
+  description: TeamSpeak generates privilege keys that grant server admin or group membership
+    when redeemed by a client.
+  type: token
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: ^[A-Za-z0-9+/]{20,}={0,2}$
+    detail: TeamSpeak privilege key/token specimen; context identifies it as a privilege key
+  location:
+  - type: logs
+    detail: first-start logs and token generation output
+  - type: database
+    detail: TeamSpeak token/privilege key records
+  - type: config_file
+    detail: deployment notes, admin runbooks, and bot configs
+  - type: secret_store
+    detail: password managers and server admin vaults
+- id: client-identity-and-api-secret
+  name: Client Identity / Bot Credential
+  description: TeamSpeak bots, query clients, and integrations use ServerQuery credentials,
+    API keys where enabled, and client identity/private key material for automated administration.
+  type: secret_value
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: config_file
+    detail: bot configs, query client configs, .env files, and service units
+  - type: database
+    detail: TeamSpeak database client identities, permissions, and query accounts
+  - type: secret_store
+    detail: bot credential vaults and CI/CD variables
+  - type: source_code
+    detail: bot repositories and automation scripts
+  - type: logs
+    detail: bot debug logs and query traces
+- id: database-and-filetransfer-secrets
+  name: Database / File Transfer / Voice Server Secrets
+  description: TeamSpeak deployments can store database credentials, file transfer secrets,
+    license keys, and service passwords in configuration and runtime files.
+  type: secret_value
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: config_file
+    detail: ts3server.ini, database plugin config, licensekey.dat, service units, and Docker
+      env files
+  - type: database
+    detail: server database containing permissions, tokens, and client state
+  - type: secret_store
+    detail: Docker/Kubernetes secrets and password vaults
+  - type: artifact
+    detail: server backups and migration bundles
+references:
+- type: docs
+  url: https://community.teamspeak.com/t/serveradmin-password/2982
+- type: docs
+  url: https://docs.teamspeak.com/server/permissions/

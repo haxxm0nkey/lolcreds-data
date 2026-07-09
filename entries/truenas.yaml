@@ -1,0 +1,98 @@
+id: truenas
+name: TrueNAS
+category: network
+vendor: iXsystems
+author: haxxm0nkey
+credentials:
+- id: admin-root-password
+  name: TrueNAS Root/Admin Password
+  description: TrueNAS CORE and SCALE use local administrative accounts for the web UI, SSH,
+    middleware/API, and console. Credentials are set during installation or first boot.
+  type: username_password
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: TrueNAS web UI, SSH, console, REST/WebSocket API, and middleware CLI
+  - type: database
+    detail: TrueNAS configuration database storing users, groups, and credential metadata
+  - type: config_file
+    detail: configuration database backups, SSH settings, and system dataset files
+  - type: secret_store
+    detail: password vaults and configuration backup stores
+  - type: logs
+    detail: middlewared logs, auth logs, SSH logs, and audit/system logs
+  notes: No universal TrueNAS root/admin password is modeled; installer/setup defines it.
+- id: api-key
+  name: API Key
+  description: TrueNAS supports API keys for authenticated automation access to the middleware
+    API.
+  type: api_key
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Bearer token/API key used by TrueNAS API clients
+  - type: database
+    detail: TrueNAS configuration database API key records
+  - type: config_file
+    detail: automation scripts, Terraform/Ansible configs, and .env files
+  - type: environment
+    path: TRUENAS_API_KEY, TRUENAS_TOKEN
+  - type: secret_store
+    detail: CI/CD variables, password vaults, and automation secret stores
+  - type: logs
+    detail: middlewared API logs and client traces
+- id: storage-directory-cloud-secrets
+  name: Storage, Directory, Cloud, and Share Secrets
+  description: TrueNAS stores credentials for SMB/NFS/iSCSI, LDAP/AD/Kerberos, cloud credentials,
+    replication tasks, rsync modules, S3, apps, and backup integrations.
+  type: secret_value
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: database
+    detail: TrueNAS configuration database cloud credentials, directory services, replication,
+      sharing, and app settings
+  - type: config_file
+    detail: configuration database backups, Kerberos keytabs, SMB secrets, app charts, and
+      replication configs
+  - type: secret_store
+    detail: TrueNAS encrypted config backups, Kubernetes/app secrets, and external vaults
+  - type: artifact
+    detail: system config backups, debug bundles, and ZFS replication configs
+  - type: logs
+    detail: middlewared, directory service, replication, app, and sharing logs
+- id: certificate-ssh-key
+  name: Certificate / SSH / Replication Private Key
+  description: TrueNAS manages TLS certificates, SSH keys for replication/rsync, host keys,
+    and service certificate/private key material.
+  type: key_pair
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: '-----BEGIN (RSA |EC |OPENSSH |ENCRYPTED |)PRIVATE KEY-----'
+    detail: private key material from TrueNAS certificates, SSH, replication, or app configs
+  location:
+  - type: database
+    detail: TrueNAS configuration database certificate and key records
+  - type: config_file
+    detail: SSH key files, certificate exports, replication keys, and app secret mounts
+  - type: secret_store
+    detail: configuration backup password stores and certificate vaults
+  - type: artifact
+    detail: debug bundles and configuration backups
+references:
+- type: docs
+  url: https://www.truenas.com/docs/scale/scaletutorials/credentials/
+- type: docs
+  url: https://www.truenas.com/docs/core/coretutorials/accounts/

@@ -1,0 +1,106 @@
+id: portainer-rancher
+name: Portainer / Rancher
+category: ci_cd
+vendor: Portainer / SUSE Rancher
+author: haxxm0nkey
+credentials:
+- id: admin-password
+  name: Initial Administrator Password
+  description: Portainer and Rancher both create an initial administrator through setup or
+    bootstrap flows for UI/API access to container and Kubernetes environments.
+  type: username_password
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: Portainer UI/API and Rancher UI/API
+  - type: database
+    detail: Portainer database or Rancher management cluster storing users, auth providers,
+      and password hashes
+  - type: config_file
+    detail: Docker Compose, Helm values, bootstrap password, and deployment manifests
+  - type: secret_store
+    detail: Kubernetes Secrets, Docker secrets, password vaults, and bootstrap secrets
+  - type: logs
+    detail: server, API, auth, and setup logs
+  notes: No shared universal admin password is modeled; setup flows create or display one-time/bootstrap
+    credentials.
+- id: api-access-token
+  name: API Access Token / Key
+  description: Portainer and Rancher issue API tokens/access keys for CLI, API, Terraform,
+    GitOps, and automation clients.
+  type: api_key
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Bearer token or access key used by Portainer/Rancher APIs
+  - type: database
+    detail: API key/token records, access keys, and session stores
+  - type: config_file
+    detail: CLI configs, Terraform providers, kubeconfigs, scripts, and .env files
+  - type: environment
+    path: PORTAINER_TOKEN, RANCHER_TOKEN, CATTLE_ACCESS_KEY, CATTLE_SECRET_KEY
+  - type: secret_store
+    detail: CI/CD variables, Kubernetes Secrets, and vaults
+  - type: source_code
+    detail: cluster automation repos, GitOps configs, and tests
+  - type: logs
+    detail: API client traces and controller logs
+- id: kubeconfig-and-cluster-secret
+  name: Kubeconfig / Cluster Registration Secret
+  description: Rancher and Portainer manage Kubernetes clusters using kubeconfigs, service
+    account tokens, registration tokens, agent secrets, and cluster certificates.
+  type: token
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+
+    detail: JWT-style Kubernetes/Rancher service account or API token
+  - pattern: '-----BEGIN (RSA |EC |ENCRYPTED |)PRIVATE KEY-----'
+    detail: private key in kubeconfig or cluster certificate material
+  location:
+  - type: config_file
+    path: kubeconfig, values.yaml, docker-compose.yml
+    detail: cluster credentials, agent registration tokens, and service account tokens
+  - type: secret_store
+    detail: Kubernetes Secrets, Rancher cattle-system secrets, Portainer endpoint credentials,
+      and vaults
+  - type: artifact
+    detail: cluster backups, exported kubeconfigs, and support bundles
+  - type: source_code
+    detail: GitOps repositories and cluster bootstrap scripts
+- id: registry-ldap-oauth-secrets
+  name: Registry, LDAP, OAuth, and Git Integration Secrets
+  description: Portainer/Rancher deployments store registry credentials, LDAP/OIDC client
+    secrets, Git repository credentials, cloud provider keys, and webhook secrets.
+  type: secret_value
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: database
+    detail: registry, endpoint, auth provider, and Git integration credential records
+  - type: config_file
+    detail: Helm values, environment files, provider configs, and app templates
+  - type: secret_store
+    detail: Kubernetes Secrets, Docker secrets, cloud secret managers, and vaults
+  - type: logs
+    detail: auth provider, registry, Git, and controller debug logs
+references:
+- type: docs
+  url: https://docs.portainer.io/admin/settings/authentication
+- type: docs
+  url: https://docs.portainer.io/api/access
+- type: docs
+  url: https://ranchermanager.docs.rancher.com/reference-guides/about-the-api/api-tokens
+- type: docs
+  url: https://ranchermanager.docs.rancher.com/how-to-guides/new-user-guides/authentication-permissions-and-global-configuration/authentication-config

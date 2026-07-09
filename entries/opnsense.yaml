@@ -1,0 +1,99 @@
+id: opnsense
+name: OPNsense
+category: network
+vendor: Deciso / OPNsense
+author: haxxm0nkey
+credentials:
+- id: default-root
+  name: Default root Login
+  description: OPNsense default console/web credentials for fresh installations are used to
+    complete initial setup and should be changed immediately.
+  type: username_password
+  nature:
+  - static_default
+  - user_defined
+  sensitivity: secret
+  default:
+    username: root
+    password: opnsense
+  location:
+  - type: public_interface
+    path: OPNsense web GUI, console, SSH, and API-capable plugins
+  - type: config_file
+    path: /conf/config.xml
+    detail: system users and hashed passwords
+  - type: artifact
+    detail: configuration backups and diagnostics bundles
+- id: local-user-password
+  name: Local User Password Hash
+  description: OPNsense local users authenticate to the web GUI, console/SSH, captive portal,
+    VPN, and package/plugin services.
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: <user>.*?<name>[^<]+</name>.*?<password>[^<]+</password>
+    detail: OPNsense config.xml user entry containing username and password hash
+  location:
+  - type: config_file
+    path: /conf/config.xml
+    detail: user manager entries, groups, privileges, and password hashes
+  - type: public_interface
+    path: web GUI, SSH/console, VPN, captive portal, and plugins
+  - type: secret_store
+    detail: password managers and firewall backup vaults
+  - type: logs
+    detail: system, auth, web GUI, VPN, and captive portal logs
+- id: api-key-secret
+  name: API Key and Secret
+  description: OPNsense supports API keys/secrets for automation and plugin APIs. The key
+    and secret together authorize API operations for the associated user privileges.
+  type: api_key
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Basic authentication using API key and secret
+  - type: config_file
+    path: /conf/config.xml
+    detail: API key metadata and user association
+  - type: environment
+    path: OPNSENSE_API_KEY, OPNSENSE_API_SECRET
+  - type: secret_store
+    detail: CI/CD variables and network automation vaults
+  - type: source_code
+    detail: Terraform/Ansible scripts and monitoring configs
+  - type: logs
+    detail: API and web GUI access logs
+- id: vpn-snmp-ldap-radius-secrets
+  name: VPN, SNMP, LDAP, RADIUS, and Certificate Secrets
+  description: OPNsense config backups include VPN keys/PSKs, SNMP communities, LDAP bind
+    passwords, RADIUS shared secrets, certificates/private keys, PPP credentials, and plugin
+    secrets.
+  type: secret_value
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - pattern: '-----BEGIN (RSA |EC |OPENVPN |ENCRYPTED |)PRIVATE KEY-----'
+    detail: private key material from OPNsense certificate or VPN exports
+  location:
+  - type: config_file
+    path: /conf/config.xml
+    detail: VPN, certificate, SNMP, auth server, gateway, package, and plugin secrets
+  - type: secret_store
+    detail: configuration backup vaults and certificate stores
+  - type: artifact
+    detail: configuration backups, diagnostics, and VPN client exports
+  - type: source_code
+    detail: firewall automation repositories
+references:
+- type: docs
+  url: https://docs.opnsense.org/manual/settingsmenu.html
+- type: docs
+  url: https://docs.opnsense.org/development/api.html
