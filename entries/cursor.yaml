@@ -1,0 +1,103 @@
+id: cursor
+name: Cursor
+category: ai_api
+vendor: Anysphere
+author: haxxm0nkey
+credentials:
+- id: provider-api-key
+  name: Model Provider API Key
+  description: Cursor supports user-supplied API keys for model providers and may store or reference them through editor settings,
+    workspace files, environment variables, and OS secret storage.
+  type: api_key
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - example: sk-proj-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    pattern: sk-(proj|svcacct)-[A-Za-z0-9_-]{20,255}
+    detail: OpenAI project/service-account API key used as a Cursor custom provider key
+  - example: sk-ant-api03-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    pattern: sk-ant-[A-Za-z0-9_-]{20,255}
+    detail: Anthropic API key used as a Cursor custom provider key
+  - example: AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    pattern: AIza[0-9A-Za-z_-]{35}
+    detail: Google API key used by Gemini integrations
+  location:
+  - type: environment
+    path: OPENAI_API_KEY, ANTHROPIC_API_KEY, GOOGLE_API_KEY, GEMINI_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY, AZURE_OPENAI_API_KEY,
+      OPENROUTER_API_KEY
+  - type: config_file
+    platform:
+    - linux
+    path: ~/.config/Cursor/User/settings.json, ~/.config/Cursor/User/globalStorage/state.vscdb
+    detail: Cursor user settings and extension/global storage on Unix-like systems
+  - type: config_file
+    platform:
+    - windows
+    path: '%APPDATA%\Cursor\User\settings.json, %APPDATA%\Cursor\User\globalStorage\state.vscdb'
+    detail: Cursor user settings and extension/global storage on Windows
+  - type: config_file
+    path: .cursor/mcp.json, .cursor/rules, .cursor/rules.json, .vscode/settings.json, .env, .env.local, .env.production, devcontainer.json,
+      .devcontainer/devcontainer.json
+    detail: Project-local Cursor/MCP/rules/workspace files and environment files
+  - type: secret_store
+    detail: Cursor/VS Code SecretStorage, OS keychain, password vaults, CI/CD variables, and cloud secret managers
+  - type: source_code
+    detail: MCP server config, custom tools, notebooks, scripts, examples, test fixtures, and committed agent settings
+  - type: logs
+    detail: Cursor logs, extension host logs, MCP logs, terminal transcripts, request debug output, and crash reports
+  notes: Cursor documentation describes custom API-key configuration, but no stable Cursor-specific provider-token prefix
+    was found. Prefer provider-specific regexes and exact editor/workspace locations.
+- id: cursor-account-token
+  name: Cursor Account Token
+  description: Cursor account/session authentication state may be present in editor storage or OS secret storage.
+  type: token
+  nature:
+  - generated_on_install
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: config_file
+    platform:
+    - linux
+    path: ~/.config/Cursor/User/globalStorage/state.vscdb
+  - type: config_file
+    platform:
+    - windows
+    path: '%APPDATA%\Cursor\User\globalStorage\state.vscdb'
+  - type: secret_store
+    detail: OS keychain or VS Code-compatible SecretStorage used by Cursor account authentication
+  - type: logs
+    detail: Cursor account/auth troubleshooting output and extension host logs
+  notes: Account tokens are not known to have a stable public prefix; this entry relies on exact Cursor storage surfaces rather
+    than value shape.
+- id: mcp-server-secret
+  name: MCP Server Secret
+  description: Cursor MCP server configuration can contain API keys, bearer tokens, or command environment variables for tools
+    used by the editor agent.
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: config_file
+    path: .cursor/mcp.json, mcp.json, .vscode/mcp.json, .env, .env.local
+  - type: environment
+    path: GITHUB_TOKEN, GH_TOKEN, OPENAI_API_KEY, ANTHROPIC_API_KEY
+  - type: secret_store
+    detail: Password vaults, OS keychain, and CI/developer-environment secret stores referenced by MCP servers
+  - type: source_code
+    detail: MCP server command definitions, wrapper scripts, and agent tool configs
+  - type: logs
+    detail: MCP server stdout/stderr, Cursor logs, and terminal transcripts
+  notes: MCP secrets vary by server; only exact common env vars with strong provider patterns are included.
+references:
+- type: docs
+  url: https://docs.cursor.com/en/account/api-keys
+  note: Cursor API-key/account documentation.
+- type: docs
+  url: https://docs.cursor.com/en/context/mcp
+  note: Cursor MCP configuration documentation.
+- type: docs
+  url: https://docs.cursor.com/en/context/rules
+  note: Cursor project configuration/rules documentation.

@@ -1,0 +1,190 @@
+id: pinecone
+name: Pinecone
+category: database
+vendor: Pinecone
+author: haxxm0nkey
+credentials:
+- id: api-key
+  name: Pinecone API Key
+  description: 'Pinecone API keys authenticate requests to Pinecone Data Plane and Control Plane APIs. The official quickstart and SDK examples use PINECONE_API_KEY, and the API reference documents API-key authentication for Pinecone requests.
+
+    '
+  type: api_key
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Api-Key, X-Pinecone-API-Key, Authorization
+    detail: Pinecone REST, SDK, gateway, and proxy request authentication contexts
+  - type: environment
+    path: PINECONE_API_KEY
+  - type: config_file
+    path: .env, .env.local, .env.production, pinecone.yml, pinecone.yaml, config.yaml, config.yml, docker-compose.yml, compose.yml, values.yaml, deployment.yaml, notebook.ipynb
+    detail: Project-local, notebook, container, Kubernetes, Helm, and application configuration files
+  - type: secret_store
+    detail: Kubernetes Secrets, Docker secrets, CI/CD variables, cloud secret managers, hosted app config vars, IDE/agent secrets, and password vaults
+  - type: source_code
+    detail: Python/TypeScript/Java/Go clients, notebooks, RAG apps, LangChain/LlamaIndex integrations, MCP servers, tests, examples, and committed deployment code
+  - type: logs
+    detail: API debug logs, SDK traces, notebook output, CI logs, proxy logs, exception reports, and support bundles
+  notes: "Pinecone key values are opaque and no stable public prefix is documented. Scanner logic should prioritize env/header/client-argument context rather than value shape.\n PINECONE_TOKEN and host/environment variables were omitted from the scanner-facing environment location because the sourced docs emphasize PINECONE_API_KEY as the credential value; host, index, namespace, and project IDs are context rather than secrets."
+- id: service-account-oauth-secret
+  name: Service Account OAuth Client Secret / Access Token
+  description: 'Pinecone Admin API service-account workflows use OAuth token creation at login.pinecone.io. Client credentials and resulting access tokens authorize Admin API requests such as project, API-key, and organization management.
+
+    '
+  type: token
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Bearer access token used for Pinecone Admin API requests
+  - type: public_interface
+    path: https://login.pinecone.io/oauth/token, /oauth/token
+    detail: Pinecone OAuth token endpoint contexts
+  - type: environment
+    path: PINECONE_CLIENT_SECRET, PINECONE_SERVICE_ACCOUNT_SECRET, PINECONE_ACCESS_TOKEN
+  - type: config_file
+    path: .env, .env.local, .env.production, pinecone.yml, pinecone.yaml, config.yaml, config.yml, docker-compose.yml, compose.yml, values.yaml, deployment.yaml
+    detail: Admin automation, service-account, and deployment configuration files
+  - type: secret_store
+    detail: Kubernetes Secrets, Docker secrets, CI/CD variables, cloud secret managers, admin automation vaults, and password vaults
+  - type: source_code
+    detail: admin automation scripts, Terraform/Pulumi code, CI workflows, tests, examples, and committed service-account clients
+  - type: logs
+    detail: OAuth token exchange logs, Admin API traces, CI logs, proxy logs, and support bundles
+  notes: "Service-account secrets and access tokens are distinct from regular project API keys; both can be high-impact because they may create or revoke keys.\n Client and service-account IDs are not listed as credential-value locations; the client secret, service-account secret, and access token are the secret values."
+- id: cli-and-target-context
+  name: Pinecone CLI / Target Context Credential
+  description: 'Pinecone CLI and IDE/agent integrations store target context and authenticate before selecting projects, indexes, or databases. Local config and agent workspace files may contain API keys, target hosts, project identifiers, or generated snippets from the console.
+
+    '
+  type: api_key
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: environment
+    path: PINECONE_API_KEY
+  - type: config_file
+    path: mcp.json, claude_desktop_config.json, cursor.json, settings.json
+    detail: IDE, MCP, and workspace configuration files that may contain Pinecone API keys or generated target snippets. Pinecone CLI target files can also exist in user config directories, but exact filenames were not confirmed.
+  - type: config_file
+    path: mcp.json, claude_desktop_config.json, cursor.json, settings.json
+    detail: IDE, MCP, and workspace configuration files that may contain Pinecone API keys or generated target snippets. Pinecone CLI target files can also exist in user config directories, but exact filenames were not confirmed.
+  - type: secret_store
+    detail: IDE secret stores, OS keychains, CI/CD variables, cloud secret managers, and password vaults
+  - type: source_code
+    detail: agent skill configs, MCP servers, AI coding tool snippets, notebooks, examples, and committed workspace files
+  - type: logs
+    detail: CLI command output, IDE logs, agent logs, MCP traces, and CI output
+  notes: 'The target context may not be secret by itself, but it often appears next to Pinecone API keys or service-account tokens.
+
+    '
+- id: assistant-and-hosted-model-api-key
+  name: Pinecone Assistant / Hosted Model API Key
+  description: 'Pinecone Assistant and hosted inference APIs use Pinecone authentication to upload files, query assistants, generate embeddings, rerank, and manage assistant projects. Keys used in these contexts can expose assistant data, context snippets, and hosted-model usage.
+
+    '
+  type: api_key
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Api-Key, X-Pinecone-API-Key, Authorization
+    detail: Pinecone Assistant, inference, embedding, and rerank API request contexts
+  - type: environment
+    path: PINECONE_API_KEY, PINECONE_ASSISTANT_API_KEY
+  - type: public_interface
+    path: /assistant, /assistant/chat, /assistant/files, /embed, /rerank, /models
+    detail: Pinecone Assistant and hosted inference endpoint contexts
+  - type: config_file
+    path: .env, .env.local, .env.production, assistant.yaml, assistant.yml, pinecone.yml, pinecone.yaml, config.yaml, config.yml, notebook.ipynb
+    detail: Assistant, hosted model, notebook, and app configuration files
+  - type: secret_store
+    detail: Kubernetes Secrets, Docker secrets, CI/CD variables, hosted app config vars, cloud secret managers, and password vaults
+  - type: source_code
+    detail: assistant clients, RAG apps, notebooks, examples, tests, frontend/backend code, and committed demos
+  - type: logs
+    detail: assistant chat traces, file upload logs, inference request logs, notebook output, proxy logs, and support bundles
+  notes: 'Pinecone Assistant can store files, snippets, and conversation context; API keys protecting it can expose more than vector index metadata.
+
+    '
+- id: integration-provider-api-key
+  name: Embedding / RAG Integration Provider API Key
+  description: 'Pinecone applications commonly combine Pinecone keys with embedding, LLM, object-store, and data-source credentials. These are not Pinecone-native secrets, but Pinecone integrations often store them beside Pinecone config.
+
+    '
+  type: api_key
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: environment
+    path: OPENAI_API_KEY, ANTHROPIC_API_KEY, COHERE_API_KEY, VOYAGE_API_KEY, JINA_API_KEY, MISTRAL_API_KEY, GOOGLE_API_KEY, GEMINI_API_KEY, HUGGINGFACEHUB_API_TOKEN, HF_TOKEN, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
+  - type: config_file
+    path: .env, .env.local, .env.production, docker-compose.yml, compose.yml, values.yaml, deployment.yaml, config.yaml, config.yml, notebook.ipynb
+    detail: Pinecone RAG, embedding, data-ingestion, and deployment configuration files
+  - type: secret_store
+    detail: Kubernetes Secrets, Docker secrets, CI/CD variables, cloud secret managers, hosted app config vars, and password vaults
+  - type: source_code
+    detail: embedding pipelines, LangChain/LlamaIndex apps, notebooks, data ingestion jobs, tests, examples, and committed application code
+  - type: logs
+    detail: embedding API errors, ingestion traces, notebook output, CI logs, and support bundles
+  notes: 'Keep provider-specific token shapes in provider templates where available; this block captures the product-local storage context for Pinecone deployments.
+
+    '
+- id: vector-index-and-namespace-data-leakage
+  name: Vector Index / Namespace / Import Data Leakage
+  description: 'Pinecone indexes, namespaces, records, metadata, imports, backups, and assistant context can contain proprietary content, PII, embedded secrets, retrieval context, or sensitive tenant/project identifiers.
+
+    '
+  type: secret_value
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: context_dependent
+  location:
+  - type: public_interface
+    path: /vectors/upsert, /query, /vectors/fetch, /vectors/update, /vectors/delete, /describe_index_stats, /records/upsert, /namespaces, /bulk/imports
+    detail: Pinecone data-plane and import endpoint contexts that can expose records, metadata, and namespace data
+  - type: environment
+    path: PINECONE_INDEX, PINECONE_NAMESPACE, PINECONE_PROJECT_ID, PINECONE_HOST, PINECONE_INDEX_HOST
+  - type: config_file
+    path: .env, .env.local, .env.production, import.yaml, import.yml, pinecone.yml, pinecone.yaml, config.yaml, config.yml, notebook.ipynb
+    detail: Index, namespace, import, backup, and RAG application configuration files
+  - type: database
+    detail: vector IDs, records, metadata, namespace names, import records, assistant files, and retrieval context stored in Pinecone projects
+  - type: artifact
+    detail: vector export files, import manifests, backups, parquet/json/jsonl/csv datasets, notebook exports, support bundles, and model/RAG demo archives
+  - type: logs
+    detail: query traces, retrieved document logs, import logs, embedding logs, application debug logs, notebook output, and backup/restore output
+  notes: 'Treat this as context-dependent sensitive data. Scanner hits should identify places where Pinecone-connected apps expose data even when no credential value is present.
+
+    '
+references:
+- type: docs
+  url: https://docs.pinecone.io/guides/get-started/quickstart
+- type: docs
+  url: https://docs.pinecone.io/reference/api/authentication
+- type: docs
+  url: https://docs.pinecone.io/reference/api/control-plane/create_index
+- type: docs
+  url: https://docs.pinecone.io/reference/api/data-plane/upsert
+- type: docs
+  url: https://docs.pinecone.io/guides/indexes/understanding-indexes
+- type: docs
+  url: https://docs.pinecone.io/reference/api/2026-04/admin/create_api_key
+- type: docs
+  url: https://docs.pinecone.io/reference/api/2026-04/admin/get_token
+- type: docs
+  url: https://docs.pinecone.io/reference/cli/target-context

@@ -1,0 +1,116 @@
+id: vscode-ai-extensions
+name: Visual Studio Code AI Extensions
+category: ai_api
+vendor: Microsoft
+author: haxxm0nkey
+credentials:
+- id: extension-provider-api-key
+  name: AI Extension Provider API Key
+  description: VS Code AI extensions commonly use provider API keys supplied through environment variables, workspace settings,
+    extension settings, devcontainers, or SecretStorage.
+  type: api_key
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - example: sk-proj-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    pattern: sk-(proj|svcacct)-[A-Za-z0-9_-]{20,255}
+    detail: OpenAI key used by VS Code AI extensions
+  - example: «redacted:sk-…»
+    pattern: sk-ant-[A-Za-z0-9_-]{20,255}
+    detail: Anthropic key used by VS Code AI extensions
+  - example: «redacted:AIza…»
+    pattern: AIza[0-9A-Za-z_-]{35}
+    detail: Google API key used by Gemini extensions
+  location:
+  - type: environment
+    path: OPENAI_API_KEY, ANTHROPIC_API_KEY, GOOGLE_API_KEY, GEMINI_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY, AZURE_OPENAI_API_KEY,
+      OPENROUTER_API_KEY
+  - type: config_file
+    platform:
+    - linux
+    path: ~/.config/Code/User/settings.json, ~/.config/Code/User/globalStorage/state.vscdb, ~/.config/Code - Insiders/User/settings.json,
+      ~/.config/Code - Insiders/User/globalStorage/state.vscdb
+    detail: VS Code user settings and extension SecretStorage metadata/blobs on Unix-like systems
+  - type: config_file
+    platform:
+    - windows
+    path: '%APPDATA%\Code\User\settings.json, %APPDATA%\Code\User\globalStorage\state.vscdb, %APPDATA%\Code - Insiders\User\settings.json,
+      %APPDATA%\Code - Insiders\User\globalStorage\state.vscdb'
+    detail: VS Code user settings and extension SecretStorage metadata/blobs on Windows
+  - type: config_file
+    path: .vscode/settings.json, .vscode/mcp.json, mcp.json, .env, .env.local, .env.production, devcontainer.json, .devcontainer/devcontainer.json,
+      docker-compose.yml, compose.yml
+    detail: Workspace settings, MCP files, env files, and development container configuration used by AI extensions
+  - type: secret_store
+    detail: VS Code SecretStorage, OS keychain, password vaults, GitHub/Codespaces secrets, Docker secrets, Kubernetes Secrets,
+      and cloud secret managers
+  - type: source_code
+    detail: Extension settings examples, notebooks, scripts, test fixtures, tool configs, MCP server definitions, and prompt/agent
+      files
+  - type: logs
+    detail: Extension host logs, AI extension output channels, terminal transcripts, MCP server stdout/stderr, CI traces,
+      and debug dumps
+  notes: VS Code SecretStorage generally stores secrets through OS keychain-backed encrypted storage; state.vscdb is an exact
+    extension storage surface but not guaranteed plaintext.
+- id: copilot-token
+  name: GitHub Copilot Token
+  description: Built-in and marketplace Copilot integrations use GitHub/Copilot tokens, including environment variables passed
+    to integrated terminals or automation.
+  type: token
+  nature:
+  - generated_on_install
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: environment
+    path: COPILOT_GITHUB_TOKEN, GITHUB_COPILOT_GITHUB_TOKEN, GH_TOKEN, GITHUB_TOKEN
+  - type: config_file
+    platform:
+    - linux
+    path: ~/.config/Code/User/globalStorage/state.vscdb, ~/.config/Code/User/settings.json
+  - type: config_file
+    platform:
+    - windows
+    path: '%APPDATA%\Code\User\globalStorage\state.vscdb, %APPDATA%\Code\User\settings.json'
+  - type: config_file
+    path: .vscode/settings.json, .github/workflows/copilot-setup-steps.yml, .devcontainer/devcontainer.json, devcontainer.json
+  - type: secret_store
+    detail: VS Code SecretStorage, OS keychain, GitHub Actions secrets, Codespaces secrets, and enterprise secret stores
+  - type: logs
+    detail: Copilot Chat logs, extension host logs, coding-agent logs, and terminal traces
+  notes: GitHub token value shapes are intentionally modeled in github.yaml. This VS Code entry keeps editor/Copilot storage
+    and environment context only so it does not override canonical GitHub token classification.
+- id: mcp-server-secret
+  name: MCP Server Secret
+  description: VS Code MCP and AI-agent extensions can invoke local or remote MCP servers with API keys and OAuth tokens in
+    configuration or command environments.
+  type: secret_value
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: config_file
+    path: .vscode/mcp.json, mcp.json, .vscode/settings.json, settings.json, .env, .env.local
+  - type: environment
+    path: OPENAI_API_KEY, ANTHROPIC_API_KEY, GITHUB_TOKEN, GH_TOKEN
+  - type: secret_store
+    detail: VS Code SecretStorage, OS keychain, password vaults, and cloud secret managers used by MCP servers
+  - type: source_code
+    detail: MCP server command wrappers, extension configs, and workspace automation
+  - type: logs
+    detail: MCP server logs, extension output channels, terminal transcripts, and debug traces
+  notes: MCP credential formats vary by server; scanner value patterns should come from the specific provider or server template
+    where possible.
+references:
+- type: docs
+  url: https://code.visualstudio.com/docs/copilot/setup
+  note: VS Code Copilot and AI setup documentation.
+- type: docs
+  url: https://code.visualstudio.com/api/references/vscode-api#SecretStorage
+  note: VS Code SecretStorage API used by extensions to store secrets.
+- type: source
+  url: https://github.com/microsoft/vscode
+  note: VS Code source references globalStorage state.vscdb and SecretStorage.

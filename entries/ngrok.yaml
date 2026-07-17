@@ -1,0 +1,109 @@
+id: ngrok
+name: ngrok
+category: network
+vendor: ngrok
+author: haxxm0nkey
+
+credentials:
+- id: authtoken
+  name: Agent Authtoken
+  description: >
+    The ngrok agent authenticates with an authtoken. The ngrok CLI can write the
+    token to the agent configuration file with ngrok config add-authtoken, and
+    the agent also accepts NGROK_AUTHTOKEN as the corresponding environment
+    variable.
+  type: token
+  nature: [user_defined]
+  sensitivity: secret
+  looks_like:
+  - example: 'NGROK_AUTHTOKEN=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+    pattern: '(?i)NGROK_AUTHTOKEN\s*[:=]\s*[''\"]?[A-Za-z0-9_\-\.]{20,255}[''\"]?'
+    detail: ngrok agent authtoken supplied by environment variable
+  - example: 'authtoken: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+    pattern: '(?i)authtoken\s*:\s*[''\"]?[A-Za-z0-9_\-\.]{20,255}[''\"]?'
+    detail: ngrok agent authtoken in ngrok.yml
+  location:
+  - type: environment
+    path: NGROK_AUTHTOKEN
+  - type: config_file
+    platform:
+    - linux
+    path: ~/.config/ngrok/ngrok.yml, ~/Library/Application Support/ngrok/ngrok.yml
+    detail: Official default ngrok agent configuration files on Linux and macOS
+  - type: config_file
+    platform:
+    - windows
+    path: '%LOCALAPPDATA%\ngrok\ngrok.yml'
+    detail: Official default ngrok agent configuration file on Windows
+  - type: config_file
+    path: ngrok.yml, ngrok.yaml, docker-compose.yml, compose.yml, .env, .env.local, .env.production, deployment.yaml, values.yaml
+    detail: Project, container, and Kubernetes files that commonly pass the ngrok authtoken to the agent
+  - type: secret_store
+    detail: Docker secrets, Kubernetes Secrets, CI/CD variables, cloud secret managers, and password vaults
+  - type: source_code
+    detail: Startup scripts, Dockerfiles, compose files, deployment manifests, examples, tests, and documentation snippets
+  - type: logs
+    detail: Shell history, container logs, CI traces, startup logs, and debug output that may print config or env vars
+  notes: >
+    ngrok docs identify NGROK_AUTHTOKEN as the environment variable for the
+    authtoken configuration property. No stable public authtoken prefix was
+    confirmed, so patterns are contextual and include the ngrok-specific key
+    name rather than matching arbitrary opaque strings.
+
+- id: api-key
+  name: API Key
+  description: >
+    ngrok API keys authenticate requests to the ngrok API as bearer tokens. The
+    agent configuration also supports the api_key property and NGROK_API_KEY
+    environment variable.
+  type: api_key
+  nature: [user_defined]
+  sensitivity: secret
+  looks_like:
+  - example: 'NGROK_API_KEY=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+    pattern: '(?i)NGROK_API_KEY\s*[:=]\s*[''\"]?[A-Za-z0-9_\-\.]{20,255}[''\"]?'
+    detail: ngrok API key supplied by environment variable
+  - example: 'api_key: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+    pattern: '(?i)api_key\s*:\s*[''\"]?[A-Za-z0-9_\-\.]{20,255}[''\"]?'
+    detail: ngrok API key in ngrok.yml or Terraform provider configuration context
+  location:
+  - type: environment
+    path: NGROK_API_KEY
+  - type: http_header
+    path: Authorization
+    detail: ngrok API requests use bearer-token authentication
+  - type: config_file
+    platform:
+    - linux
+    path: ~/.config/ngrok/ngrok.yml, ~/Library/Application Support/ngrok/ngrok.yml
+    detail: Official default ngrok agent configuration files on Linux and macOS
+  - type: config_file
+    platform:
+    - windows
+    path: '%LOCALAPPDATA%\ngrok\ngrok.yml'
+    detail: Official default ngrok agent configuration file on Windows
+  - type: config_file
+    path: ngrok.yml, ngrok.yaml, terraform.tfvars, main.tf, providers.tf, docker-compose.yml, compose.yml, .env, .env.local, .env.production, values.yaml
+    detail: Project-local ngrok, Terraform, container, and deployment files that may contain api_key or NGROK_API_KEY
+  - type: secret_store
+    detail: Terraform Cloud variables, CI/CD variables, Docker secrets, Kubernetes Secrets, cloud secret managers, and password vaults
+  - type: source_code
+    detail: Terraform provider config, API clients, examples, scripts, tests, and deployment manifests
+  - type: logs
+    detail: Terraform logs, API debug logs, shell history, CI traces, and container startup output
+  notes: >
+    ngrok API documentation shows API keys used as bearer tokens in the
+    Authorization header. Patterns are contextual because no stable public
+    value prefix was confirmed.
+
+references:
+- type: docs
+  url: https://ngrok.com/docs/agent/
+- type: docs
+  url: https://ngrok.com/docs/agent/config/
+- type: docs
+  url: https://ngrok.com/docs/agent/cli/#ngrok-config-add-authtoken
+- type: docs
+  url: https://ngrok.com/docs/api/
+- type: docs
+  url: https://ngrok.com/docs/using-ngrok-with/docker/

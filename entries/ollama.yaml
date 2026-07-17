@@ -1,0 +1,221 @@
+id: ollama
+name: Ollama
+category: ai_api
+vendor: Ollama
+author: haxxm0nkey
+
+credentials:
+  - id: unauthenticated-local-api
+    name: Unauthenticated Ollama API
+    description: >
+      Ollama's documented local API listens on the configured OLLAMA_HOST and is
+      commonly accessed on localhost port 11434 without an application password
+      or API key. Binding the server to non-loopback interfaces can expose model
+      generation, chat, embedding, model pull/push, and model-management endpoints
+      unless protected by a reverse proxy, firewall, or Ollama authentication.
+    type: other
+    nature: [unauthenticated_default]
+    sensitivity: context_dependent
+    default:
+      username: null
+      password: null
+    location:
+      - type: public_interface
+        path: http://127.0.0.1:11434, http://localhost:11434, /api/generate, /api/chat, /api/embed, /api/tags, /api/pull, /api/push, /api/create, /api/delete
+        detail: Ollama API host and unauthenticated API endpoint contexts.
+      - type: environment
+        path: OLLAMA_HOST, OLLAMA_ORIGINS, OLLAMA_AUTH
+      - type: config_file
+        platform: [linux]
+        path: /etc/systemd/system/ollama.service, /etc/default/ollama, /etc/sysconfig/ollama, /usr/lib/systemd/system/ollama.service, ~/.ollama/server.json, ~/.config/ollama/server.json
+        detail: Linux service and user configuration that controls host binding, CORS origins, and auth-related settings.
+      - type: config_file
+        platform: [linux]
+        path: ~/Library/Application Support/Ollama/server.json, ~/Library/LaunchAgents/com.ollama.ollama.plist
+        detail: macOS user configuration and launch-agent contexts. CredsHound uses platform linux for Unix-like layouts.
+      - type: config_file
+        platform: [windows]
+        path: '%APPDATA%\Ollama\server.json, %LOCALAPPDATA%\Ollama\server.json, %USERPROFILE%\.ollama\server.json'
+        detail: Windows user configuration contexts.
+      - type: logs
+        detail: Ollama server logs, systemd journal, container logs, API traces, and reverse-proxy access logs.
+    notes: >
+      This represents absence of authentication, not a secret value. It is useful
+      for scanners because exposed Ollama APIs can be security-sensitive even when
+      no credential is present. OLLAMA_AUTH is a boolean auth toggle, not a token
+      value; it is listed here because it changes the authentication surface.
+
+  - id: ollama-api-key
+    name: Ollama API Key / Auth Token
+    description: >
+      Ollama cloud, hosted gateways, reverse proxies, or deployments with Ollama
+      authentication enabled can use API keys or bearer tokens for client/server
+      API access. Current Ollama docs and source use OLLAMA_API_KEY for cloud and
+      hosted API key flows. Betterleaks models Ollama API keys as a 32-hex prefix
+      followed by a dot and a 24-character URL-safe suffix in Ollama context.
+    type: api_key
+    nature: [generated_on_install, user_defined]
+    sensitivity: secret
+    looks_like:
+      - example: 00000000000000000000000000000000.XXXXXXXXXXXXXXXXXXXXXXXX
+        pattern: '[a-f0-9]{32}\.[A-Za-z0-9_-]{24}'
+        detail: Betterleaks ollama-api-key value shape.
+      - pattern: '(?i)ollama[ A-Za-z0-9_.-]{0,20}\s*[:=]\s*[''"]?([a-f0-9]{32}\.[A-Za-z0-9_-]{24})[''"]?'
+        detail: Contextual Ollama assignment form based on the Betterleaks ollama-api-key detector.
+    location:
+      - type: http_header
+        path: Authorization
+        detail: Bearer/API-key authorization header used by hosted Ollama-compatible APIs, proxies, or auth-enabled deployments.
+      - type: http_response
+        detail: Token creation, sign-in, or proxy credential responses that display the key value.
+      - type: environment
+        path: OLLAMA_API_KEY
+      - type: config_file
+        path: .env, .env.local, docker-compose.yml, compose.yml, values.yaml, config.yaml, config.yml
+        detail: Project-local and deployment configuration files used by Ollama clients, gateways, and containers.
+      - type: config_file
+        platform: [linux]
+        path: ~/.ollama/config.json, ~/.ollama/config/config.json, ~/.ollama/server.json, ~/.config/ollama/config.json, ~/.config/ollama/server.json
+        detail: Linux/macOS user-level Ollama configuration and auth/token cache contexts.
+      - type: config_file
+        platform: [linux]
+        path: ~/Library/Application Support/Ollama/config.json, ~/Library/Application Support/Ollama/server.json
+        detail: macOS user-level Ollama configuration and auth/token cache contexts. CredsHound uses platform linux for Unix-like layouts.
+      - type: config_file
+        platform: [windows]
+        path: '%APPDATA%\Ollama\config.json, %APPDATA%\Ollama\server.json, %LOCALAPPDATA%\Ollama\config.json, %LOCALAPPDATA%\Ollama\server.json, %USERPROFILE%\.ollama\config.json, %USERPROFILE%\.ollama\server.json'
+        detail: Windows user-level Ollama configuration and auth/token cache contexts.
+      - type: secret_store
+        detail: CI/CD variables, notebook secrets, cloud secret managers, Kubernetes Secrets, Docker secrets, and password vaults.
+      - type: source_code
+        detail: SDK clients, notebooks, agent configs, MCP/tool configs, evaluation scripts, examples, and committed application code.
+      - type: logs
+        detail: API debug logs, gateway logs, reverse-proxy logs, notebook output, CI traces, and exception reports.
+    notes: >
+      Local Ollama API deployments may not use this key at all. Use the key shape
+      and surrounding Ollama context to distinguish real Ollama auth tokens from
+      generic opaque secrets. OLLAMA_TOKEN and OLLAMA_AUTH_TOKEN were not added as
+      exact environment locations because current official source/docs checked for
+      this enrichment use OLLAMA_API_KEY for API-key material.
+
+  - id: openai-compatible-proxy-secret
+    name: OpenAI-compatible Proxy Secret
+    description: >
+      Ollama can be used through OpenAI-compatible clients and gateways. Many
+      deployments add a reverse proxy, API gateway, LiteLLM/OpenWebUI front-end,
+      or service mesh that injects or validates bearer tokens before forwarding
+      requests to Ollama.
+    type: token
+    nature: [user_defined, generated_on_install]
+    sensitivity: secret
+    location:
+      - type: http_header
+        path: Authorization, X-API-Key, Proxy-Authorization
+        detail: Headers commonly used by OpenAI-compatible clients and reverse proxies protecting Ollama.
+      - type: public_interface
+        path: /v1/chat/completions, /v1/completions, /v1/embeddings, /api/chat, /api/generate
+        detail: OpenAI-compatible and native Ollama endpoint contexts.
+      - type: environment
+        path: OPENAI_API_KEY, OLLAMA_API_KEY, LITELLM_MASTER_KEY, WEBUI_SECRET_KEY, OPEN_WEBUI_SECRET_KEY
+      - type: config_file
+        path: .env, .env.local, docker-compose.yml, compose.yml, values.yaml, litellm.yaml, config.yaml, config.yml
+        detail: Gateway, OpenAI-compatible client, and container deployment configuration files.
+      - type: secret_store
+        detail: Kubernetes Secrets, Docker secrets, CI/CD variables, cloud secret managers, gateway secret stores, and password vaults.
+      - type: source_code
+        detail: agent frameworks, notebooks, demos, tests, MCP servers, and committed SDK client code.
+      - type: logs
+        detail: proxy logs, gateway logs, API client traces, notebook output, and CI logs.
+    notes: >
+      This is product-focused because Ollama deployments often rely on external
+      proxy authentication rather than a native local-server password.
+
+  - id: model-registry-or-ssh-private-key
+    name: Model Registry / SSH Private Key
+    description: >
+      Ollama model distribution and developer workflows use an Ollama-owned SSH
+      key pair under the .ollama directory for cloud/model operations. Registry
+      credentials or hosted-service tokens can also be used to push, pull, or
+      manage private models and model artifacts.
+    type: key_pair
+    nature: [generated_on_install, user_defined]
+    sensitivity: secret
+    looks_like:
+      - pattern: '-----BEGIN (?:OPENSSH |RSA |EC |)PRIVATE KEY-----'
+        detail: SSH or PEM private key used by Ollama model registry, developer, or deployment workflows.
+    location:
+      - type: config_file
+        platform: [linux]
+        path: ~/.ollama/id_ed25519, /usr/share/ollama/.ollama/id_ed25519
+        detail: Linux/macOS Ollama-owned private-key locations. The matching public key is id_ed25519.pub and is not secret.
+      - type: config_file
+        platform: [windows]
+        path: '%USERPROFILE%\.ollama\id_ed25519'
+        detail: Windows Ollama-owned private-key location. The matching public key is id_ed25519.pub and is not secret.
+      - type: config_file
+        path: .env, docker-compose.yml, compose.yml, values.yaml, config.yaml, config.yml
+        detail: Deployment configuration that may mount model registry keys or tokens.
+      - type: secret_store
+        detail: Kubernetes Secrets, Docker secrets, CI/CD variables, cloud secret managers, SSH agents, and password vaults.
+      - type: source_code
+        detail: model publishing scripts, CI workflows, deployment automation, and committed examples.
+      - type: logs
+        detail: model push/pull logs, CI traces, SSH debug logs, and deployment output.
+      - type: artifact
+        detail: container images, VM images, model bundles, backups, and developer workstation archives.
+    notes: >
+      Public model names, model manifests, and id_ed25519.pub public keys are not
+      secrets. Generic ~/.ssh private-key files are intentionally not listed as
+      scanner-facing Ollama config_file locations because generic SSH key
+      detection belongs in CredsHound built-ins; this template keeps the
+      product-owned ~/.ollama key paths.
+
+  - id: model-cache-and-prompt-leakage
+    name: Model Cache / Prompt and Request Leakage
+    description: >
+      Ollama stores models and can log request bodies when debug request logging
+      is enabled. Model blobs are usually not credentials, but local model caches,
+      Modelfiles, request logs, and debug output can contain embedded prompts,
+      system messages, adapter paths, copied secrets, or proprietary model artifacts.
+    type: secret_value
+    nature: [user_defined, generated_on_install]
+    sensitivity: context_dependent
+    location:
+      - type: environment
+        path: OLLAMA_MODELS, OLLAMA_DEBUG_LOG_REQUESTS, OLLAMA_NOHISTORY, OLLAMA_REMOTES, OLLAMA_NO_CLOUD
+      - type: artifact
+        path: ~/.ollama/models, /usr/share/ollama/.ollama/models, /var/lib/ollama/.ollama/models, /var/lib/ollama/models, /opt/ollama/models
+        detail: Linux model-cache and service-account model directories.
+      - type: artifact
+        path: ~/Library/Application Support/Ollama/models, ~/.ollama/models
+        detail: macOS model-cache directories.
+      - type: artifact
+        path: '%USERPROFILE%\.ollama\models, %LOCALAPPDATA%\Ollama\models'
+        detail: Windows model-cache directories.
+      - type: config_file
+        path: Modelfile, .ollama_history
+        detail: Project-local Modelfiles and CLI history files that may contain prompts, templates, or copied secrets. Additional project-specific Modelfile names are possible but omitted to avoid globs.
+      - type: logs
+        detail: OLLAMA_DEBUG_LOG_REQUESTS output, server logs, API traces, notebook output, reverse-proxy logs, and CI logs.
+      - type: artifact
+        detail: model cache archives, container images, notebook exports, support bundles, and workstation backups.
+    notes: >
+      This block is context-dependent: model files are often legitimate artifacts,
+      but scanner hits in request logs, Modelfiles, and model-cache bundles may
+      reveal prompts, proprietary models, or copied secrets.
+
+references:
+  - type: docs
+    url: https://github.com/ollama/ollama/blob/main/docs/api.md
+  - type: docs
+    url: https://github.com/ollama/ollama/blob/main/envconfig/config.go
+  - type: docs
+    url: https://github.com/ollama/ollama/blob/main/docs/api/authentication.mdx
+  - type: docs
+    url: https://github.com/ollama/ollama/blob/main/docs/cloud.mdx
+  - type: docs
+    url: https://github.com/ollama/ollama/blob/main/docs/faq.mdx
+  - type: docs
+    url: https://raw.githubusercontent.com/betterleaks/betterleaks/main/config/betterleaks.toml
+  - type: docs
+    url: https://ollama.com/library

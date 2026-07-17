@@ -1,0 +1,197 @@
+id: vllm
+name: vLLM
+category: ai_api
+vendor: vLLM Project
+author: haxxm0nkey
+credentials:
+- id: unauthenticated-openai-server
+  name: Unauthenticated OpenAI-compatible Server
+  description: 'vLLM serves an OpenAI-compatible HTTP API. Authentication is only enforced when API keys are configured with --api-key or VLLM_API_KEY, so many local or internal deployments expose /v1 endpoints without a credential.
+
+    '
+  type: other
+  nature:
+  - unauthenticated_default
+  sensitivity: context_dependent
+  default:
+    username: null
+    password: null
+  location:
+  - type: public_interface
+    path: /v1/models, /v1/chat/completions, /v1/completions, /v1/embeddings, /v1/audio/transcriptions, /v1/audio/translations, /health, /metrics
+    detail: vLLM OpenAI-compatible API and health/metrics endpoint contexts
+  - type: environment
+    path: VLLM_API_KEY, VLLM_HOST_IP
+  - type: config_file
+    path: docker-compose.yml, compose.yml, values.yaml, deployment.yaml, service.yaml, ingress.yaml, .env, .env.production
+    detail: Container and Kubernetes deployment files that may expose an unauthenticated vLLM service
+  - type: logs
+    detail: vLLM server logs, access logs, reverse-proxy logs, Kubernetes logs, and gateway traces
+  notes: 'This represents absence of authentication, not a secret value. It is useful for scanners because externally reachable unauthenticated inference APIs can leak data, incur compute cost, or allow model abuse.
+
+    '
+- id: api-key
+  name: vLLM API Key
+  description: 'vLLM supports API-key authentication for the OpenAI-compatible server. The CLI --api-key option takes precedence over VLLM_API_KEY, and clients send the configured key as a bearer token in the Authorization header.
+
+    '
+  type: api_key
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Bearer token used by OpenAI-compatible vLLM clients
+  - type: environment
+    path: VLLM_API_KEY, OPENAI_API_KEY
+  - type: config_file
+    path: .env, .env.local, .env.production, docker-compose.yml, compose.yml, values.yaml, deployment.yaml, service.yaml, config.yaml, config.yml
+    detail: Project-local, container, Kubernetes, and gateway configuration files containing API keys or --api-key arguments
+  - type: secret_store
+    detail: Kubernetes Secrets, Docker secrets, CI/CD variables, cloud secret managers, inference-platform secrets, and password vaults
+  - type: source_code
+    detail: OpenAI SDK clients, notebooks, agent configs, tests, examples, MCP servers, and committed application code
+  - type: logs
+    detail: API debug logs, proxy logs, request traces, notebook output, CI traces, and exception reports
+  notes: 'vLLM API keys are user-chosen opaque values; no stable upstream prefix is documented. Detect them by env/header/CLI context rather than value shape.
+
+    '
+- id: huggingface-model-token
+  name: Hugging Face Model Access Token
+  description: 'vLLM commonly downloads models from Hugging Face. Gated or private models require Hugging Face access tokens passed through environment variables, CLI arguments, cache files, or deployment secret stores.
+
+    '
+  type: token
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - example: hf_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    pattern: hf_[A-Za-z0-9]{20,}
+    detail: Hugging Face access token used by vLLM model download and runtime workflows
+  location:
+  - type: environment
+    path: HF_TOKEN, HUGGING_FACE_HUB_TOKEN
+  - type: config_file
+    path: ~/.cache/huggingface/token, ~/.cache/huggingface/stored_tokens, /root/.cache/huggingface/token, /root/.cache/huggingface/stored_tokens, /home/vllm/.cache/huggingface/token, /home/vllm/.cache/huggingface/stored_tokens
+    detail: Linux Hugging Face token cache files used inside hosts and containers
+    platform:
+    - linux
+  - type: config_file
+    path: '%USERPROFILE%\\.cache\\huggingface\\token, %USERPROFILE%\\.huggingface\\token'
+    detail: Windows Hugging Face token cache files used by development hosts
+    platform:
+    - windows
+  - type: config_file
+    path: .env, docker-compose.yml, compose.yml, values.yaml, deployment.yaml, config.yaml, config.yml
+    detail: Deployment configuration that injects Hugging Face tokens for vLLM workers
+  - type: secret_store
+    detail: Kubernetes Secrets, Docker secrets, CI/CD variables, cloud secret managers, model-registry secrets, and password vaults
+  - type: source_code
+    detail: model-serving scripts, notebooks, CI workflows, examples, and committed deployment code
+  - type: logs
+    detail: model download logs, CI traces, container logs, failed authentication messages, and support bundles
+  notes: "A Hugging Face token can grant access to private or gated model artifacts and may be reused outside vLLM.\n HUGGINGFACEHUB_API_TOKEN was omitted from the environment location because current official Hugging Face Hub source/docs checked in this session use HF_TOKEN and HUGGING_FACE_HUB_TOKEN for token material."
+- id: openai-compatible-client-secret
+  name: OpenAI-compatible Client / Gateway Secret
+  description: 'vLLM deployments frequently sit behind OpenAI-compatible gateways, proxies, service meshes, or multi-tenant routers. These layers may use their own API keys, master keys, proxy authorization tokens, or OAuth bearer tokens before forwarding traffic to vLLM.
+
+    '
+  type: token
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Authorization, X-API-Key, Proxy-Authorization
+    detail: Headers commonly used by OpenAI-compatible clients, gateways, and reverse proxies in front of vLLM
+  - type: public_interface
+    path: /v1/chat/completions, /v1/completions, /v1/embeddings, /v1/models
+    detail: OpenAI-compatible endpoint contexts served by vLLM or a gateway
+  - type: environment
+    path: OPENAI_API_KEY, VLLM_API_KEY, LITELLM_MASTER_KEY, WEBUI_SECRET_KEY, OPEN_WEBUI_SECRET_KEY
+  - type: config_file
+    path: .env, .env.local, docker-compose.yml, compose.yml, values.yaml, litellm.yaml, config.yaml, config.yml, deployment.yaml, ingress.yaml
+    detail: Gateway, proxy, OpenAI-compatible client, and Kubernetes/container deployment configuration files
+  - type: secret_store
+    detail: Kubernetes Secrets, Docker secrets, CI/CD variables, cloud secret managers, API gateway secret stores, and password vaults
+  - type: source_code
+    detail: agent frameworks, notebooks, demos, tests, SDK clients, MCP servers, and committed gateway code
+  - type: logs
+    detail: gateway logs, proxy logs, API client traces, notebook output, and CI logs
+  notes: 'This block is product-focused because vLLM''s native OpenAI-compatible API is commonly protected by external auth rather than a built-in user database.
+
+    '
+- id: tls-private-key
+  name: TLS Private Key / Certificate Material
+  description: 'vLLM''s OpenAI-compatible server supports TLS-related server options and is often deployed behind TLS-terminating ingress or reverse proxies. Private keys used for vLLM or its gateway are sensitive.
+
+    '
+  type: key_pair
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - pattern: '-----BEGIN (?:RSA |EC |)PRIVATE KEY-----'
+    detail: PEM private key used by vLLM HTTPS serving, ingress, or reverse-proxy TLS termination
+  location:
+  - type: config_file
+    path: tls.key, server.key, privkey.pem, fullchain.pem, cert.pem, /etc/tls/tls.key, /etc/ssl/private/server.key
+    detail: Common TLS key/certificate files used by vLLM servers, containers, and reverse proxies Let's Encrypt live certificate directories are deployment-specific and omitted from path to avoid globs.
+  - type: config_file
+    path: docker-compose.yml, compose.yml, values.yaml, deployment.yaml, ingress.yaml, nginx.conf, traefik.yml, caddy.json, Caddyfile
+    detail: Deployment and reverse-proxy configuration referencing TLS secrets
+  - type: secret_store
+    detail: Kubernetes TLS Secrets, Docker secrets, cloud certificate stores, cloud secret managers, and password vaults
+  - type: artifact
+    detail: container images, Helm chart packages, deployment bundles, VM snapshots, and support bundles
+  - type: logs
+    detail: TLS startup errors, ingress/controller logs, reverse-proxy logs, and deployment traces
+  notes: 'Certificate public chains are not secrets; private keys and any passphrases protecting them are secrets.
+
+    '
+- id: prompt-request-and-model-leakage
+  name: Prompt / Request / Model Artifact Leakage
+  description: 'vLLM request bodies, OpenAI-compatible traces, chat templates, model paths, LoRA/adapters, and downloaded model caches can contain proprietary prompts, copied secrets, private model artifacts, or sensitive tenant data.
+
+    '
+  type: secret_value
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: context_dependent
+  location:
+  - type: public_interface
+    path: /v1/chat/completions, /v1/completions, /v1/embeddings, /metrics
+    detail: Endpoint contexts where prompts, embeddings, and metrics can expose sensitive request or tenant data
+  - type: environment
+    path: VLLM_CONFIG_ROOT, VLLM_USAGE_SOURCE, VLLM_LOGGING_LEVEL, VLLM_HOST_IP, VLLM_DEBUG_LOG_API_SERVER_RESPONSE
+  - type: config_file
+    path: .env, config.yaml, config.yml, chat_template.jinja, chat_template.json
+    detail: Project-local vLLM deployment configuration and chat template files. VLLM_CONFIG_ROOT defaults to ~/.config/vllm, but exact files under that directory are deployment-defined.
+  - type: artifact
+    path: ~/.cache/huggingface/hub, /root/.cache/huggingface/hub, /home/vllm/.cache/huggingface/hub, /models, /mnt/models, /data/models
+    detail: Model cache and mounted model artifact paths used by vLLM deployments
+  - type: logs
+    detail: vLLM request logs, gateway logs, OpenAI SDK debug traces, distributed worker logs, Ray logs, Kubernetes logs, and notebook output
+  - type: artifact
+    detail: model cache archives, LoRA adapter bundles, container images, volume snapshots, notebook exports, and support bundles
+  notes: 'This block is context-dependent: model files are often legitimate artifacts, but scanner hits in request logs, chat templates, model caches, and adapter bundles may expose prompts, tenant data, copied secrets, or proprietary models.
+
+    '
+references:
+- type: docs
+  url: https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html
+- type: docs
+  url: https://docs.vllm.ai/en/latest/deployment/docker.html
+- type: docs
+  url: https://docs.vllm.ai/en/latest/api/vllm/entrypoints/openai/api_server.html
+- type: docs
+  url: https://github.com/vllm-project/vllm/blob/main/vllm/entrypoints/openai/api_server.py
+- type: docs
+  url: https://github.com/vllm-project/vllm/blob/main/vllm/envs.py

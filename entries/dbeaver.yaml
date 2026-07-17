@@ -1,0 +1,112 @@
+id: dbeaver
+name: DBeaver
+category: database
+vendor: DBeaver Corp
+author: haxxm0nkey
+
+credentials:
+- id: connection-credential
+  name: Database Connection Credential
+  description: >
+    DBeaver stores database connection definitions in project data-sources files
+    and secured information such as usernames, passwords, secret keys, and other
+    connection secrets in encrypted credentials-config files or global secure
+    storage.
+  type: secret_value
+  nature: [user_defined]
+  sensitivity: secret
+  location:
+  - type: config_file
+    platform:
+    - linux
+    path: ~/.local/share/DBeaverData/workspace6/General/.dbeaver/data-sources.json, ~/.local/share/DBeaverData/workspace6/General/.dbeaver/credentials-config.json, ~/Library/DBeaverData/workspace6/General/.dbeaver/data-sources.json, ~/Library/DBeaverData/workspace6/General/.dbeaver/credentials-config.json
+    detail: Default DBeaver project connection and encrypted credential files on Linux and macOS
+  - type: config_file
+    platform:
+    - windows
+    path: '%APPDATA%\DBeaverData\workspace6\General\.dbeaver\data-sources.json, %APPDATA%\DBeaverData\workspace6\General\.dbeaver\credentials-config.json'
+    detail: Default DBeaver project connection and encrypted credential files on Windows
+  - type: config_file
+    path: .dbeaver/data-sources.json, .dbeaver/credentials-config.json, .dbeaver-data-sources.xml, data-sources.xml
+    detail: Project-local DBeaver connection metadata and legacy connection files
+  - type: secret_store
+    detail: DBeaver encrypted secure storage, operating-system credential stores, password vaults, and enterprise secret providers
+  - type: database
+    detail: Saved JDBC/ODBC connection profiles for database users, service accounts, SSH tunnels, SSL material, and cloud database auth
+  - type: logs
+    detail: DBeaver error logs, driver logs, SQL execution logs, exported diagnostics, and support bundles
+  - type: source_code
+    detail: Exported connection profiles, shared project files, admin-provisioned connection bundles, and migration archives
+  notes: >
+    DBeaver documentation states that secured information is encrypted in
+    credentials-config.json. The file is still a credential surface because it
+    contains recoverable connection secrets when paired with the user's DBeaver
+    environment or master-password state.
+
+- id: global-secure-storage
+  name: Global Secure Storage
+  description: >
+    DBeaver stores global credentials in the DBeaverData secure directory and can
+    protect them with a master password.
+  type: secret_value
+  nature: [user_defined]
+  sensitivity: secret
+  location:
+  - type: config_file
+    platform:
+    - linux
+    path: ~/.local/share/DBeaverData/secure/secure_storage, ~/Library/DBeaverData/secure/secure_storage
+    detail: DBeaver global encrypted credential store on Linux and macOS
+  - type: config_file
+    platform:
+    - windows
+    path: '%APPDATA%\DBeaverData\secure\secure_storage'
+    detail: DBeaver global encrypted credential store on Windows
+  - type: secret_store
+    detail: DBeaver secure storage and master-password-protected credential storage
+  - type: logs
+    detail: Secure-storage troubleshooting logs and exported support diagnostics
+  notes: >
+    The secure_storage file is encrypted; no plaintext value regex is added.
+    Scanner value matching should rely on exact product-owned file paths and
+    downstream DBeaver-specific parsing rather than generic password patterns.
+
+- id: database-private-key
+  name: Database SSH or SSL Private Key
+  description: >
+    DBeaver connections can reference SSH tunnel keys and database SSL client
+    keys through connection configuration and secure storage.
+  type: key_pair
+  nature: [user_defined]
+  sensitivity: secret
+  looks_like:
+  - pattern: '-----BEGIN (OPENSSH|RSA|EC|DSA|PRIVATE) PRIVATE KEY-----'
+    detail: Private-key header when DBeaver-managed or exported connection material contains an SSH or SSL private key
+  location:
+  - type: config_file
+    platform:
+    - linux
+    path: ~/.local/share/DBeaverData/workspace6/General/.dbeaver/data-sources.json, ~/.local/share/DBeaverData/workspace6/General/.dbeaver/credentials-config.json, ~/Library/DBeaverData/workspace6/General/.dbeaver/data-sources.json, ~/Library/DBeaverData/workspace6/General/.dbeaver/credentials-config.json
+  - type: config_file
+    platform:
+    - windows
+    path: '%APPDATA%\DBeaverData\workspace6\General\.dbeaver\data-sources.json, %APPDATA%\DBeaverData\workspace6\General\.dbeaver\credentials-config.json'
+  - type: config_file
+    path: .dbeaver/data-sources.json, .dbeaver/credentials-config.json
+  - type: secret_store
+    detail: DBeaver secure storage, operating-system credential stores, and password vaults containing tunnel or SSL key material
+  - type: logs
+    detail: SSH tunnel, SSL, JDBC driver, and connection troubleshooting logs
+  notes: >
+    Generic SSH key files such as ~/.ssh/id_rsa are intentionally not listed;
+    this entry only models DBeaver-owned connection and secure-storage surfaces.
+
+references:
+- type: docs
+  url: https://dbeaver.com/docs/dbeaver/Workspace-Location/
+- type: docs
+  url: https://dbeaver.com/docs/dbeaver/Admin-Manage-Connections/
+- type: docs
+  url: https://dbeaver.com/docs/dbeaver/Security/
+- type: source
+  url: https://github.com/dbeaver/dbeaver

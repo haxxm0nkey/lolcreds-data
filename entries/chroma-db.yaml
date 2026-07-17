@@ -1,0 +1,212 @@
+id: chroma-db
+name: Chroma DB
+category: database
+vendor: Chroma
+author: haxxm0nkey
+credentials:
+- id: unauthenticated-local-server
+  name: Unauthenticated Local / Self-hosted Chroma Server
+  description: 'Chroma can be run in client-server mode for local or self-hosted vector database access. Authentication is optional and controlled by configured auth providers, so many development deployments expose the API without a credential.
+
+    '
+  type: other
+  nature:
+  - unauthenticated_default
+  sensitivity: context_dependent
+  default:
+    username: null
+    password: null
+  location:
+  - type: public_interface
+    path: /api/v1, /api/v2, /api/v2/heartbeat, /api/v2/version, /api/v2/tenants, /api/v2/tenants/{tenant}/databases/{database}/collections
+    detail: Chroma HTTP API contexts for self-hosted client-server deployments
+  - type: environment
+    path: CHROMA_SERVER_HOST, CHROMA_SERVER_HTTP_PORT, CHROMA_SERVER_SSL_ENABLED, CHROMA_SERVER_AUTHN_PROVIDER, CHROMA_SERVER_AUTHZ_PROVIDER
+  - type: config_file
+    path: docker-compose.yml, compose.yml, values.yaml, deployment.yaml, service.yaml, ingress.yaml, .env, .env.production, config.yaml, config.yml
+    detail: Container, Kubernetes, Helm, and local deployment files that may expose an unauthenticated Chroma service
+  - type: logs
+    detail: Chroma server logs, access logs, reverse-proxy logs, Kubernetes logs, and gateway traces
+  notes: "This represents absence of authentication, not a secret value. It is useful for scanners because reachable unauthenticated vector databases can expose embeddings, documents, metadata, tenant/database names, or application data.\n Host, port, SSL, authn provider, and authz provider variables are included because they determine exposure/auth posture rather than because they are secret values."
+- id: chroma-cloud-api-key
+  name: Chroma Cloud API Key
+  description: 'Chroma Cloud clients use an API key with tenant and database identifiers. The official client docs show api_key arguments, CHROMA_API_KEY, and x-chroma-token headers for Cloud database access.
+
+    '
+  type: api_key
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: x-chroma-token, Authorization
+    detail: Chroma Cloud and token-auth client headers
+  - type: environment
+    path: CHROMA_API_KEY
+  - type: config_file
+    path: .env, .env.local, .env.production, docker-compose.yml, compose.yml, values.yaml, deployment.yaml, config.yaml, config.yml, pyproject.toml, notebook.ipynb
+    detail: Project-local, container, Kubernetes, notebook, and application configuration files
+  - type: secret_store
+    detail: Kubernetes Secrets, Docker secrets, CI/CD variables, cloud secret managers, hosted app config vars, and password vaults
+  - type: source_code
+    detail: Python/TypeScript clients, notebooks, examples, tests, MCP servers, LangChain/LlamaIndex integrations, and committed application code
+  - type: logs
+    detail: API debug logs, notebook output, CI traces, proxy logs, application errors, and support bundles
+  notes: "Chroma Cloud key values are opaque; detect by env/header/client-argument context rather than assuming a stable token prefix.\n CHROMA_TENANT, CHROMA_DATABASE, and CHROMA_HOST are useful Chroma context but are not credential values, so the scanner-facing environment location keeps CHROMA_API_KEY only."
+- id: self-hosted-token-auth
+  name: Self-hosted Token Auth Credential
+  description: 'Chroma supports token authentication using server and client auth providers. The token may be configured directly through credentials settings or read from a credentials file. The token transport header is Authorization by default, and can also be X-Chroma-Token.
+
+    '
+  type: token
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Authorization, X-Chroma-Token
+    detail: Token-auth headers; Authorization expects a bearer token
+  - type: environment
+    path: CHROMA_CLIENT_AUTH_CREDENTIALS, CHROMA_SERVER_AUTHN_CREDENTIALS, CHROMA_SERVER_AUTHN_CREDENTIALS_FILE
+  - type: config_file
+    path: .env, .env.local, .env.production, chroma-auth.json, auth.json, credentials.json, docker-compose.yml, compose.yml, values.yaml, deployment.yaml, config.yaml, config.yml
+    detail: Chroma token auth credentials, credentials files, and deployment configuration
+  - type: secret_store
+    detail: Kubernetes Secrets, Docker secrets, CI/CD variables, cloud secret managers, Chroma server secrets, and password vaults
+  - type: source_code
+    detail: Chroma client code, server startup scripts, notebooks, examples, tests, and committed deployment manifests
+  - type: logs
+    detail: auth failures, API debug traces, server startup logs, proxy logs, CI output, and support bundles
+  notes: 'Upstream token validation permits ASCII letters, digits, and punctuation; token value shape is deployment-defined. Scanner logic should prioritize env/header/config-file context.
+
+    '
+- id: self-hosted-basic-auth
+  name: Self-hosted Basic Auth Credential
+  description: 'Chroma also supports Basic authentication. Client credentials are configured with chroma_client_auth_credentials, while server Basic auth reads htpasswd-style credential lines from chroma_server_authn_credentials_file.
+
+    '
+  type: username_password
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - pattern: ^.+:\$2[aby]\$.{56,}$
+    detail: htpasswd bcrypt line used by Chroma Basic auth credentials files
+  - pattern: ^.+:\$apr1\$.+
+    detail: htpasswd Apache MD5 line used by Chroma Basic auth credentials files
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Basic auth header used by Chroma clients
+  - type: environment
+    path: CHROMA_CLIENT_AUTH_CREDENTIALS, CHROMA_SERVER_AUTHN_CREDENTIALS_FILE
+  - type: config_file
+    path: .env, .env.local, .env.production, .htpasswd, htpasswd, chroma.htpasswd, auth.htpasswd, docker-compose.yml, compose.yml, values.yaml, deployment.yaml, config.yaml, config.yml
+    detail: Chroma Basic auth credentials and deployment configuration files
+  - type: secret_store
+    detail: Kubernetes Secrets, Docker secrets, CI/CD variables, cloud secret managers, and password vaults
+  - type: source_code
+    detail: Chroma client code, notebooks, examples, tests, container entrypoints, and committed deployment manifests
+  - type: logs
+    detail: Basic auth failures, proxy logs, application traces, CI output, and support bundles
+  notes: 'Do not model a default username/password; Basic auth values are deployment-created.
+
+    '
+- id: authorization-config
+  name: Authorization / Tenant-Database Access Config
+  description: 'Chroma server authorization can be configured with provider-specific config or config files. Token auth mappings may include user IDs, tenant names, database names, and token lists, which can disclose both secrets and scope.
+
+    '
+  type: secret_value
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: environment
+    path: CHROMA_SERVER_AUTHZ_CONFIG, CHROMA_SERVER_AUTHZ_CONFIG_FILE
+  - type: config_file
+    path: chroma-authz.json, authz.json, rbac.json, credentials.json, docker-compose.yml, compose.yml, values.yaml, deployment.yaml, config.yaml, config.yml, .env
+    detail: Chroma authorization, RBAC, tenant/database mapping, and deployment configuration files
+  - type: database
+    detail: Tenant, database, user identity, collection, and auth scope metadata in Chroma system storage
+  - type: secret_store
+    detail: Kubernetes Secrets, Docker secrets, CI/CD variables, cloud secret managers, and password vaults
+  - type: logs
+    detail: authorization failures, tenant/database resolution errors, server startup logs, and support bundles
+  notes: 'Tenant and database identifiers are often not secrets alone, but auth config files may contain bearer tokens and authorization scopes.
+
+    '
+- id: embedding-provider-api-key
+  name: Embedding Provider API Key
+  description: 'Chroma applications frequently call embedding providers while writing or querying vector collections. These keys are not Chroma-native credentials, but Chroma client/server deployments often store them beside Chroma settings.
+
+    '
+  type: api_key
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: environment
+    path: OPENAI_API_KEY, COHERE_API_KEY, VOYAGE_API_KEY, JINA_API_KEY, MISTRAL_API_KEY, GOOGLE_API_KEY, GEMINI_API_KEY, HUGGINGFACEHUB_API_TOKEN, HF_TOKEN, CLOUDFLARE_API_TOKEN
+  - type: config_file
+    path: .env, .env.local, .env.production, docker-compose.yml, compose.yml, values.yaml, deployment.yaml, config.yaml, config.yml, notebook.ipynb
+    detail: Chroma embedding-function configuration, notebooks, and deployment manifests
+  - type: secret_store
+    detail: Kubernetes Secrets, Docker secrets, CI/CD variables, cloud secret managers, hosted app config vars, and password vaults
+  - type: source_code
+    detail: embedding function code, LangChain/LlamaIndex apps, notebooks, tests, examples, and committed application code
+  - type: logs
+    detail: embedding API errors, request traces, notebook output, CI logs, and support bundles
+  notes: 'Keep provider-specific token shapes in provider templates where available; this Chroma block captures the common product-local storage context.
+
+    '
+- id: persistent-data-and-vector-leakage
+  name: Persistent Data / Vector Collection Leakage
+  description: 'Chroma persistent clients and servers store vector collections, embeddings, documents, metadata, tenant/database information, and system state on disk. These artifacts may include copied secrets, PII, proprietary content, or retrieval context even when they are not credentials themselves.
+
+    '
+  type: secret_value
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: context_dependent
+  location:
+  - type: artifact
+    path: .chroma, chroma, chroma.sqlite3, /chroma/chroma, /data/chroma, /var/lib/chroma, /var/lib/chromadb, /opt/chroma, /mnt/chroma, /app/chroma
+    detail: Common local and container persistence directories/files for Chroma database files and volumes
+  - type: artifact
+    path: '%APPDATA%\\Chroma, %LOCALAPPDATA%\\Chroma, %USERPROFILE%\\.chroma'
+    detail: Windows development-host Chroma persistence paths
+    platform:
+    - windows
+  - type: environment
+    path: PERSIST_DIRECTORY, CHROMA_SERVER_HOST, CHROMA_SERVER_HTTP_PORT, CHROMA_TENANT, CHROMA_DATABASE
+  - type: database
+    detail: collections, embeddings, documents, metadata, tenant/database records, and system tables in Chroma persistence storage
+  - type: artifact
+    detail: database backups, container images, persistent-volume snapshots, support bundles, notebook exports, and model/RAG demo archives
+  - type: logs
+    detail: query traces, retrieved document logs, embedding logs, application debug logs, and backup/restore output
+  notes: 'Treat this as context-dependent sensitive data. Scanner hits should help identify exposed Chroma stores and artifacts that may contain embedded secrets or high-value application data.
+
+    '
+references:
+- type: docs
+  url: https://docs.trychroma.com/docs/overview/introduction
+- type: docs
+  url: https://docs.trychroma.com/docs/run-chroma/client-server
+- type: docs
+  url: https://docs.trychroma.com/docs/run-chroma/clients
+- type: docs
+  url: https://docs.trychroma.com/reference/chroma-reference
+- type: docs
+  url: https://github.com/chroma-core/chroma/blob/main/chromadb/config.py
+- type: docs
+  url: https://github.com/chroma-core/chroma/blob/main/chromadb/auth/token_authn/__init__.py
+- type: docs
+  url: https://github.com/chroma-core/chroma/blob/main/chromadb/auth/basic_authn/__init__.py

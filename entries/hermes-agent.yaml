@@ -1,0 +1,257 @@
+id: hermes-agent
+name: Hermes Agent
+category: other
+vendor: Nous Research
+author: haxxm0nkey
+
+credentials:
+  - id: provider-api-key
+    name: LLM Provider API Key
+    description: >
+      Hermes Agent can use API keys for OpenRouter, Anthropic, OpenAI, Google Gemini,
+      Groq, DeepSeek, xAI, Hugging Face, MiniMax, Mistral, Fireworks, Together, and
+      other model providers. These keys allow model inference and may grant billing
+      access or access to provider-hosted resources.
+    type: api_key
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - example: sk-or-v1-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+        pattern: 'sk-or-v1-[A-Za-z0-9_\-]{20,}'
+        detail: OpenRouter API key used by Hermes when OPENROUTER_API_KEY is configured.
+      - example: sk-ant-api03-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+        pattern: 'sk-ant-api[0-9]{2}-[A-Za-z0-9_\-]{20,}'
+        detail: Anthropic Console API key accepted by Hermes Anthropic providers.
+      - example: hf_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+        pattern: 'hf_[A-Za-z0-9]{20,}'
+        detail: Hugging Face token accepted by Hermes when HF_TOKEN is configured.
+      - example: gsk_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+        pattern: 'gsk_[A-Za-z0-9]{20,}'
+        detail: Groq API key accepted by Hermes when GROQ_API_KEY is configured.
+      - example: AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+        pattern: 'AIza[0-9A-Za-z_\-]{35}'
+        detail: Google API key accepted by Hermes Gemini providers.
+    location:
+      - type: environment
+        path: OPENROUTER_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, GOOGLE_API_KEY, GEMINI_API_KEY, GROQ_API_KEY, DEEPSEEK_API_KEY, XAI_API_KEY, HF_TOKEN, MISTRAL_API_KEY, MINIMAX_API_KEY, MINIMAX_CN_API_KEY, DASHSCOPE_API_KEY, GLM_API_KEY, ZAI_API_KEY, Z_AI_API_KEY, KIMI_API_KEY, KIMI_CODING_API_KEY, KIMI_CN_API_KEY, FIREWORKS_API_KEY, TOGETHER_API_KEY, PERPLEXITY_API_KEY, NVIDIA_API_KEY, NOVITA_API_KEY, ARCEEAI_API_KEY, GMI_API_KEY, STEPFUN_API_KEY, TOKENHUB_API_KEY, KILOCODE_API_KEY, XIAOMI_API_KEY, UPSTAGE_API_KEY, AZURE_FOUNDRY_API_KEY, LM_API_KEY, OLLAMA_API_KEY, OPENCODE_ZEN_API_KEY, OPENCODE_GO_API_KEY
+      - type: config_file
+        platform: [linux]
+        path: ~/.hermes/.env, ~/.hermes/config.yaml
+        detail: Linux/macOS Hermes environment and configuration files containing provider API keys or provider-specific api_key values.
+      - type: config_file
+        platform: [windows]
+        path: '%USERPROFILE%\.hermes\.env, %USERPROFILE%\.hermes\config.yaml'
+        detail: Windows Hermes environment and configuration files containing provider API keys or provider-specific api_key values.
+      - type: config_file
+        path: .env, config.yaml
+        detail: Project-local Hermes or development configuration files; lower-confidence fallback scan targets.
+      - type: secret_store
+        detail: Password managers, shell secret stores, CI/CD variables, and external vaults used to inject Hermes provider credentials.
+      - type: logs
+        path: ~/.hermes/logs, %USERPROFILE%\.hermes\logs
+        detail: Hermes logs may accidentally capture provider configuration or failed authentication context.
+    notes: >
+      Provider keys are not Hermes-specific formats; scanner confidence should combine
+      known provider env var names, config keys, and provider-specific token shapes.
+      Base URL and endpoint override variables are intentionally omitted from the
+      environment location unless they contain credential material.
+
+  - id: oauth-credential-pool
+    name: OAuth Credential Pool Token
+    description: >
+      Hermes stores OAuth-based provider credentials and credential pools for providers
+      such as Nous Portal, OpenAI Codex, Anthropic/Claude, Qwen OAuth, xAI/SuperGrok,
+      and similar sign-in flows. The credential pool can allow model access without
+      a raw API key.
+    type: token
+    nature: [generated_on_install, user_defined]
+    sensitivity: secret
+    looks_like:
+      - example: gho_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+        pattern: 'gho_[A-Za-z0-9_]{36,255}'
+        detail: GitHub OAuth token shape used by Copilot-related Hermes credential paths.
+      - example: github_pat_XXXXXXXXXXXXXXXXXXXX_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+        pattern: 'github_pat_[A-Za-z0-9_]{20,255}'
+        detail: GitHub fine-grained personal access token accepted by Copilot-related Hermes credential paths.
+    location:
+      - type: environment
+        path: ANTHROPIC_TOKEN, CLAUDE_CODE_OAUTH_TOKEN, COPILOT_GITHUB_TOKEN, GH_TOKEN, GITHUB_TOKEN
+      - type: config_file
+        platform: [linux]
+        path: ~/.hermes/auth.json, ~/.hermes/.anthropic_oauth.json
+        detail: Linux/macOS Hermes OAuth credential pool and Anthropic OAuth credential files. Per-profile Hermes homes can contain their own auth.json under ~/.hermes/profiles/<name>/.
+      - type: config_file
+        platform: [windows]
+        path: '%USERPROFILE%\.hermes\auth.json, %USERPROFILE%\.hermes\.anthropic_oauth.json'
+        detail: Windows Hermes OAuth credential pool and Anthropic OAuth credential files. Per-profile Hermes homes can contain their own auth.json under %USERPROFILE%\.hermes\profiles\<name>\.
+      - type: secret_store
+        detail: OS keychains, password managers, and external secret stores used for OAuth refresh tokens or provider access tokens.
+      - type: logs
+        path: ~/.hermes/logs, %USERPROFILE%\.hermes\logs
+        detail: Authentication and provider errors may reveal credential identifiers or token handling context.
+    notes: >
+      auth.json should be treated as a credential-bearing file even when individual
+      token formats vary by provider. HERMES_OAUTH_FILE can override the OAuth
+      credential storage path and is documented as a path override, not as token
+      material itself.
+
+  - id: gateway-platform-token
+    name: Messaging Gateway Platform Token
+    description: >
+      Hermes Gateway connects Telegram, Discord, Slack, WhatsApp, Signal, Matrix,
+      Email, SMS, Teams, Feishu, DingTalk, WeCom, and other messaging platforms.
+      Bot tokens, app secrets, webhook URLs, API keys, and allowed-user settings may
+      grant remote access to the agent surface or to the messaging platform account.
+    type: token
+    nature: [user_defined]
+    sensitivity: secret
+    looks_like:
+      - example: '123456789:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+        pattern: '[0-9]{8,12}:[A-Za-z0-9_\-]{30,80}'
+        detail: Telegram bot token shape for TELEGRAM_BOT_TOKEN.
+      - example: xoxb-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+        pattern: 'xox[baprs]-[A-Za-z0-9\-]{20,255}'
+        detail: Slack bot/app/user token family used by Slack gateway configuration.
+      - example: EAAXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+        pattern: 'EAA[A-Za-z0-9]{20,255}'
+        detail: Meta/WhatsApp Cloud access-token prefix used by WHATSAPP_CLOUD_ACCESS_TOKEN.
+    location:
+      - type: environment
+        path: TELEGRAM_BOT_TOKEN, TELEGRAM_WEBHOOK_SECRET, DISCORD_BOT_TOKEN, SLACK_BOT_TOKEN, SLACK_APP_TOKEN, SLACK_SIGNING_SECRET, GOOGLE_CHAT_SERVICE_ACCOUNT_JSON, WHATSAPP_ACCESS_TOKEN, WHATSAPP_VERIFY_TOKEN, WHATSAPP_CLOUD_ACCESS_TOKEN, WHATSAPP_CLOUD_APP_SECRET, WHATSAPP_CLOUD_VERIFY_TOKEN, MATRIX_ACCESS_TOKEN, MATTERMOST_TOKEN, TEAMS_CLIENT_SECRET, EMAIL_PASSWORD, SMTP_PASSWORD, SMS_API_KEY, TWILIO_AUTH_TOKEN, DINGTALK_CLIENT_SECRET, DINGTALK_WEBHOOK_URL, FEISHU_APP_SECRET, FEISHU_ENCRYPT_KEY, FEISHU_VERIFICATION_TOKEN, WECOM_CORP_SECRET, BLUEBUBBLES_PASSWORD, GATEWAY_PROXY_KEY, GATEWAY_RELAY_SECRET, GATEWAY_RELAY_DELIVERY_KEY, GATEWAY_RELAY_ENROLL_TOKEN, GATEWAY_RELAY_ROUTE_KEYS
+      - type: config_file
+        platform: [linux]
+        path: ~/.hermes/.env, ~/.hermes/config.yaml
+        detail: Linux/macOS Hermes gateway platform credentials and platform configuration. Per-profile Hermes homes can contain their own .env and config.yaml under ~/.hermes/profiles/<name>/.
+      - type: config_file
+        platform: [windows]
+        path: '%USERPROFILE%\.hermes\.env, %USERPROFILE%\.hermes\config.yaml'
+        detail: Windows Hermes gateway platform credentials and platform configuration. Per-profile Hermes homes can contain their own .env and config.yaml under %USERPROFILE%\.hermes\profiles\<name>\.
+      - type: secret_store
+        detail: Platform app dashboards, cloud secret managers, password managers, and deployment secret stores.
+      - type: logs
+        path: ~/.hermes/logs/gateway.log, ~/.hermes/logs, %USERPROFILE%\.hermes\logs\gateway.log, %USERPROFILE%\.hermes\logs
+        detail: Gateway startup, platform authentication, webhook, and delivery logs.
+    notes: >
+      Some adjacent allowlist and channel variables are not secrets, but platform
+      tokens, webhook secrets, relay keys, and app secrets are sensitive because
+      they can grant messaging or gateway control.
+
+  - id: api-dashboard-webhook-secret
+    name: API Server / Dashboard / Webhook Secret
+    description: >
+      Hermes can expose a dashboard, API server, local proxy, and webhook routes.
+      API keys, dashboard drain secrets, webhook secrets, and route tokens protect
+      remote control and automation surfaces.
+    type: secret_value
+    nature: [user_defined, generated_on_install]
+    sensitivity: secret
+    looks_like:
+      - pattern: '(?i)(API_SERVER_KEY|WEBHOOK_SECRET|HERMES_DASHBOARD_DRAIN_SECRET|HERMES_DASHBOARD_BASIC_AUTH_PASSWORD|HERMES_DASHBOARD_BASIC_AUTH_SECRET)\s*[:=]\s*[''"]?[A-Za-z0-9_./+=:\-]{16,512}[''"]?'
+        detail: Contextual assignment pattern for Hermes API, webhook, drain, and dashboard-auth secrets.
+    location:
+      - type: environment
+        path: API_SERVER_KEY, WEBHOOK_SECRET, HERMES_DASHBOARD_DRAIN_SECRET, HERMES_DASHBOARD_BASIC_AUTH_PASSWORD, HERMES_DASHBOARD_BASIC_AUTH_PASSWORD_HASH, HERMES_DASHBOARD_BASIC_AUTH_SECRET, HERMES_DASHBOARD_OIDC_CLIENT_SECRET
+      - type: config_file
+        platform: [linux]
+        path: ~/.hermes/.env, ~/.hermes/config.yaml, ~/.hermes/webhooks.yaml
+        detail: Linux/macOS Hermes dashboard, API server, proxy, webhook, and automation configuration. Per-profile Hermes homes can contain their own .env and config.yaml under ~/.hermes/profiles/<name>/.
+      - type: config_file
+        platform: [windows]
+        path: '%USERPROFILE%\.hermes\.env, %USERPROFILE%\.hermes\config.yaml, %USERPROFILE%\.hermes\webhooks.yaml'
+        detail: Windows Hermes dashboard, API server, proxy, webhook, and automation configuration. Per-profile Hermes homes can contain their own .env and config.yaml under %USERPROFILE%\.hermes\profiles\<name>\.
+      - type: public_interface
+        path: /, /api, /webhooks, /v1/chat/completions
+        detail: Hermes dashboard, API server, webhook, and OpenAI-compatible proxy endpoints.
+      - type: http_header
+        path: Authorization, X-API-Key, X-Hermes-Secret
+        detail: Headers commonly used to carry API, proxy, or webhook credentials.
+      - type: logs
+        path: ~/.hermes/logs, %USERPROFILE%\.hermes\logs
+        detail: Dashboard, API server, proxy, and webhook logs may reveal route names or accidental credential material.
+    notes: >
+      Treat exposed dashboard/API/webhook secrets as high-impact because they may
+      allow remote agent interaction, scheduled runs, or tool execution depending on deployment.
+      Public URL, CORS, host, and port variables are intentionally omitted from the
+      environment location because they are not credential material.
+
+  - id: mcp-and-plugin-credential
+    name: MCP Server / Plugin Credential
+    description: >
+      Hermes can load MCP servers and plugins. Their configurations may contain API
+      keys, bearer tokens, command arguments, OAuth material, or service credentials
+      for third-party tools exposed to the agent.
+    type: secret_value
+    nature: [user_defined]
+    sensitivity: secret
+    location:
+      - type: config_file
+        platform: [linux]
+        path: ~/.hermes/config.yaml, ~/.hermes/.env, ~/.hermes/mcp.json
+        detail: Linux/macOS Hermes MCP and plugin configuration. Plugin code and per-profile plugin secrets can live under Hermes profile directories.
+      - type: config_file
+        platform: [windows]
+        path: '%USERPROFILE%\.hermes\config.yaml, %USERPROFILE%\.hermes\.env, %USERPROFILE%\.hermes\mcp.json'
+        detail: Windows Hermes MCP and plugin configuration. Plugin code and per-profile plugin secrets can live under Hermes profile directories.
+      - type: environment
+        path: BRAVE_SEARCH_API_KEY, FIRECRAWL_API_KEY, EXA_API_KEY, TAVILY_API_KEY, AIRTABLE_API_KEY, NOTION_API_KEY, LINEAR_API_KEY, TENOR_API_KEY, BROWSERBASE_API_KEY, BROWSER_USE_API_KEY, DAYTONA_API_KEY, MODAL_TOKEN_ID, MODAL_TOKEN_SECRET, GITHUB_TOKEN, GH_TOKEN, HASS_TOKEN, HERMES_LANGFUSE_PUBLIC_KEY, HERMES_LANGFUSE_SECRET_KEY, LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY, TOOL_GATEWAY_USER_TOKEN
+      - type: source_code
+        path: plugin.py, manifest.yaml, config.yaml, .env, mcp.json
+        detail: Local plugin and MCP server source/configuration files that may embed tool credentials.
+      - type: secret_store
+        detail: External secret stores and password managers used by MCP servers or plugins.
+      - type: logs
+        path: ~/.hermes/logs, %USERPROFILE%\.hermes\logs
+        detail: MCP and plugin startup errors may reveal configured command arguments or credential names.
+    notes: >
+      MCP/plugin secrets are product-specific to the connected service; this block
+      catalogs Hermes locations where those third-party credentials are commonly wired in.
+      Non-secret service URLs such as FIRECRAWL_API_URL and HERMES_LANGFUSE_BASE_URL
+      are omitted from the environment credential location.
+
+  - id: voice-and-media-provider-key
+    name: Voice / Media Provider API Key
+    description: >
+      Hermes voice, transcription, text-to-speech, image generation, browser, and media
+      tools can use provider API keys. These keys may be stored alongside model provider
+      credentials and are consumed by optional toolsets.
+    type: api_key
+    nature: [user_defined]
+    sensitivity: secret
+    location:
+      - type: environment
+        path: GROQ_API_KEY, VOICE_TOOLS_OPENAI_KEY, ELEVENLABS_API_KEY, MINIMAX_API_KEY, MISTRAL_API_KEY, FAL_KEY, KREA_API_KEY, BROWSERBASE_API_KEY, BROWSER_USE_API_KEY, CAMOFOX_SESSION_KEY, HONCHO_API_KEY, SUPERMEMORY_API_KEY, DAYTONA_API_KEY
+      - type: config_file
+        platform: [linux]
+        path: ~/.hermes/.env, ~/.hermes/config.yaml
+        detail: Linux/macOS Hermes STT, TTS, image, browser, memory-provider, and media provider configuration. Per-profile Hermes homes can contain their own .env and config.yaml under ~/.hermes/profiles/<name>/.
+      - type: config_file
+        platform: [windows]
+        path: '%USERPROFILE%\.hermes\.env, %USERPROFILE%\.hermes\config.yaml'
+        detail: Windows Hermes STT, TTS, image, browser, memory-provider, and media provider configuration. Per-profile Hermes homes can contain their own .env and config.yaml under %USERPROFILE%\.hermes\profiles\<name>\.
+      - type: secret_store
+        detail: Provider dashboards, password managers, and deployment secret stores used for optional Hermes media/tool providers.
+      - type: logs
+        path: ~/.hermes/logs, %USERPROFILE%\.hermes\logs
+        detail: Provider setup and tool errors may expose credential names or accidental API key material.
+    notes: >
+      Some env vars overlap with model-provider keys; scanner output should deduplicate
+      findings by path, variable name, and value. Browser URL and user-id variables
+      are omitted unless they contain credential material.
+
+references:
+  - type: docs
+    url: https://hermes-agent.nousresearch.com/docs/reference/environment-variables
+  - type: docs
+    url: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+  - type: docs
+    url: https://hermes-agent.nousresearch.com/docs/integrations/providers
+  - type: docs
+    url: https://hermes-agent.nousresearch.com/docs/user-guide/messaging/
+  - type: docs
+    url: https://hermes-agent.nousresearch.com/docs/user-guide/profiles
+  - type: source
+    url: https://github.com/NousResearch/hermes-agent/blob/main/agent/credential_pool.py
+  - type: source
+    url: https://github.com/NousResearch/hermes-agent/blob/main/agent/anthropic_adapter.py
+  - type: source
+    url: https://github.com/NousResearch/hermes-agent/blob/main/tools/managed_tool_gateway.py

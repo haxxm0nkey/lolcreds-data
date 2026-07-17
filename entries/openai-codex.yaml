@@ -1,0 +1,100 @@
+id: openai-codex
+name: OpenAI Codex
+category: ai_api
+vendor: OpenAI
+author: haxxm0nkey
+credentials:
+- id: openai-api-key
+  name: OpenAI API Key
+  description: Codex supports OpenAI API key authentication through OPENAI_API_KEY and auth.json.
+  type: api_key
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - example: sk-proj-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    pattern: sk-(proj|svcacct)-[A-Za-z0-9_-]{20,255}
+    detail: OpenAI project or service-account API key
+  - example: sk-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    pattern: sk-[A-Za-z0-9_-]{20,255}
+    detail: Legacy OpenAI API key form, kept after the more specific project/service-account pattern
+  location:
+  - type: environment
+    path: OPENAI_API_KEY
+  - type: config_file
+    platform:
+    - linux
+    path: ~/.codex/auth.json, ~/.codex/config.toml, ~/.codex/.credentials.json
+    detail: Default Codex home credential and config files on Unix-like systems; CODEX_HOME can relocate these files but is
+      not itself credential material
+  - type: config_file
+    platform:
+    - windows
+    path: '%USERPROFILE%\.codex\auth.json, %USERPROFILE%\.codex\config.toml, %USERPROFILE%\.codex\.credentials.json'
+    detail: Default Codex home credential and config files on Windows
+  - type: config_file
+    path: .codex/config.toml, .env, .env.local, .env.production, docker-compose.yml, compose.yml, devcontainer.json
+    detail: Project-local Codex and container/devcontainer files that may pass OPENAI_API_KEY or provider settings
+  - type: secret_store
+    detail: OS keychain, GitHub Actions secrets, CI/CD variables, cloud secret managers, Docker secrets, and Kubernetes Secrets
+  - type: source_code
+    detail: Codex scripts, container wrappers, app-server config, tests, MCP configuration, and committed automation
+  - type: logs
+    detail: Codex logs, shell history, CI traces, debug dumps, app-server logs, and terminal transcripts
+  notes: Codex source uses CODEX_HOME as a base directory override. It is intentionally not listed as a credential-value env
+    var.
+- id: chatgpt-login-token
+  name: ChatGPT Login Token
+  description: Codex auth.json can store ChatGPT login tokens and account auth state used instead of API-key auth.
+  type: token
+  nature:
+  - generated_on_install
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: config_file
+    platform:
+    - linux
+    path: ~/.codex/auth.json
+  - type: config_file
+    platform:
+    - windows
+    path: '%USERPROFILE%\.codex\auth.json'
+  - type: secret_store
+    detail: OS keychain or password vault entries used by Codex login flows
+  - type: logs
+    detail: Debug logs, auth troubleshooting output, terminal transcripts, and copied auth.json content
+  notes: No stable public token prefix was found in Codex docs/source; use exact auth.json location and field context.
+- id: mcp-oauth-credential
+  name: MCP OAuth Credential
+  description: Codex remote MCP support may persist OAuth credentials in keyring or a CODEX_HOME-backed fallback credentials
+    file.
+  type: token
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: config_file
+    platform:
+    - linux
+    path: ~/.codex/.credentials.json
+    detail: Codex source documents fallback MCP OAuth credentials under CODEX_HOME/.credentials.json
+  - type: config_file
+    platform:
+    - windows
+    path: '%USERPROFILE%\.codex\.credentials.json'
+  - type: secret_store
+    detail: OS keychain/keyring storage for MCP OAuth credentials
+  - type: logs
+    detail: MCP auth debug output and OAuth callback traces
+  notes: The default CODEX_HOME is ~/.codex; user-provided CODEX_HOME can relocate this file.
+references:
+- type: source
+  url: https://github.com/openai/codex/blob/main/codex-rs/network-proxy/src/credential_broker/providers/openai.rs
+  note: Codex OpenAI credential broker uses OPENAI_API_KEY.
+- type: source
+  url: https://github.com/openai/codex/blob/main/codex-rs/core/config.schema.json
+  note: Codex auth and config schema references auth.json and config.toml.
+- type: docs
+  url: https://github.com/openai/codex
+  note: OpenAI Codex CLI repository and user documentation.

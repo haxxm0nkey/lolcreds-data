@@ -1,0 +1,104 @@
+id: opencode
+name: OpenCode
+category: ai_api
+vendor: SST
+author: haxxm0nkey
+credentials:
+- id: provider-api-key
+  name: Provider API Key
+  description: OpenCode can authenticate to model providers through provider environment variables, explicit provider config,
+    or auth login storage.
+  type: api_key
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - example: sk-proj-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    pattern: sk-(proj|svcacct)-[A-Za-z0-9_-]{20,255}
+    detail: OpenAI project/service-account key used by OpenCode providers
+  - example: sk-ant-api03-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    pattern: sk-ant-[A-Za-z0-9_-]{20,255}
+    detail: Anthropic API key used by OpenCode providers
+  - example: ghp_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    pattern: gh[pousr]_[A-Za-z0-9_]{36,255}
+    detail: GitHub token used by OpenCode GitHub workflows or tools
+  location:
+  - type: environment
+    path: OPENAI_API_KEY, ANTHROPIC_API_KEY, AZURE_OPENAI_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY, GROQ_API_KEY, XAI_API_KEY,
+      OPENROUTER_API_KEY, GITHUB_TOKEN, GH_TOKEN
+  - type: config_file
+    platform:
+    - linux
+    path: ~/.local/share/opencode/auth.json, ~/.config/opencode/opencode.json, ~/.config/opencode/opencode.jsonc, ~/.config/opencode/tui.json
+    detail: Official OpenCode auth and global config files on Unix-like systems
+  - type: config_file
+    path: opencode.json, opencode.jsonc, .opencode/opencode.json, .opencode/opencode.jsonc, .env, .env.local, .env.production
+    detail: Project-local OpenCode config and environment files
+  - type: secret_store
+    detail: GitHub Actions secrets, GitLab CI variables, cloud secret managers, Docker secrets, Kubernetes Secrets, and password
+      vaults
+  - type: source_code
+    detail: OpenCode tool/plugin files, custom agents, workflow examples, tests, scripts, and committed provider config
+  - type: logs
+    detail: OpenCode logs, CI traces, shell history, debug output, provider request traces, and terminal transcripts
+  notes: Provider key names are provider-owned and are included because official OpenCode docs/source show OpenCode consuming
+    them directly or through provider config.
+- id: auth-json
+  name: OpenCode Auth JSON
+  description: OpenCode stores API keys and OAuth tokens configured by opencode auth login or /connect in auth.json.
+  type: secret_value
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: config_file
+    platform:
+    - linux
+    path: ~/.local/share/opencode/auth.json
+    detail: Official OpenCode auth storage path documented for macOS/Linux and WSL
+  - type: environment
+    path: OPENCODE_AUTH_JSON
+    detail: OpenCode GitLab integration variable carrying the auth JSON content
+  - type: secret_store
+    detail: CI/CD variables and deployment secrets containing OPENCODE_AUTH_JSON or provider keys
+  - type: source_code
+    detail: Workflow snippets that materialize auth.json for OpenCode automation
+  - type: logs
+    detail: CI traces and setup logs that print auth JSON or provider keys
+  notes: OPENCODE_AUTH_JSON is documented for GitLab integration as serialized OpenCode authentication JSON, not a conventional
+    provider token.
+- id: mcp-oauth-token
+  name: MCP OAuth Token
+  description: OpenCode MCP authorization stores OAuth tokens for remote MCP servers.
+  type: token
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: config_file
+    platform:
+    - linux
+    path: ~/.local/share/opencode/mcp-auth.json
+    detail: Official OpenCode MCP auth token storage path on Unix-like systems
+  - type: secret_store
+    detail: Password vaults, CI variables, and secret managers used to move MCP authorization state between environments
+  - type: source_code
+    detail: MCP server configuration examples and setup scripts
+  - type: logs
+    detail: MCP auth debug logs and OAuth callback traces
+  notes: No stable OpenCode-specific token prefix was found; detect this surface by exact file path and OAuth field context.
+references:
+- type: docs
+  url: https://opencode.ai/docs/cli
+  note: OpenCode auth login stores API keys in ~/.local/share/opencode/auth.json.
+- type: docs
+  url: https://opencode.ai/docs/config
+  note: OpenCode global and project config file locations.
+- type: docs
+  url: https://opencode.ai/docs/mcp-servers
+  note: OpenCode MCP auth stores tokens in ~/.local/share/opencode/mcp-auth.json.
+- type: source
+  url: https://github.com/sst/opencode
+  note: OpenCode source and provider environment variable usage.

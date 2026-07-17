@@ -6,40 +6,57 @@ author: haxxm0nkey
 
 credentials:
 
-  - id: user-access-token
-    name: User Access Token
-    description: >
-      Hugging Face User Access Tokens authenticate Hub, git, library, and
-      Inference Provider access. Hugging Face documents tokens with the hf_
-      prefix and recommends separate tokens per app or usage.
-    type: token
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - example: 'hf_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
-        pattern: 'hf_[A-Za-z0-9]{20,}'
-    location:
-      - type: environment
-        path: HF_TOKEN, HUGGINGFACEHUB_API_TOKEN
-      - type: http_header
-        path: Authorization
-        detail: Bearer token used by Hub and Inference Provider API calls
-      - type: config_file
-        path: $HF_HOME/token, ~/.cache/huggingface/token
-        detail: default local token cache used by huggingface_hub
-      - type: source_code
-        detail: notebooks, model-loading scripts, training jobs, committed .env files
-      - type: secret_store
-        detail: CI/CD variables, Spaces secrets, cloud secret managers
-      - type: logs
-        detail: git, HTTP, or notebook output that prints bearer tokens
-    notes: >
-      Token scope controls whether a leak grants read, write, or admin-style
-      Hub access. A write token can publish or overwrite models, datasets,
-      and Spaces reachable by the account.
+- id: user-access-token
+  name: User Access Token
+  description: >
+    Hugging Face User Access Tokens authenticate Hub, git, library, and
+    Inference Provider access. Hugging Face documents tokens with the hf_
+    prefix and recommends separate tokens per app or usage.
+  type: token
+  nature: [user_defined]
+  sensitivity: secret
+  looks_like:
+  - example: hf_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    pattern: 'hf_[A-Za-z0-9]{20,}'
+  location:
+  - type: environment
+    path: HF_TOKEN, HUGGING_FACE_HUB_TOKEN
+  - type: http_header
+    path: Authorization
+    detail: Bearer token used by Hub and Inference Provider API calls
+  - type: config_file
+    path: ~/.cache/huggingface/token, ~/.cache/huggingface/stored_tokens
+    detail: Default local token files used by huggingface_hub and the hf CLI; HF_HOME and HF_TOKEN_PATH can relocate these files.
+    platform:
+    - linux
+  - type: source_code
+    detail: notebooks, model-loading scripts, training jobs, committed .env files
+  - type: secret_store
+    detail: CI/CD variables, Spaces secrets, cloud secret managers
+  - type: logs
+    detail: git, HTTP, or notebook output that prints bearer tokens
+  - type: config_file
+    path: .env, config.yml, config.yaml, values.yaml
+    detail: Project-local configuration filenames; lower-confidence fallback scan targets
+  notes: >
+    Token scope controls whether a leak grants read, write, or admin-style
+    Hub access. A write token can publish or overwrite models, datasets,
+    and Spaces reachable by the account. HF_TOKEN takes priority over the
+    backward-compatible HUGGING_FACE_HUB_TOKEN environment variable. The hf CLI
+    also supports saving tokens to configured git credential helpers, but those
+    helper files are generic credential stores rather than Hugging Face-owned
+    scanner surfaces. HUGGINGFACEHUB_API_TOKEN was omitted from the environment
+    location because it was not found in current official huggingface_hub
+    documentation or source during verification.
 
 references:
-  - type: docs
-    url: https://huggingface.co/docs/hub/security-tokens
-  - type: docs
-    url: https://huggingface.co/docs/huggingface_hub/package_reference/environment_variables
+- type: docs
+  url: https://huggingface.co/docs/hub/security-tokens
+- type: docs
+  url: https://huggingface.co/docs/huggingface_hub/package_reference/environment_variables
+- type: docs
+  url: https://huggingface.co/docs/huggingface_hub/guides/cli
+- type: source
+  url: https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/constants.py
+- type: source
+  url: https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/utils/_auth.py
