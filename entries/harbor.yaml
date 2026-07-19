@@ -6,33 +6,41 @@ author: haxxm0nkey
 credentials:
 - id: admin-password
   name: Harbor Administrator Password
-  description: Harbor creates a local administrator account for portal, registry, and API
-    administration. The initial password is deployment-configured in harbor.yml or Helm values.
+  description: Harbor creates a local administrator account for portal, registry,
+    and API administration. The initial password is deployment-configured in harbor.yml
+    or Helm values.
   type: username_password
   nature:
   - generated_on_install
   - user_defined
+  - static_default
   sensitivity: secret
   location:
   - type: public_interface
-    path: Harbor portal, REST API, Docker/OCI registry endpoints, and robot/account flows
+    path: Harbor portal, REST API, Docker/OCI registry endpoints, and robot/account
+      flows
   - type: database
     detail: Harbor database user and auth tables storing password verifier state
   - type: config_file
-    path: harbor.yml, values.yaml
-    detail: initial admin password, auth mode, database, Redis, and registry settings
+    path: harbor.yml, harbor.yaml, harbor-values.yaml
+    detail: Harbor initial admin password, auth mode, database, Redis, and registry
+      settings
   - type: environment
     path: HARBOR_ADMIN_PASSWORD
   - type: secret_store
-    detail: Kubernetes Secrets, Helm secrets, Docker Compose secrets, and password vaults
+    detail: Kubernetes Secrets, Helm secrets, Docker Compose secrets, and password
+      vaults
   - type: logs
     detail: core, portal, registry, jobservice, and authentication logs
-  notes: No literal default is modeled; packaged examples often show placeholders, while real
-    deployments set or generate the admin password.
+  notes: No literal default is modeled; packaged examples often show placeholders,
+    while real deployments set or generate the admin password.
+  default:
+    username: admin
+    password: Harbor12345
 - id: robot-account-token
   name: Robot Account Token
-  description: Harbor robot accounts use generated tokens for pull/push automation and CI/CD
-    registry access.
+  description: Harbor robot accounts use generated tokens for pull/push automation
+    and CI/CD registry access.
   type: token
   nature:
   - generated_on_install
@@ -41,11 +49,14 @@ credentials:
   location:
   - type: http_header
     path: Authorization
-    detail: Basic authentication with robot account name and token for registry/API access
+    detail: Basic authentication with robot account name and token for registry/API
+      access
   - type: database
     detail: robot account records and token metadata
   - type: config_file
-    detail: Docker config.json, Kubernetes imagePullSecrets, CI manifests, and Helm values
+    detail: Docker config, Kubernetes imagePullSecrets, CI manifests, and Harbor robot
+      account token files
+    path: config.json, dockerconfigjson, imagePullSecret.yaml, harbor-robot.json
   - type: environment
     path: HARBOR_ROBOT_TOKEN, HARBOR_TOKEN
   - type: secret_store
@@ -56,9 +67,9 @@ credentials:
     detail: registry auth logs and CI output
 - id: oidc-ldap-database-secrets
   name: OIDC, LDAP, Database, and Registry Secrets
-  description: Harbor deployments store OIDC client secrets, LDAP bind passwords, database
-    passwords, Redis passwords, registry HTTP secrets, token signing material, and scanner/replication
-    credentials.
+  description: Harbor deployments store OIDC client secrets, LDAP bind passwords,
+    database passwords, Redis passwords, registry HTTP secrets, token signing material,
+    and scanner/replication credentials.
   type: secret_value
   nature:
   - generated_on_install
@@ -66,8 +77,9 @@ credentials:
   sensitivity: secret
   location:
   - type: config_file
-    path: harbor.yml, values.yaml
-    detail: auth, database, Redis, registry, token, scanner, and replication settings
+    path: harbor.yml, harbor.yaml, harbor-values.yaml
+    detail: 'auth, database, Redis, registry, token, scanner, and replication settings;
+      Removed generic/common scanner surface path(s) from product template: values.yaml'
   - type: database
     detail: replication endpoints, scanner credentials, OIDC/LDAP settings, and encrypted
       secrets

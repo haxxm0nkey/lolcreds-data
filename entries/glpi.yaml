@@ -1,13 +1,13 @@
 id: glpi
 name: GLPI
-category: enterprise_app
+category: other
 vendor: Teclib
 author: haxxm0nkey
 credentials:
 - id: default-local-accounts
   name: Default Local Accounts
-  description: Fresh GLPI installations include built-in local accounts used to sign in before
-    the operator changes or disables them.
+  description: Fresh GLPI installations include built-in local accounts used to sign
+    in before the operator changes or disables them.
   type: username_password
   nature:
   - static_default
@@ -22,15 +22,17 @@ credentials:
   - type: database
     detail: GLPI users table storing password verifier data
   - type: config_file
-    detail: deployment inventories, Docker Compose files, and installer notes
+    detail: Deployment inventories, Docker config, and installer notes
+    path: config/config_db.php, config_db.php, glpi.env
   - type: artifact
     detail: database dumps and application backups
-  notes: Other documented initial accounts commonly include tech/tech, normal/normal, and
-    post-only/postonly; the default block records the administrative glpi/glpi account.
+  notes: Other documented initial accounts commonly include tech/tech, normal/normal,
+    and post-only/postonly; the default block records the administrative glpi/glpi
+    account.
 - id: api-app-token
   name: API App Token / Session Token
-  description: GLPI REST API clients can use application tokens and user authentication to
-    obtain session tokens for API access.
+  description: GLPI REST API clients can use application tokens and user authentication
+    to obtain session tokens for API access.
   type: token
   nature:
   - generated_on_install
@@ -46,7 +48,8 @@ credentials:
   - type: database
     detail: GLPI API client and session tables
   - type: config_file
-    detail: integration scripts, .env files, monitoring configs, and CMDB sync jobs
+    detail: GLPI API integration configs and local client settings
+    path: glpi.json, glpi.ini, config.json, config/config_db.php
   - type: environment
     path: GLPI_APP_TOKEN, GLPI_SESSION_TOKEN, GLPI_USER_TOKEN
   - type: secret_store
@@ -55,16 +58,19 @@ credentials:
     detail: API client traces and web server access logs
 - id: ldap-mail-database-secrets
   name: LDAP, Mail Receiver, and Database Secrets
-  description: GLPI deployments store LDAP bind credentials, mail receiver passwords, and
-    database credentials for runtime and integrations.
+  description: GLPI deployments store LDAP bind credentials, mail receiver passwords,
+    and database credentials for runtime and integrations.
   type: secret_value
   nature:
   - user_defined
   sensitivity: secret
   location:
   - type: config_file
-    detail: config/config_db.php, LDAP configuration, mail receiver setup, and deployment
-      manifests
+    detail: GLPI database config plus LDAP/mail receiver settings stored in DB/admin
+      UI
+    path: config/config_db.php, config_db.php
+    platform:
+    - linux
   - type: database
     detail: GLPI tables holding encrypted or protected integration settings
   - type: secret_store

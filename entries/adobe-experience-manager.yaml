@@ -1,87 +1,141 @@
 id: adobe-experience-manager
 name: Adobe Experience Manager
-category: cms
+category: other
 vendor: Adobe
 author: haxxm0nkey
+
 credentials:
 - id: default-admin
   name: Default Administrator Account
-  description: AEM quickstart installations include the built-in admin account used for initial
-    author/publish administration. Adobe hardening guidance calls out changing default passwords
-    and securing default accounts.
+  description: >
+    AEM quickstart installations include the built-in admin account used for
+    initial author/publish administration. Adobe hardening guidance calls out
+    changing default passwords for the AEM admin and OSGi Web Console admin
+    accounts after installation.
   type: username_password
-  nature:
-  - static_default
-  - user_defined
+  nature: [static_default, user_defined]
   sensitivity: secret
   default:
     username: admin
     password: admin
+  looks_like:
+  - pattern: '(?i)(aem|cq|crx|osgi|felix|granite)[A-Za-z0-9_ .:/-]{0,80}(admin)[A-Za-z0-9_ .:/-]{0,40}(admin)'
+    detail: Contextual AEM/CQ/CRX admin/admin default credential evidence in config, docs, scripts, or logs
   location:
   - type: public_interface
-    path: AEM author/publish login, CRXDE Lite, Felix console, Package Manager, and Sling
-      endpoints
+    path: /libs/granite/core/content/login.html, /crx/de/index.jsp, /system/console, /crx/packmgr/index.jsp, /bin/receive
+    detail: AEM author/publish login, CRXDE Lite, Felix console, Package Manager, and replication receiver contexts
+  - type: config_file
+    path: quickstart.properties, start.bat, start.sh, crx-quickstart/conf/controlport, crx-quickstart/repository/repository.xml
+    detail: Product-owned quickstart/startup and repository files that may expose default admin use or bootstrap context
   - type: database
     detail: JCR/Oak repository user and token nodes
-  - type: config_file
-    detail: quickstart startup scripts, OSGi configs, runmode configs, and provisioning files
   - type: artifact
     detail: AEM package exports, repository backups, and quickstart snapshots
-  notes: admin/admin is an initial/development credential and should be changed or disabled
-    for production hardening.
+  - type: logs
+    detail: request.log, audit logs, error.log, access logs, and authentication traces containing default-admin activity
+  notes: >
+    admin/admin is an initial/development credential. Adobe recommends changing
+    both the AEM admin and OSGi Web Console admin passwords after installation.
+
 - id: repository-user-password
   name: Repository / Service User Password
-  description: AEM stores local repository users, service users, and application accounts
-    in the JCR/Oak repository for authoring, replication, package management, and integrations.
+  description: >
+    AEM stores local repository users, service users, and application accounts in
+    the JCR/Oak repository for authoring, replication, package management, and
+    integrations.
   type: username_password
-  nature:
-  - user_defined
-  - generated_on_install
+  nature: [user_defined, generated_on_install]
   sensitivity: secret
   location:
-  - type: database
-    detail: JCR/Oak repository users, groups, rep:password hashes, and service user mappings
   - type: public_interface
-    path: AEM login, Sling servlets, CRXDE, package manager, and replication endpoints
+    path: /libs/granite/security/content/useradmin.html, /crx/de/index.jsp, /crx/packmgr/index.jsp, /bin/receive
+    detail: AEM user administration, CRXDE, package manager, and replication endpoints
+  - type: config_file
+    path: jcr_root/home/users/.content.xml, jcr_root/home/users/system/.content.xml, jcr_root/home/groups/.content.xml, crx-quickstart/repository/repository.xml
+    detail: Content package and repository files that can contain user/service-user nodes, password hashes, and auth metadata
+  - type: database
+    detail: JCR/Oak repository users, groups, rep:password hashes, token nodes, and service user mappings
   - type: secret_store
-    detail: password vaults, Cloud Manager variables, and deployment secrets
+    detail: Password vaults, Cloud Manager variables, deployment secrets, and enterprise secret stores
   - type: source_code
-    detail: content packages, repoinit scripts, tests, and runmode configs
+    detail: Content packages, repoinit scripts, tests, runmode configs, and provisioning repositories
   - type: logs
     detail: request.log, audit logs, error.log, and authentication traces
-- id: osgi-and-crypto-secrets
-  name: OSGi, Crypto Support, and Integration Secrets
-  description: AEM OSGi configurations can hold SMTP passwords, LDAP bind credentials, dispatcher
-    flush secrets, OAuth/client secrets, database credentials, replication agent passwords,
-    and the Crypto Support master key material.
-  type: secret_value
-  nature:
-  - generated_on_install
-  - user_defined
+  notes: >
+    Repository password material is usually stored as hashes or protected values;
+    detect this surface by AEM repository/package context rather than generic
+    password words.
+
+- id: replication-agent-credential
+  name: Replication Agent Transport Credential
+  description: >
+    AEM replication agents can use transport credentials to authenticate from
+    author to publish or dispatcher endpoints. Adobe hardening guidance says the
+    default admin user should not be used for replication transport credentials.
+  type: username_password
+  nature: [user_defined]
   sensitivity: secret
   looks_like:
-  - pattern: \{[A-Za-z0-9+/=]+\}
-    detail: AEM encrypted OSGi configuration value produced by Crypto Support
+  - pattern: '(?i)(transportUser|transportPassword|transportUri|replication)[A-Za-z0-9_ .:/-]{0,80}(password|admin|\{[A-Za-z0-9+/=]{20,}\})'
+    detail: Contextual replication-agent transport credential or encrypted password in exported repository/config content
+  location:
+  - type: public_interface
+    path: /etc/replication/agents.author.html, /etc/replication/agents.publish.html, /bin/receive, /dispatcher/invalidate.cache
+    detail: Replication agent consoles, receiver servlet, and dispatcher flush contexts
+  - type: config_file
+    path: jcr_root/etc/replication/agents.author/publish/jcr:content/.content.xml, jcr_root/etc/replication/agents.author/flush/jcr:content/.content.xml, jcr_root/etc/replication/agents.publish/flush/jcr:content/.content.xml
+    detail: Common AEM content-package paths for replication agent configuration exports
+  - type: database
+    detail: JCR replication agent nodes and protected properties
+  - type: secret_store
+    detail: AEM Crypto Support, Cloud Manager variables, Kubernetes Secrets, and vaults
+  - type: source_code
+    detail: Content packages, runmode configs, deployment repositories, and dispatcher automation
+  - type: logs
+    detail: Replication logs, dispatcher flush logs, request logs, and transport debug traces
+
+- id: osgi-and-crypto-secrets
+  name: OSGi, Crypto Support, and Integration Secrets
+  description: >
+    AEM OSGi configurations can hold SMTP passwords, LDAP bind credentials,
+    dispatcher flush secrets, OAuth/client secrets, database credentials,
+    replication agent passwords, and Crypto Support encrypted values. AEM 6.3+
+    stores Crypto Support HMAC and master files under the com.adobe.granite.crypto.file
+    bundle data directory.
+  type: secret_value
+  nature: [generated_on_install, user_defined]
+  sensitivity: secret
+  looks_like:
+  - pattern: '(?i)(password|secret|token|credential|clientSecret|bindPassword|transportPassword|smtpPassword)[A-Za-z0-9_ .:/-]{0,40}[:=]\s*\{[A-Za-z0-9+/=]{20,}\}'
+    detail: Contextual AEM encrypted OSGi configuration value produced by Crypto Support
   location:
   - type: config_file
-    path: crx-quickstart/launchpad/config, crx-quickstart/conf
-    detail: OSGi configs, runmode configs, crypto keys, and connector settings
+    path: crx-quickstart/launchpad/config/org/apache/felix/webconsole/internal/servlet/OsgiManager.config, crx-quickstart/repository/repository.xml, crx-quickstart/conf/controlport
+    detail: Product-owned OSGi/web-console, repository, and quickstart configuration files
+  - type: config_file
+    path: org.apache.felix.webconsole.internal.servlet.OsgiManager.config, com.day.cq.mailer.DefaultMailService.config, org.apache.jackrabbit.oak.security.authentication.ldap.impl.LdapIdentityProvider.config, com.adobe.granite.auth.saml.SamlAuthenticationHandler.config
+    detail: Project/runmode OSGi configuration filenames that commonly hold admin, SMTP, LDAP, SAML, or integration secrets
   - type: database
-    detail: JCR configuration nodes for replication agents and integration credentials
+    detail: JCR configuration nodes for OSGi configs, replication agents, and integration credentials
   - type: secret_store
-    detail: AEM Crypto Support, Cloud Manager secrets, Kubernetes Secrets, and vaults
+    detail: AEM Crypto Support master/HMAC files, Cloud Manager secrets, Kubernetes Secrets, and vaults
   - type: source_code
-    detail: committed OSGi config files, content packages, and deployment repos
+    detail: Committed OSGi config files, content packages, runmode folders, and deployment repos
   - type: logs
-    detail: replication, LDAP, mail, and connector debug logs
+    detail: Replication, LDAP, SAML, mail, and connector debug logs
+  notes: >
+    Adobe documents copying the HMAC and master files from the com.adobe.granite.crypto.file
+    bundle data directory, but the Felix bundle number is instance-specific. It is
+    therefore kept as secret-store context rather than a globbed CredsHound path.
+
 - id: api-session-token
   name: Login Token / OAuth Token
-  description: AEM issues login tokens and may store OAuth/access tokens for integrations
+  description: >
+    AEM issues login tokens and may store OAuth/access tokens for integrations
     with Adobe and third-party services.
   type: token
-  nature:
-  - generated_on_install
-  - user_defined
+  nature: [generated_on_install, user_defined]
   sensitivity: secret
   location:
   - type: http_header
@@ -90,12 +144,45 @@ credentials:
   - type: http_header
     path: Authorization
     detail: Bearer/OAuth tokens used by integrations and Sling clients
+  - type: config_file
+    path: jcr_root/home/users/.content.xml, jcr_root/home/users/system/.content.xml, crx-quickstart/repository/repository.xml
+    detail: Repository/package paths that may contain token nodes or token-related auth metadata
   - type: database
     detail: JCR token nodes and OAuth/client credential storage
   - type: logs
-    detail: HTTP traces, request logs, and client debug output
+    detail: HTTP traces, request logs, access logs, and client debug output
+
+- id: truststore-or-keystore-secret
+  name: Truststore / Keystore Secret
+  description: >
+    AEM deployments use keystores, truststores, SSL certificates, and private keys
+    for HTTPS, SAML, LDAP over TLS, and integrations.
+  type: key_pair
+  nature: [user_defined, generated_on_install]
+  sensitivity: secret
+  looks_like:
+  - pattern: '-----BEGIN (RSA |EC |OPENSSH |ENCRYPTED )?PRIVATE KEY-----'
+    detail: Private-key header when AEM packages, configs, backups, or integrations expose key material
+  location:
+  - type: config_file
+    path: quickstart.properties, crx-quickstart/repository/repository.xml, org.apache.felix.https.config, com.adobe.granite.auth.saml.SamlAuthenticationHandler.config
+    detail: Product-owned or runmode config files that may reference HTTPS/SAML/LDAP key and truststore material
+  - type: database
+    detail: JCR truststore, keystore, and certificate nodes
+  - type: secret_store
+    detail: Java keystores, AEM truststore/keystore secrets, Cloud Manager variables, and vaults
+  - type: artifact
+    detail: AEM backups, content packages, support bundles, and deployment archives
+  - type: logs
+    detail: TLS, SAML, LDAP, and startup troubleshooting logs
+  notes: >
+    Generic keystore filenames and generic private-key paths are intentionally not
+    repeated as scanner paths. Include only AEM-owned config/package context here.
+
 references:
 - type: docs
-  url: https://experienceleague.adobe.com/en/docs/experience-manager-65/content/security/security
-- type: docs
   url: https://experienceleague.adobe.com/en/docs/experience-manager-65/content/security/security-checklist
+- type: docs
+  url: https://jackrabbit.apache.org/oak/docs/security/authentication/tokenmanagement.html
+- type: docs
+  url: https://experienceleague.adobe.com/en/docs/experience-manager-65/content/sites/administering/operations/replication

@@ -3,65 +3,77 @@ name: Dropbox
 category: saas
 vendor: Dropbox
 author: haxxm0nkey
-
 credentials:
+- id: oauth-access-refresh-token
+  name: OAuth Access / Refresh Token
+  description: 'Dropbox uses OAuth 2.0 to authorize access to user data. Dropbox documents
+    that the OAuth flow returns an access token to the app, used in API calls with
+    Authorization: Bearer, and supports refresh tokens for short-lived access tokens.
 
-  - id: oauth-access-refresh-token
-    name: OAuth Access / Refresh Token
-    description: >
-      Dropbox uses OAuth 2.0 to authorize access to user data. Dropbox documents
-      that the OAuth flow returns an access token to the app, used in API calls
-      with Authorization: Bearer, and supports refresh tokens for short-lived
-      access tokens.
-    type: token
-    nature: [generated_on_install]
-    sensitivity: secret
-    location:
-      - type: http_header
-        path: Authorization
-        detail: Bearer token used for Dropbox API calls
-      - type: http_response
-        detail: OAuth token endpoint responses containing access_token and refresh_token
-      - type: database
-        detail: application token stores mapped to Dropbox users or teams
-      - type: environment
-        path: DROPBOX_ACCESS_TOKEN, DROPBOX_REFRESH_TOKEN
-      - type: config_file
-        detail: OAuth example config, local token caches, .env files, and integration settings
-      - type: secret_store
-        detail: cloud secret managers, CI/CD variables, and encrypted app secrets
-      - type: logs
-        detail: OAuth callback logs and API client traces
-    notes: >
-      Access token permissions are controlled by scopes selected for the app and
-      authorization grant. Refresh tokens extend access until revoked.
+    '
+  type: token
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Bearer token used for Dropbox API calls
+  - type: http_response
+    detail: OAuth token endpoint responses containing access_token and refresh_token
+  - type: database
+    detail: application token stores mapped to Dropbox users or teams
+  - type: environment
+    path: DROPBOX_ACCESS_TOKEN, DROPBOX_REFRESH_TOKEN
+  - type: config_file
+    detail: Dropbox OAuth example config, local token caches, and integration settings
+    path: dropbox.json, dropbox-oauth.json, oauth-token.json, config.json
+  - type: secret_store
+    detail: cloud secret managers, CI/CD variables, and encrypted app secrets
+  - type: logs
+    detail: OAuth callback logs and API client traces
+  notes: 'Access token permissions are controlled by scopes selected for the app and
+    authorization grant. Refresh tokens extend access until revoked.
 
-  - id: app-secret
-    name: App Secret
-    description: >
-      Dropbox apps have an app key and app secret, also called client_id and
-      client_secret. Dropbox documents obtaining the app key and secret from the
-      App Console when registering an app.
-    type: secret_value
-    nature: [generated_on_install]
-    sensitivity: secret
-    location:
-      - type: environment
-        path: DROPBOX_APP_KEY, DROPBOX_APP_SECRET, DROPBOX_CLIENT_ID, DROPBOX_CLIENT_SECRET
-      - type: config_file
-        detail: OAuth backend config, .env files, app config, and deployment manifests
-      - type: secret_store
-        detail: CI/CD variables, cloud secret managers, and hosted app secrets
-      - type: source_code
-        detail: OAuth examples, app settings, tests, and accidentally committed integration config
-      - type: logs
-        detail: OAuth token request dumps and troubleshooting logs
-    notes: >
-      The app key identifies the app; the app secret is confidential and can be
-      used to authenticate token exchange requests for confidential clients.
+    '
+  looks_like:
+  - example: sl.Abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklm
+    pattern: sl\.[A-Za-z0-9\-_=]{135}
+    detail: Dropbox short-lived access token shape from public scanner rules
+  - example: abcdefghijklmnopqrstuvwxyzAAAAAAAAAAabcdefghijklmnopqrstuvwxyz0123456789abcde
+    pattern: '[A-Za-z0-9]{11}AAAAAAAAAA[A-Za-z0-9\-_=]{43}'
+    detail: Dropbox long-lived API token shape from public scanner rules
+- id: app-secret
+  name: App Secret
+  description: 'Dropbox apps have an app key and app secret, also called client_id
+    and client_secret. Dropbox documents obtaining the app key and secret from the
+    App Console when registering an app.
 
+    '
+  type: secret_value
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: environment
+    path: DROPBOX_APP_SECRET, DROPBOX_CLIENT_SECRET
+    detail: Dropbox app secret/client secret env vars; app key/client id are identifiers
+  - type: config_file
+    detail: Dropbox OAuth backend/app configuration files
+    path: dropbox.json, dropbox-oauth.json, oauth.json, config.json
+  - type: secret_store
+    detail: CI/CD variables, cloud secret managers, and hosted app secrets
+  - type: source_code
+    detail: OAuth examples, app settings, tests, and accidentally committed integration
+      config
+  - type: logs
+    detail: OAuth token request dumps and troubleshooting logs
+  notes: 'The app key identifies the app; the app secret is confidential and can be
+    used to authenticate token exchange requests for confidential clients.
+
+    '
 references:
-  - type: docs
-    url: https://developers.dropbox.com/oauth-guide
-  - type: docs
-    url: https://www.dropbox.com/developers/documentation/http/documentation
+- type: docs
+  url: https://developers.dropbox.com/oauth-guide
+- type: docs
+  url: https://www.dropbox.com/developers/documentation/http/documentation

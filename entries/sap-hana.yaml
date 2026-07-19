@@ -7,8 +7,8 @@ credentials:
 - id: system-user-password
   name: SYSTEM / Database User Password
   description: SAP HANA databases use database users such as SYSTEM and application/technical
-    users for SQL, administration, and service access. Initial passwords are set during installation
-    or provisioning.
+    users for SQL, administration, and service access. Initial passwords are set during
+    installation or provisioning.
   type: username_password
   nature:
   - generated_on_install
@@ -20,7 +20,9 @@ credentials:
   - type: database
     detail: HANA user catalog and password verifier state
   - type: config_file
-    detail: hdbuserstore references, deployment descriptors, xs/app configs, and backup scripts
+    detail: hdbuserstore references, deployment descriptors, xs/app configs, and backup
+      scripts
+    path: hdbuserstore, global.ini, nameserver.ini, indexserver.ini
   - type: secret_store
     detail: hdbuserstore, OS credential stores, Kubernetes Secrets, and password vaults
   - type: logs
@@ -29,8 +31,9 @@ credentials:
     SYSTEM password is modeled.
 - id: hdbuserstore-key
   name: hdbuserstore Secure User Store Key
-  description: HANA client tools can store connection credentials in hdbuserstore secure user
-    store keys, allowing scripts to connect without plaintext command-line passwords.
+  description: HANA client tools can store connection credentials in hdbuserstore
+    secure user store keys, allowing scripts to connect without plaintext command-line
+    passwords.
   type: secret_value
   nature:
   - user_defined
@@ -41,14 +44,15 @@ credentials:
     detail: SAP HANA secure user store entries on client or server hosts
   - type: config_file
     detail: scripts and service files referencing hdbuserstore key names
+    path: hdbuserstore, hdbuserstore.key, .hdbuserstore
   - type: source_code
     detail: backup, monitoring, and deployment automation
   - type: logs
     detail: hdbsql command traces and failed connection output
 - id: xs-uaa-oauth-secret
   name: XS Advanced / UAA OAuth Client Secret
-  description: SAP HANA XS Advanced and related services use UAA/OAuth clients, service keys,
-    and JWT signing configuration for application and service authentication.
+  description: SAP HANA XS Advanced and related services use UAA/OAuth clients, service
+    keys, and JWT signing configuration for application and service authentication.
   type: secret_value
   nature:
   - generated_on_install
@@ -62,6 +66,7 @@ credentials:
     detail: XSA/UAA service and client credential stores
   - type: config_file
     detail: mta.yaml, xs-security.json, service keys, and app environment files
+    path: mta.yaml, xs-security.json, default-env.json, manifest.yml
   - type: environment
     path: VCAP_SERVICES, HANA_CLIENT_SECRET, XSUAA_CLIENT_SECRET
   - type: secret_store
@@ -80,20 +85,21 @@ credentials:
   - user_defined
   sensitivity: secret
   looks_like:
-  - pattern: '-----BEGIN (RSA |EC |ENCRYPTED |)PRIVATE KEY-----'
+  - pattern: '-----BEGIN (RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----'
     detail: private key material for HANA TLS or client certificate authentication
   location:
   - type: config_file
-    detail: HANA certificate stores, PSE/PKCS#12 files, global.ini SSL settings, and client
-      key files
+    detail: HANA certificate stores, PSE/PKCS#12 files, global.ini SSL settings, and
+      client key files
+    path: global.ini, xsengine.ini, SAPSSLS.pse, SAPSNCS.pse, server.pse
   - type: secret_store
     detail: certificate vaults, OS key stores, and backup vaults
   - type: artifact
     detail: system copies, backups, and support archives
 - id: backup-encryption-key
   name: Backup Encryption Key / Root Key Material
-  description: HANA deployments can use encryption keys for data volume, redo log, and backup
-    encryption. Key backups and root keys are sensitive recovery credentials.
+  description: HANA deployments can use encryption keys for data volume, redo log,
+    and backup encryption. Key backups and root keys are sensitive recovery credentials.
   type: secret_value
   nature:
   - generated_on_install
@@ -106,6 +112,7 @@ credentials:
     detail: encrypted backup sets, key backups, and recovery bundles
   - type: config_file
     detail: encryption and key management configuration
+    path: global.ini, backup.log, backup-encryption.key
 references:
 - type: docs
   url: https://help.sap.com/docs/SAP_HANA_PLATFORM/6b94445c94ae495c83a19646e7c3fd56/c44f922dcb6341df871b62f2f9d5d04a.html

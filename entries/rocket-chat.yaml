@@ -1,93 +1,103 @@
 id: rocket-chat
 name: Rocket.Chat
-category: collaboration
+category: other
 vendor: Rocket.Chat
 author: haxxm0nkey
-
 credentials:
+- id: admin-provisioning-password
+  name: Provisioned Admin Password
+  description: 'Rocket.Chat deployment environment variables can provision an admin
+    user during deployment. Rocket.Chat documents deployment variables for configuring
+    and provisioning workspaces without relying on the UI.
 
-  - id: admin-provisioning-password
-    name: Provisioned Admin Password
-    description: >
-      Rocket.Chat deployment environment variables can provision an admin user
-      during deployment. Rocket.Chat documents deployment variables for
-      configuring and provisioning workspaces without relying on the UI.
-    type: username_password
-    nature: [generated_on_install, user_defined]
-    sensitivity: secret
-    location:
-      - type: environment
-        path: ADMIN_USERNAME, ADMIN_PASS, ADMIN_EMAIL, OVERWRITE_SETTING_Accounts_AdminUsername
-      - type: public_interface
-        path: Rocket.Chat login and administration UI
-      - type: database
-        detail: MongoDB database storing users, credentials, sessions, and settings
-      - type: secret_store
-        detail: Docker/Kubernetes secrets, cloud secret managers, and deployment vaults
-      - type: source_code
-        detail: Docker Compose files, Helm values, tests, and committed deployment manifests
-      - type: logs
-        detail: startup logs and provisioning output
-    notes: >
-      Admin credentials are deployment-specific. Do not treat documentation
-      examples as shipped defaults.
+    '
+  type: username_password
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: environment
+    path: ADMIN_USERNAME, ADMIN_PASS
+  - type: public_interface
+    path: Rocket.Chat login and administration UI
+  - type: database
+    detail: MongoDB database storing users, credentials, sessions, and settings
+  - type: secret_store
+    detail: Docker/Kubernetes secrets, cloud secret managers, and deployment vaults
+  - type: source_code
+    detail: Docker Compose files, Helm values, tests, and committed deployment manifests
+  - type: logs
+    detail: startup logs and provisioning output
+  - type: config_file
+    path: docker-compose.yml, rocketchat.env, settings.json
+  notes: 'Admin credentials are deployment-specific. Do not treat documentation examples
+    as shipped defaults.
 
-  - id: personal-access-token
-    name: Personal Access Token
-    description: >
-      Rocket.Chat supports personal access tokens for API use. Tokens are
-      user-scoped credentials for scripts, bots, and integrations.
-    type: token
-    nature: [user_defined]
-    sensitivity: secret
-    location:
-      - type: http_header
-        path: X-Auth-Token, Authorization
-        detail: Rocket.Chat REST API token or bearer authentication context
-      - type: database
-        detail: MongoDB records storing user tokens and sessions
-      - type: environment
-        path: ROCKETCHAT_AUTH_TOKEN, ROCKETCHAT_TOKEN
-      - type: config_file
-        detail: bot config, integration config, .env files, and deployment manifests
-      - type: secret_store
-        detail: bot secrets, CI/CD variables, and cloud secret managers
-      - type: source_code
-        detail: bot scripts, tests, and committed REST clients
-      - type: logs
-        detail: REST API traces and bot logs
-    notes: >
-      Token permissions follow the owning Rocket.Chat user and workspace roles.
+    '
+- id: personal-access-token
+  name: Personal Access Token
+  description: 'Rocket.Chat supports personal access tokens for API use. Tokens are
+    user-scoped credentials for scripts, bots, and integrations.
 
-  - id: mongodb-credentials
-    name: MongoDB Credentials
-    description: >
-      Rocket.Chat stores workspace state in MongoDB and deployments configure
-      MongoDB connection URIs through environment variables. Authenticated URIs
-      can contain database usernames and passwords.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: 'mongodb(?:\+srv)?://[^\s:@]+:[^\s@]+@[^\s/]+'
-        detail: MongoDB URI with username and password used by Rocket.Chat
-    location:
-      - type: environment
-        path: MONGO_URL, MONGO_OPLOG_URL
-      - type: config_file
-        detail: Docker Compose files, systemd units, Helm values, and deployment manifests
-      - type: secret_store
-        detail: Kubernetes Secrets, cloud secret managers, and database password vaults
-      - type: source_code
-        detail: committed deployment configs and test fixtures
-      - type: logs
-        detail: startup logs and MongoDB connection troubleshooting output
-    notes: >
-      MongoDB access can expose users, password hashes, tokens, messages, files
-      metadata, integrations, and workspace settings.
+    '
+  type: token
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: X-Auth-Token, Authorization
+    detail: Rocket.Chat REST API token or bearer authentication context
+  - type: database
+    detail: MongoDB records storing user tokens and sessions
+  - type: environment
+    path: ROCKETCHAT_AUTH_TOKEN, ROCKETCHAT_TOKEN
+  - type: config_file
+    detail: 'bot config, integration config, .env files, and deployment manifests;
+      Removed generic/common scanner surface path(s) from product template: .env'
+    path: rocket-chat.json, rocketchat.json, hubot.env, bot-config.json
+  - type: secret_store
+    detail: bot secrets, CI/CD variables, and cloud secret managers
+  - type: source_code
+    detail: bot scripts, tests, and committed REST clients
+  - type: logs
+    detail: REST API traces and bot logs
+  notes: 'Token permissions follow the owning Rocket.Chat user and workspace roles.
 
+    '
+- id: mongodb-credentials
+  name: MongoDB Credentials
+  description: 'Rocket.Chat stores workspace state in MongoDB and deployments configure
+    MongoDB connection URIs through environment variables. Authenticated URIs can
+    contain database usernames and passwords.
+
+    '
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: mongodb(?:\+srv)?://[^\s:@]+:[^\s@]+@[^\s/]+
+    detail: MongoDB URI with username and password used by Rocket.Chat
+  location:
+  - type: environment
+    path: MONGO_URL, MONGO_OPLOG_URL
+  - type: config_file
+    detail: Docker Compose files, systemd units, Helm values, and deployment manifests
+    path: docker-compose.yml, rocketchat.env, settings.json
+  - type: secret_store
+    detail: Kubernetes Secrets, cloud secret managers, and database password vaults
+  - type: source_code
+    detail: committed deployment configs and test fixtures
+  - type: logs
+    detail: startup logs and MongoDB connection troubleshooting output
+  notes: 'MongoDB access can expose users, password hashes, tokens, messages, files
+    metadata, integrations, and workspace settings.
+
+    '
 references:
-  - type: docs
-    url: https://docs.rocket.chat/docs/deployment-environment-variables
-  - type: docs
-    url: https://developer.rocket.chat/apidocs/personal-access-tokens
+- type: docs
+  url: https://docs.rocket.chat/docs/deployment-environment-variables
+- type: docs
+  url: https://developer.rocket.chat/apidocs/personal-access-tokens

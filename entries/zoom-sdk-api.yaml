@@ -3,98 +3,112 @@ name: Zoom SDK/API
 category: saas
 vendor: Zoom
 author: haxxm0nkey
-
 credentials:
+- id: oauth-access-refresh-token
+  name: OAuth Access / Refresh Token
+  description: 'Zoom integrations use OAuth 2.0 access tokens to call Zoom APIs and
+    may receive refresh tokens depending on app type. Zoom documents access_token,
+    token_type bearer, refresh_token, expires_in, scopes, and api_url in token responses.
 
-  - id: oauth-access-refresh-token
-    name: OAuth Access / Refresh Token
-    description: >
-      Zoom integrations use OAuth 2.0 access tokens to call Zoom APIs and may
-      receive refresh tokens depending on app type. Zoom documents access_token,
-      token_type bearer, refresh_token, expires_in, scopes, and api_url in token
-      responses.
-    type: token
-    nature: [generated_on_install]
-    sensitivity: secret
-    looks_like:
-      - pattern: 'eyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+'
-        detail: Zoom OAuth examples show JWT access tokens; use Bearer or token response context because no Zoom-specific prefix is documented
-    location:
-      - type: http_header
-        path: Authorization
-        detail: Bearer token used for Zoom API calls
-      - type: http_response
-        detail: OAuth token endpoint responses containing access_token and refresh_token
-      - type: environment
-        path: ZOOM_ACCESS_TOKEN, ZOOM_REFRESH_TOKEN
-      - type: database
-        detail: application OAuth token stores linked to Zoom users or accounts
-      - type: config_file
-        detail: OAuth examples, local token caches, .env files, and integration config
-      - type: secret_store
-        detail: cloud secret managers, CI/CD variables, and application secrets
-      - type: logs
-        detail: OAuth callback logs, token exchange traces, and API client debug logs
-    notes: >
-      Zoom access tokens expire after about one hour; refresh tokens can be used
-      to obtain new access tokens until expiration or revocation.
+    '
+  type: token
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - pattern: eyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+
+    detail: Zoom OAuth examples show JWT access tokens; use Bearer or token response
+      context because no Zoom-specific prefix is documented
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Bearer token used for Zoom API calls
+  - type: http_response
+    detail: OAuth token endpoint responses containing access_token and refresh_token
+  - type: environment
+    path: ZOOM_ACCESS_TOKEN, ZOOM_REFRESH_TOKEN
+  - type: database
+    detail: application OAuth token stores linked to Zoom users or accounts
+  - type: config_file
+    detail: 'OAuth examples, local token caches, .env files, and integration config;
+      Removed generic/common scanner surface path(s) from product template: .env'
+    path: zoom-oauth.json, oauth-token.json, zoom.json, zoom.yaml
+  - type: secret_store
+    detail: cloud secret managers, CI/CD variables, and application secrets
+  - type: logs
+    detail: OAuth callback logs, token exchange traces, and API client debug logs
+  notes: 'Zoom access tokens expire after about one hour; refresh tokens can be used
+    to obtain new access tokens until expiration or revocation.
 
-  - id: client-secret
-    name: OAuth / SDK Client Secret
-    description: >
-      Zoom apps have a Client ID and Client Secret. Zoom documents Basic
-      authorization using the Client ID and Client Secret for token requests and
-      Meeting SDK JWT generation using app credentials.
-    type: secret_value
-    nature: [generated_on_install]
-    sensitivity: secret
-    location:
-      - type: environment
-        path: ZOOM_CLIENT_ID, ZOOM_CLIENT_SECRET, ZOOM_SDK_KEY, ZOOM_SDK_SECRET
-      - type: http_header
-        path: Authorization
-        detail: Basic authorization header containing Base64 client_id:client_secret for token requests
-      - type: config_file
-        detail: OAuth backend config, Meeting SDK config, .env files, and deployment manifests
-      - type: secret_store
-        detail: cloud secret managers, CI/CD variables, hosted app config, and Kubernetes Secrets
-      - type: source_code
-        detail: SDK examples, backend OAuth handlers, tests, and accidentally committed app config
-      - type: logs
-        detail: token request dumps and SDK authentication troubleshooting logs
-    notes: >
-      Client ID / SDK key identifiers are not sufficient by themselves; the
-      client secret or SDK secret can authenticate the app or sign SDK JWTs.
+    '
+- id: client-secret
+  name: OAuth / SDK Client Secret
+  description: 'Zoom apps have a Client ID and Client Secret. Zoom documents Basic
+    authorization using the Client ID and Client Secret for token requests and Meeting
+    SDK JWT generation using app credentials.
 
-  - id: meeting-sdk-jwt
-    name: Meeting SDK JWT / ZAK Token
-    description: >
-      Zoom Meeting SDKs use JWTs for authorization and Zoom Access Key (ZAK)
-      tokens for authorizing users to start meetings or webinars. Zoom documents
-      ZAK retrieval through a Bearer-authenticated API call.
-    type: token
-    nature: [generated_on_install]
-    sensitivity: secret
-    looks_like:
-      - pattern: 'eyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+'
-        detail: Zoom Meeting SDK JWT, OAuth access token, or ZAK token in JWT compact serialization
-    location:
-      - type: http_response
-        detail: /users/{userId}/token?type=zak API responses containing token
-      - type: config_file
-        detail: Meeting SDK app config, local development files, and generated token caches
-      - type: environment
-        path: ZOOM_MEETING_SDK_JWT, ZOOM_ZAK_TOKEN
-      - type: source_code
-        detail: SDK startMeeting/joinMeeting code, examples, and committed generated JWTs
-      - type: logs
-        detail: Meeting SDK auth debug logs and API responses printed during troubleshooting
-    notes: >
-      ZAK tokens can start meetings for the associated Zoom user and should be
-      generated just before use.
+    '
+  type: secret_value
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: environment
+    path: ZOOM_CLIENT_SECRET, ZOOM_SDK_SECRET
+  - type: http_header
+    path: Authorization
+    detail: Basic authorization header containing Base64 client_id:client_secret for
+      token requests
+  - type: config_file
+    detail: 'OAuth backend config, Meeting SDK config, .env files, and deployment
+      manifests; Removed generic/common scanner surface path(s) from product template:
+      .env'
+    path: zoom-oauth.json, zoom-sdk.json, app.json, marketplace-app.json
+  - type: secret_store
+    detail: cloud secret managers, CI/CD variables, hosted app config, and Kubernetes
+      Secrets
+  - type: source_code
+    detail: SDK examples, backend OAuth handlers, tests, and accidentally committed
+      app config
+  - type: logs
+    detail: token request dumps and SDK authentication troubleshooting logs
+  notes: 'Client ID / SDK key identifiers are not sufficient by themselves; the client
+    secret or SDK secret can authenticate the app or sign SDK JWTs.
 
+    '
+- id: meeting-sdk-jwt
+  name: Meeting SDK JWT / ZAK Token
+  description: 'Zoom Meeting SDKs use JWTs for authorization and Zoom Access Key (ZAK)
+    tokens for authorizing users to start meetings or webinars. Zoom documents ZAK
+    retrieval through a Bearer-authenticated API call.
+
+    '
+  type: token
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - pattern: eyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+
+    detail: Zoom Meeting SDK JWT, OAuth access token, or ZAK token in JWT compact
+      serialization
+  location:
+  - type: http_response
+    detail: /users/{userId}/token?type=zak API responses containing token
+  - type: config_file
+    detail: Meeting SDK app config, local development files, and generated token caches
+    path: zoom-sdk.json, meeting-sdk.json, jwt.json
+  - type: environment
+    path: ZOOM_MEETING_SDK_JWT, ZOOM_ZAK_TOKEN
+  - type: source_code
+    detail: SDK startMeeting/joinMeeting code, examples, and committed generated JWTs
+  - type: logs
+    detail: Meeting SDK auth debug logs and API responses printed during troubleshooting
+  notes: 'ZAK tokens can start meetings for the associated Zoom user and should be
+    generated just before use.
+
+    '
 references:
-  - type: docs
-    url: https://developers.zoom.us/docs/integrations/oauth/
-  - type: docs
-    url: https://developers.zoom.us/docs/meeting-sdk/auth/
+- type: docs
+  url: https://developers.zoom.us/docs/integrations/oauth/
+- type: docs
+  url: https://developers.zoom.us/docs/meeting-sdk/auth/

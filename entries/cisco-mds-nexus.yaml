@@ -6,9 +6,9 @@ author: haxxm0nkey
 credentials:
 - id: local-admin-password
   name: Local Administrator/User Password
-  description: Cisco MDS and Nexus NX-OS switches use local users for console, SSH, Telnet
-    where enabled, NX-API, and management access. Initial setup requires creating or setting
-    the admin password.
+  description: Cisco MDS and Nexus NX-OS switches use local users for console, SSH,
+    Telnet where enabled, NX-API, and management access. Initial setup requires creating
+    or setting the admin password.
   type: username_password
   nature:
   - user_defined
@@ -22,18 +22,23 @@ credentials:
   location:
   - type: config_file
     detail: running-config/startup-config user and AAA configuration
+    path: running-config, startup-config, checkpoint.cfg
   - type: public_interface
     path: console, SSH, NX-API, HTTPS, and management VRF services
   - type: artifact
     detail: configuration backups, tech-support bundles, and golden configs
   - type: source_code
     detail: network automation templates and lab configs
-  notes: No universal Nexus/MDS admin password is modeled; platforms prompt for an admin password
-    during first boot or setup.
+  - type: artifact
+    path: show-running-config.txt, show-startup-config.txt, show-tech-support.txt,
+      checkpoint.cfg
+    detail: Common exported NX-OS/MDS configuration and support artifacts
+  notes: No universal Nexus/MDS admin password is modeled; platforms prompt for an
+    admin password during first boot or setup.
 - id: nx-api-token-cookie
   name: NX-API Session Cookie / Token
-  description: NX-OS NX-API and RESTCONF-style clients authenticate over HTTPS and may use
-    Basic credentials, cookies, or session tokens for automation.
+  description: NX-OS NX-API and RESTCONF-style clients authenticate over HTTPS and
+    may use Basic credentials, cookies, or session tokens for automation.
   type: token
   nature:
   - generated_on_install
@@ -48,16 +53,15 @@ credentials:
     detail: NX-API web/API session cookie
   - type: config_file
     detail: Ansible, Terraform, Nornir, and custom automation configs
-  - type: environment
-    path: NXOS_USERNAME, NXOS_PASSWORD, NXAPI_TOKEN
+    path: running-config, startup-config, checkpoint.cfg
   - type: secret_store
     detail: CI/CD variables and network automation vaults
   - type: logs
     detail: NX-API HTTP traces and automation debug logs
 - id: aaa-snmp-secrets
   name: AAA / SNMP Shared Secrets
-  description: NX-OS configurations store RADIUS/TACACS+ shared keys, LDAP integration settings,
-    SNMP communities/users, and local fallback credentials.
+  description: NX-OS configurations store RADIUS/TACACS+ shared keys, LDAP integration
+    settings, SNMP communities/users, and local fallback credentials.
   type: secret_value
   nature:
   - user_defined
@@ -70,29 +74,40 @@ credentials:
   location:
   - type: config_file
     detail: NX-OS AAA, SNMP, and management configuration
+    path: running-config, startup-config, checkpoint.cfg
   - type: artifact
     detail: configuration backups, checkpoint archives, and tech-support files
   - type: source_code
     detail: network-as-code repositories and monitoring templates
+  - type: artifact
+    path: show-running-config.txt, show-startup-config.txt, show-tech-support.txt,
+      checkpoint.cfg
+    detail: Common exported NX-OS/MDS configuration and support artifacts
 - id: fc-vsan-and-ipsec-secrets
   name: Fibre Channel, FCSP, and IPsec Secrets
-  description: Cisco MDS/Nexus storage/network configurations can include Fibre Channel Security
-    Protocol credentials, DH-CHAP secrets, IPsec/IKE pre-shared keys, and routing protocol
-    authentication keys.
+  description: Cisco MDS/Nexus storage/network configurations can include Fibre Channel
+    Security Protocol credentials, DH-CHAP secrets, IPsec/IKE pre-shared keys, and
+    routing protocol authentication keys.
   type: secret_value
   nature:
   - user_defined
   sensitivity: secret
   looks_like:
   - pattern: (dhchap|fcsp|key-chain|pre-shared-key|isakmp key)
-    detail: NX-OS/MDS config fragments indicating FCSP, routing, or VPN shared secret context
+    detail: NX-OS/MDS config fragments indicating FCSP, routing, or VPN shared secret
+      context
   location:
   - type: config_file
     detail: MDS FCSP/DH-CHAP, VSAN, key-chain, routing, and crypto configuration
+    path: running-config, startup-config, checkpoint.cfg
   - type: artifact
     detail: fabric configuration backups and migration bundles
   - type: secret_store
     detail: network automation vaults and storage fabric password stores
+  - type: artifact
+    path: show-running-config.txt, show-startup-config.txt, show-tech-support.txt,
+      checkpoint.cfg
+    detail: Common exported NX-OS/MDS configuration and support artifacts
 references:
 - type: docs
   url: https://www.cisco.com/c/en/us/td/docs/switches/datacenter/sw/9_x/nx-os/security/configuration/guide/b-cisco-nexus-9000-nx-os-security-configuration-guide-93x.html

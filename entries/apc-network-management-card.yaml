@@ -6,8 +6,9 @@ author: haxxm0nkey
 credentials:
 - id: default-apc
   name: Default apc Account
-  description: APC Network Management Cards for UPS/PDU devices have a documented default
-    administrator account for initial web/Telnet/SSH access that must be changed during installation.
+  description: APC Network Management Cards for UPS/PDU devices have a documented
+    default administrator account for initial web/Telnet/SSH access that must be changed
+    during installation.
   type: username_password
   nature:
   - static_default
@@ -21,14 +22,15 @@ credentials:
     path: NMC web UI, SSH, Telnet, FTP/SCP, SNMP, and serial console
   - type: config_file
     detail: NMC configuration exports, config.ini, and fleet management templates
+    path: config.ini
   - type: artifact
     detail: UPS/PDU configuration backups, support files, and deployment worksheets
-  notes: apc/apc is a well-known initial credential for many APC NMC generations; newer firmware/policies
-    may require password changes or unique credentials.
+  notes: apc/apc is a well-known initial credential for many APC NMC generations;
+    newer firmware/policies may require password changes or unique credentials.
 - id: local-user-password
   name: Local NMC User Password
-  description: APC NMC cards maintain local administrator/device/read-only users for management
-    interfaces and automation.
+  description: APC NMC cards maintain local administrator/device/read-only users for
+    management interfaces and automation.
   type: username_password
   nature:
   - user_defined
@@ -49,8 +51,8 @@ credentials:
     detail: event logs, syslog, and management access traces
 - id: snmpv1-v3-secrets
   name: SNMP Community / SNMPv3 Auth and Privacy Secrets
-  description: APC NMC devices expose monitoring and control over SNMP. Community strings
-    and SNMPv3 auth/privacy phrases are management credentials.
+  description: APC NMC devices expose monitoring and control over SNMP. Community
+    strings and SNMPv3 auth/privacy phrases are management credentials.
   type: secret_value
   nature:
   - user_defined
@@ -69,20 +71,23 @@ credentials:
     detail: SNMP traps, syslog, and NMS debug logs
 - id: radius-ldap-tacacs-and-tls-secrets
   name: RADIUS/LDAP/TACACS+ and TLS Secrets
-  description: APC NMC configurations may contain RADIUS shared secrets, LDAP bind credentials,
-    TACACS+ secrets, email/SMTP credentials, and HTTPS/SSH certificate or host key material.
+  description: APC NMC configurations may contain RADIUS shared secrets, LDAP bind
+    credentials, TACACS+ secrets, email/SMTP credentials, and HTTPS/SSH certificate
+    or host key material.
   type: secret_value
   nature:
   - user_defined
   - generated_on_install
   sensitivity: secret
   looks_like:
-  - pattern: '-----BEGIN (RSA |EC |ENCRYPTED |)PRIVATE KEY-----'
-    detail: private key material for NMC HTTPS certificate or SSH host/client key context
+  - pattern: '-----BEGIN (RSA |EC |OPENSSH |ENCRYPTED )?PRIVATE KEY-----'
+    detail: private key material for NMC HTTPS certificate or SSH host/client key
+      context
   location:
   - type: config_file
-    path: config.ini, ssl/ssh certificate exports
-    detail: remote authentication, SMTP, TLS, and SSH settings
+    path: config.ini
+    detail: 'remote authentication, SMTP, TLS, and SSH settings. Additional non-path
+      context from previous path: ssl/ssh certificate exports.'
   - type: secret_store
     detail: certificate stores, password vaults, and datacenter management secrets
   - type: artifact

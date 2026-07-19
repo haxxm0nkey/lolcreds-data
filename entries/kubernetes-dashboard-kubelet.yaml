@@ -7,10 +7,10 @@ credentials:
 - id: kubelet-anonymous-access
   name: kubelet Anonymous / Read-Only Access
   description: kubelet can be configured to allow anonymous requests or expose read-only/metrics
-    endpoints depending on Kubernetes version and flags. When enabled or left exposed, some
-    node information, metrics, logs, or pod-related endpoints may be reachable without presenting
-    a bearer token or client certificate.
-  type: username_password
+    endpoints depending on Kubernetes version and flags. When enabled or left exposed,
+    some node information, metrics, logs, or pod-related endpoints may be reachable
+    without presenting a bearer token or client certificate.
+  type: other
   nature:
   - unauthenticated_default
   sensitivity: secret
@@ -20,24 +20,26 @@ credentials:
   location:
   - type: public_interface
     path: kubelet HTTPS :10250 and legacy read-only :10255 endpoints
-    detail: node kubelet API, metrics, pods, logs, stats, or read-only endpoints when anonymous/read-only
-      access is enabled
+    detail: node kubelet API, metrics, pods, logs, stats, or read-only endpoints when
+      anonymous/read-only access is enabled
   - type: config_file
-    path: kubelet config.yaml, kubelet flags, node systemd units
-    detail: anonymous.authentication.enabled, authorization.mode, readOnlyPort, clientCAFile,
-      and webhook authn/authz settings control access
+    detail: 'anonymous.authentication.enabled, authorization.mode, readOnlyPort, clientCAFile,
+      and webhook authn/authz settings control access. Additional non-path context
+      from previous path: kubelet flags, node systemd units.; Removed generic/common
+      scanner surface path(s) from product template: config.yaml'
+    path: /var/lib/kubelet/config.yaml, kubelet-config.yaml, kubelet.service
   - type: logs
-    detail: kubelet startup logs and apiserver audit/node proxy logs showing anonymous or
-      unauthenticated requests
+    detail: kubelet startup logs and apiserver audit/node proxy logs showing anonymous
+      or unauthenticated requests
   notes: This is config-dependent and represents absence of kubelet credential enforcement
-    for specific endpoints, not a credential value. Impact depends on anonymous auth, authorization
-    mode, readOnlyPort, network reachability, client certificate settings, and Kubernetes
-    version.
+    for specific endpoints, not a credential value. Impact depends on anonymous auth,
+    authorization mode, readOnlyPort, network reachability, client certificate settings,
+    and Kubernetes version.
 - id: dashboard-service-account-token
   name: Kubernetes Dashboard ServiceAccount Token
-  description: Kubernetes Dashboard authenticates users with bearer tokens, commonly service
-    account tokens or kubeconfig-derived tokens. High-privilege dashboard tokens can provide
-    broad cluster access.
+  description: Kubernetes Dashboard authenticates users with bearer tokens, commonly
+    service account tokens or kubeconfig-derived tokens. High-privilege dashboard
+    tokens can provide broad cluster access.
   type: token
   nature:
   - generated_on_install
@@ -51,19 +53,21 @@ credentials:
     path: Authorization
     detail: Bearer token submitted to Dashboard or Kubernetes API
   - type: secret_store
-    detail: Kubernetes service account token Secrets, projected token volumes, and external
-      vaults
+    detail: Kubernetes service account token Secrets, projected token volumes, and
+      external vaults
   - type: config_file
-    path: kubeconfig, dashboard manifests, serviceaccount token files
-    detail: dashboard auth token and kubeconfig context material
+    path: kubeconfig, admin.conf, dashboard-token.txt, kubernetes-dashboard.yaml
+    detail: 'dashboard auth token and kubeconfig context material. Additional non-path
+      context from previous path: dashboard manifests, serviceaccount token files.'
   - type: source_code
     detail: cluster bootstrap repos, Helm values, and lab manifests
   - type: logs
     detail: Dashboard logs, apiserver audit logs, and proxy traces
 - id: kubeconfig-client-certificate
   name: kubeconfig Client Certificate / Key
-  description: Dashboard users, kubectl clients, and automation may authenticate with kubeconfig
-    files containing client certificates, private keys, bearer tokens, or exec-plugin credentials.
+  description: Dashboard users, kubectl clients, and automation may authenticate with
+    kubeconfig files containing client certificates, private keys, bearer tokens,
+    or exec-plugin credentials.
   type: key_pair
   nature:
   - generated_on_install
@@ -72,11 +76,16 @@ credentials:
   looks_like:
   - pattern: client-key-data:\s+[A-Za-z0-9+/=]+
     detail: base64-encoded Kubernetes kubeconfig client private key field
-  - pattern: '-----BEGIN (RSA |EC |OPENSSH |ENCRYPTED |)PRIVATE KEY-----'
+  - pattern: '-----BEGIN (RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----'
     detail: client private key material used by Kubernetes kubeconfig authentication
   location:
   - type: config_file
-    path: ~/.kube/config, kubeconfig
+    path: ~/.kube/config
+    detail: clusters, users, tokens, client certs, and private keys
+    platform:
+    - linux
+  - type: config_file
+    path: kubeconfig, admin.conf, controller-manager.conf, scheduler.conf
     detail: clusters, users, tokens, client certs, and private keys
   - type: secret_store
     detail: Kubernetes Secrets, CI/CD variables, and workstation credential stores
@@ -86,22 +95,28 @@ credentials:
     detail: support bundles, cluster backups, and exported admin configs
 - id: kubelet-client-cert-and-token
   name: kubelet Client Certificate / Bearer Token
-  description: kubelet HTTPS endpoints can require client certificates or bearer tokens. Nodes
-    also store kubelet client credentials used to talk to the apiserver.
+  description: kubelet HTTPS endpoints can require client certificates or bearer tokens.
+    Nodes also store kubelet client credentials used to talk to the apiserver.
   type: key_pair
   nature:
   - generated_on_install
   - user_defined
   sensitivity: secret
   looks_like:
-  - pattern: '-----BEGIN (RSA |EC |ENCRYPTED |)PRIVATE KEY-----'
+  - pattern: '-----BEGIN (RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----'
     detail: kubelet client/server private key material
   location:
   - type: public_interface
-    path: kubelet HTTPS API, metrics, logs, exec/portforward-related endpoints, and node proxy
-      paths
+    path: kubelet HTTPS API, metrics, logs, exec/portforward-related endpoints, and
+      node proxy paths
   - type: config_file
-    path: /var/lib/kubelet/pki/, /var/lib/kubelet/kubeconfig
+    path: /var/lib/kubelet/pki/kubelet-client-current.pem, /var/lib/kubelet/pki/kubelet-server-current.pem,
+      /var/lib/kubelet/kubeconfig
+    detail: kubelet client certificate, server certificate, and kubeconfig credentials
+    platform:
+    - linux
+  - type: config_file
+    path: kubelet.conf, kubeconfig
     detail: kubelet client certificate, server certificate, and kubeconfig credentials
   - type: secret_store
     detail: node filesystem credential stores and cluster PKI backups
@@ -109,8 +124,8 @@ credentials:
     detail: kubelet logs, apiserver audit logs, and node diagnostics
 - id: dashboard-csrf-cookie-session
   name: Dashboard Session / CSRF Cookie
-  description: Kubernetes Dashboard browser sessions use cookies and CSRF/session state that
-    can act as bearer material while valid.
+  description: Kubernetes Dashboard browser sessions use cookies and CSRF/session
+    state that can act as bearer material while valid.
   type: token
   nature:
   - generated_on_install
@@ -129,9 +144,9 @@ credentials:
     detail: browser traces, reverse proxy logs, and Dashboard debug logs
 - id: cluster-admin-rbac-secret
   name: Cluster Admin RBAC Binding Secret
-  description: Dashboard deployments sometimes bind a service account to cluster-admin for
-    convenience. The credential is the service account token or kubeconfig tied to that RBAC
-    binding.
+  description: Dashboard deployments sometimes bind a service account to cluster-admin
+    for convenience. The credential is the service account token or kubeconfig tied
+    to that RBAC binding.
   type: token
   nature:
   - user_defined
@@ -141,14 +156,16 @@ credentials:
   - type: config_file
     detail: ClusterRoleBinding, ServiceAccount, Secret, and Helm values granting Dashboard
       permissions
+    path: kubernetes-dashboard.yaml, dashboard-adminuser.yaml, clusterrolebinding.yaml,
+      serviceaccount.yaml
   - type: secret_store
     detail: Kubernetes Secrets and projected service account token volumes
   - type: source_code
     detail: lab manifests and admin dashboard installation snippets
   - type: logs
     detail: apiserver audit records showing Dashboard service account use
-  notes: The RBAC binding is not itself secret, but it identifies which token/kubeconfig has
-    cluster-admin blast radius.
+  notes: The RBAC binding is not itself secret, but it identifies which token/kubeconfig
+    has cluster-admin blast radius.
 references:
 - type: docs
   url: https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/

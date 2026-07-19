@@ -3,119 +3,126 @@ name: Apache Solr
 category: database
 vendor: Apache Software Foundation
 author: haxxm0nkey
+
 credentials:
 - id: unauthenticated-default
   name: Unauthenticated Solr API/Admin Access
-  description: Solr does not require HTTP authentication until an authentication plugin is
-    configured through security.json or equivalent deployment configuration. Without auth,
-    Admin UI and query/update APIs may be reachable to anyone with network access.
-  type: username_password
-  nature:
-  - unauthenticated_default
-  sensitivity: secret
+  description: >
+    Solr does not require HTTP authentication until an authentication plugin is
+    configured through security.json or equivalent deployment configuration.
+  type: other
+  nature: [unauthenticated_default]
+  sensitivity: context_dependent
   default:
     username: null
     password: null
   location:
   - type: public_interface
-    path: Solr Admin UI and HTTP APIs, commonly :8983/solr
-    detail: Admin, collections, config, query, and update endpoints when no auth plugin is
-      active
+    path: /solr, /solr/admin, /api
+    detail: Admin, collections, config, query, and update endpoints when no auth plugin is active
   - type: config_file
-    path: security.json
-    detail: absence of authentication plugin or blockUnknown/user configuration means no Solr
-      HTTP auth enforcement
+    path: security.json, solr.in.sh, solr.in.cmd
+    detail: Absence of authentication plugin or blockUnknown/user configuration means no Solr HTTP auth enforcement
   - type: database
     detail: ZooKeeper-stored security.json for SolrCloud clusters
   - type: logs
     detail: Solr startup and security plugin logs indicating whether authentication is configured
-  notes: This represents absence of Solr HTTP authentication, not a blank username/password.
-    Exposure depends on security.json, SolrCloud ZooKeeper state, reverse proxies, network
-    controls, and collection/update permissions.
+  notes: >
+    This represents absence of Solr HTTP authentication, not a blank username/password.
+
 - id: basic-auth-user-password
   name: Solr Basic Authentication User Password
-  description: Solr can enable the BasicAuthPlugin or other authentication plugins in security.json.
-    Users and password hashes protect the Admin UI, Collections API, and query/update APIs.
+  description: >
+    Solr can enable BasicAuthPlugin or other authentication plugins in
+    security.json. Users and password hashes protect the Admin UI and APIs.
   type: username_password
-  nature:
-  - user_defined
-  - generated_on_install
+  nature: [user_defined, generated_on_install]
   sensitivity: secret
+  looks_like:
+  - pattern: '"credentials"\s*:\s*\{[^}]{0,500}"[A-Za-z0-9_.@-]{1,128}"\s*:\s*"[^"\r\n]{10,255}"'
+    detail: Solr security.json BasicAuthPlugin credentials object with user hash value
   location:
   - type: public_interface
-    path: Solr Admin UI, Collections API, query/update handlers, and V2 APIs
+    path: /solr, /solr/admin, /api
+    detail: Solr Admin UI, Collections API, query/update handlers, and V2 APIs
   - type: config_file
     path: security.json
-    detail: authentication plugin, users, password hashes, blockUnknown, and authorization
-      config
+    detail: Authentication plugin, users, password hashes, blockUnknown, and authorization config
   - type: database
     detail: ZooKeeper security.json storage for SolrCloud clusters
   - type: secret_store
     detail: Kubernetes Secrets, Solr Operator secrets, and password vaults
   - type: logs
     detail: Solr request logs, security audit logs, and client traces
+
 - id: bearer-jwt-and-api-token
   name: JWT / Bearer Token Credential
-  description: Solr can use JWT/OIDC or plugin-based bearer tokens for API access. Clients
+  description: >
+    Solr can use JWT/OIDC or plugin-based bearer tokens for API access. Clients
     present tokens to query and update collections.
   type: token
-  nature:
-  - generated_on_install
-  - user_defined
+  nature: [generated_on_install, user_defined]
   sensitivity: secret
   location:
   - type: http_header
     path: Authorization
     detail: Basic or Bearer/JWT token for Solr API requests
   - type: config_file
-    detail: security.json, OIDC/JWT plugin configuration, client configs, and .env files
+    path: security.json, solr.in.sh, solr.in.cmd
+    detail: OIDC/JWT plugin configuration and auth command options
   - type: environment
-    path: SOLR_AUTH_TYPE, SOLR_AUTHENTICATION_OPTS, SOLR_TOKEN
+    path: SOLR_AUTHENTICATION_OPTS
+    detail: Solr startup/authentication options can contain BasicAuth credentials for scripts or clients
   - type: secret_store
     detail: CI/CD variables, Kubernetes Secrets, and identity-provider client stores
   - type: logs
     detail: HTTP traces and auth plugin debug logs
+  notes: >
+    SOLR_AUTH_TYPE is context, not credential material; SOLR_TOKEN was not kept
+    because it was not confirmed as an ASF Solr credential-value env var.
+
 - id: zk-digest-and-jaas-secret
   name: ZooKeeper Digest / Kerberos JAAS Secret
-  description: SolrCloud deployments commonly protect ZooKeeper with digest auth, SASL/Kerberos,
-    JAAS files, and ZK ACL credentials.
+  description: >
+    SolrCloud deployments commonly protect ZooKeeper with digest auth,
+    SASL/Kerberos, JAAS files, and ZK ACL credentials.
   type: secret_value
-  nature:
-  - user_defined
-  - generated_on_install
+  nature: [user_defined, generated_on_install]
   sensitivity: secret
   location:
   - type: config_file
-    path: solr.in.sh, jaas.conf, zoo.cfg
+    path: solr.in.sh, solr.in.cmd, jaas.conf, zoo.cfg
     detail: ZooKeeper digest credentials, JAAS login modules, and Solr ZK auth settings
   - type: environment
-    path: SOLR_ZK_CREDS_AND_ACLS, SOLR_JAAS_FILE
+    path: SOLR_ZK_CREDS_AND_ACLS
+    detail: SolrCloud ZooKeeper credential/ACL bootstrap options
   - type: secret_store
     detail: Kubernetes Secrets, keytabs, and deployment vaults
   - type: logs
     detail: ZooKeeper ACL/auth logs and SolrCloud startup logs
+
 - id: tls-private-key-and-keystore
   name: TLS Keystore / Private Key
-  description: Solr can secure HTTP and internode traffic with TLS keystores, truststores,
+  description: >
+    Solr can secure HTTP and internode traffic with TLS keystores, truststores,
     and private keys.
   type: key_pair
-  nature:
-  - generated_on_install
-  - user_defined
+  nature: [generated_on_install, user_defined]
   sensitivity: secret
   looks_like:
-  - pattern: '-----BEGIN (RSA |EC |ENCRYPTED |)PRIVATE KEY-----'
-    detail: private key material for Solr HTTP or internode TLS
+  - pattern: '-----BEGIN (RSA |EC |OPENSSH |ENCRYPTED )?PRIVATE KEY-----'
+    detail: Private key material for Solr HTTP or internode TLS
   location:
-  - type: config_file
-    path: solr.in.sh, solr-ssl.keystore.p12, solr-ssl.keystore.jks
-    detail: SSL key/trust store paths and passwords
   - type: environment
     path: SOLR_SSL_KEY_STORE_PASSWORD, SOLR_SSL_TRUST_STORE_PASSWORD
+  - type: config_file
+    path: solr.in.sh, solr.in.cmd, solr-ssl.keystore.p12, solr-ssl.keystore.jks
+    detail: SSL key/trust store paths and passwords
   - type: secret_store
     detail: Kubernetes Secrets, Java keystores, and certificate vaults
   - type: artifact
-    detail: cluster backups and support bundles
+    detail: Cluster backups and support bundles
+
 references:
 - type: docs
   url: https://solr.apache.org/guide/solr/latest/deployment-guide/basic-authentication-plugin.html

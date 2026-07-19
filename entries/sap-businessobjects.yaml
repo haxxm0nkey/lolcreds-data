@@ -1,14 +1,14 @@
 id: sap-businessobjects
 name: SAP BusinessObjects Business Intelligence Platform
-category: enterprise_app
+category: other
 vendor: SAP
 author: haxxm0nkey
 credentials:
 - id: administrator-password
   name: CMS Administrator Password
-  description: SAP BusinessObjects BI Platform uses Central Management Server accounts such
-    as Administrator for CMC, BI Launch Pad, SDK, and REST access. The Administrator password
-    is set during installation or deployment.
+  description: SAP BusinessObjects BI Platform uses Central Management Server accounts
+    such as Administrator for CMC, BI Launch Pad, SDK, and REST access. The Administrator
+    password is set during installation or deployment.
   type: username_password
   nature:
   - generated_on_install
@@ -16,21 +16,24 @@ credentials:
   sensitivity: secret
   location:
   - type: public_interface
-    path: Central Management Console, BI Launch Pad, RESTful web services, and SDK logon
+    path: Central Management Console, BI Launch Pad, RESTful web services, and SDK
+      logon
   - type: database
     detail: CMS repository/security database storing users, groups, tokens, and encrypted
       credential data
   - type: config_file
-    detail: response.ini, deployment scripts, SIA/CMS configuration, and web application properties
+    detail: response.ini, deployment scripts, SIA/CMS configuration, and web application
+      properties
+    path: response.ini, boconfig.cfg, ccms.properties, server.xml
   - type: secret_store
     detail: password managers and deployment vaults
   - type: logs
     detail: CMS, Adaptive Processing Server, webapp, and installer logs
 - id: enterprise-alias-and-service-account
   name: Enterprise/LDAP/AD User Credential
-  description: BusinessObjects can authenticate Enterprise users and external LDAP/AD users,
-    and often stores service account credentials for schedules, publications, data sources,
-    and external identity integration.
+  description: BusinessObjects can authenticate Enterprise users and external LDAP/AD
+    users, and often stores service account credentials for schedules, publications,
+    data sources, and external identity integration.
   type: username_password
   nature:
   - user_defined
@@ -41,15 +44,17 @@ credentials:
   - type: database
     detail: CMS repository records for users, aliases, schedules, and connection objects
   - type: config_file
-    detail: LDAP/AD plugin configuration, service account scripts, and BI deployment files
+    detail: LDAP/AD plugin configuration, service account scripts, and BI deployment
+      files
+    path: response.ini, server.xml, authentication.properties
   - type: secret_store
     detail: enterprise password vaults and server credential stores
   - type: logs
     detail: authentication plugin logs and schedule execution logs
 - id: trusted-auth-shared-secret
   name: Trusted Authentication Shared Secret
-  description: BusinessObjects trusted authentication uses shared secrets/tokens between trusted
-    web applications and the BI platform to assert users.
+  description: BusinessObjects trusted authentication uses shared secrets/tokens between
+    trusted web applications and the BI platform to assert users.
   type: secret_value
   nature:
   - user_defined
@@ -57,8 +62,9 @@ credentials:
   sensitivity: secret
   location:
   - type: config_file
-    detail: trusted authentication configuration files, web.xml/properties, and custom application
-      settings
+    detail: trusted authentication configuration files, web.xml/properties, and custom
+      application settings
+    path: web.xml, TrustedPrincipal.conf, global.properties
   - type: secret_store
     detail: application vaults and deployment secrets
   - type: source_code
@@ -67,8 +73,8 @@ credentials:
     detail: SSO and authentication debug traces
 - id: database-connection-secret
   name: Universe / Data Connection Credential
-  description: BI content stores database connection credentials for universes, reports, publications,
-    and data federation.
+  description: BI content stores database connection credentials for universes, reports,
+    publications, and data federation.
   type: secret_value
   nature:
   - user_defined
@@ -78,6 +84,7 @@ credentials:
     detail: CMS repository connection objects and encrypted credential storage
   - type: config_file
     detail: universe exports, LCMBIAR/BIAR packages, and connection server configuration
+    path: response.ini, db.properties, odbc.ini, cmsdb.properties, universe.unx
   - type: artifact
     detail: BIAR/LCMBIAR promotion packages, report exports, and backups
   - type: logs

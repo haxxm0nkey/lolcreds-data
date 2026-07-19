@@ -1,14 +1,15 @@
 id: sap-hybris
 name: SAP Hybris / SAP Commerce
-category: enterprise_app
+category: other
 vendor: SAP
 author: haxxm0nkey
 credentials:
 - id: admin-console-default
   name: Local Development Admin Console Credential
-  description: SAP Commerce/Hybris development and accelerator setups commonly include local
-    administrative users for HAC, backoffice, and administration consoles. Production deployments
-    should change seeded/demo credentials and rely on configured identity stores.
+  description: SAP Commerce/Hybris development and accelerator setups commonly include
+    local administrative users for HAC, backoffice, and administration consoles. Production
+    deployments should change seeded/demo credentials and rely on configured identity
+    stores.
   type: username_password
   nature:
   - static_default
@@ -19,15 +20,18 @@ credentials:
     password: nimda
   location:
   - type: public_interface
-    path: Hybris Administration Console, Backoffice, SmartEdit, OCC, and storefront login
+    path: Hybris Administration Console, Backoffice, SmartEdit, OCC, and storefront
+      login
   - type: database
     detail: SAP Commerce user model tables and password hash fields
   - type: config_file
-    detail: local.properties, project.properties, impex seed data, and deployment configs
+    detail: local.properties, project.properties, impex seed data, and deployment
+      configs
+    path: local.properties, project.properties, manifest.json
   - type: artifact
     detail: database dumps, initialization exports, and environment backups
-  notes: admin/nimda is modeled as a common seeded/development credential; do not assume it
-    is valid for hardened production Commerce Cloud deployments.
+  notes: admin/nimda is modeled as a common seeded/development credential; do not
+    assume it is valid for hardened production Commerce Cloud deployments.
 - id: user-password-hash
   name: Customer / Employee Password Hash
   description: SAP Commerce stores employee, administrator, and customer account password
@@ -48,8 +52,8 @@ credentials:
     detail: database dumps and system copies
 - id: oauth-client-secret
   name: OAuth / OCC Client Secret
-  description: SAP Commerce OAuth2/OCC integrations use client IDs, client secrets, access
-    tokens, and refresh tokens for API access.
+  description: SAP Commerce OAuth2/OCC integrations use client IDs, client secrets,
+    access tokens, and refresh tokens for API access.
   type: secret_value
   nature:
   - generated_on_install
@@ -63,6 +67,7 @@ credentials:
     detail: OAuth client details, access token, and refresh token storage
   - type: config_file
     detail: local.properties, extension config, manifest secrets, and API client configs
+    path: local.properties, project.properties, oauth-clients.impex
   - type: environment
     path: HYBRIS_CLIENT_SECRET, SAP_COMMERCE_CLIENT_SECRET, OCC_CLIENT_SECRET
   - type: secret_store
@@ -73,9 +78,9 @@ credentials:
     detail: OAuth debug logs and API traces
 - id: database-mail-integration-secrets
   name: Database, Mail, Search, and Integration Secrets
-  description: SAP Commerce configuration contains database passwords, SMTP passwords, Solr
-    credentials, payment provider secrets, SSO/SAML keys, and extension-specific integration
-    tokens.
+  description: SAP Commerce configuration contains database passwords, SMTP passwords,
+    Solr credentials, payment provider secrets, SSO/SAML keys, and extension-specific
+    integration tokens.
   type: secret_value
   nature:
   - user_defined
@@ -86,7 +91,7 @@ credentials:
     detail: SAP Commerce properties line carrying a password or secret
   location:
   - type: config_file
-    path: local.properties, project.properties, manifest.json
+    path: local.properties, project.properties, manifest.json, hybris.properties
     detail: runtime and extension secret configuration
   - type: secret_store
     detail: SAP Commerce Cloud variables, vaults, and Kubernetes/Docker secrets

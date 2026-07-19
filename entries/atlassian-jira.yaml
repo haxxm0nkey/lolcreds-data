@@ -3,212 +3,233 @@ name: Atlassian Jira
 category: ci_cd
 vendor: Atlassian
 author: haxxm0nkey
-
 credentials:
+- id: database-password
+  name: Database Password
+  description: 'Jira Server and Data Center store the database connection details
+    in dbconfig.xml in the Jira home directory. The file includes the database username
+    and password used by Jira to connect to its relational database.
 
-  - id: database-password
-    name: Database Password
-    description: >
-      Jira Server and Data Center store the database connection details in
-      dbconfig.xml in the Jira home directory. The file includes the database
-      username and password used by Jira to connect to its relational
-      database.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: '<username>[^<]+</username>\s*<password>[^<]*</password>'
-        detail: >
-          dbconfig.xml database credential pair; the username and password
-          elements are arbitrary operator-supplied values
-      - pattern: '<password>[^<]*</password>'
-        detail: >
-          database password element in dbconfig.xml; Jira can also be
-          configured to secure the database password rather than leaving the
-          raw value directly readable
-    location:
-      - type: config_file
-        path: $JIRA_HOME/dbconfig.xml
-        detail: Jira home root; created by setup wizard or database configuration tool
-      - type: build_artifact
-        detail: Jira home backups, migration bundles, VM snapshots, support zips
-    notes: >
-      dbconfig.xml is required to reconnect Jira to its database during
-      server migrations and upgrades, so it is frequently copied into backup
-      sets and operational runbooks. Access to the database account is often
-      enough to read issue data, user directories, plugin state, and stored
-      integration metadata outside the Jira application layer.
+    '
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: <username>[^<]+</username>\s*<password>[^<]*</password>
+    detail: 'dbconfig.xml database credential pair; the username and password elements
+      are arbitrary operator-supplied values
 
-  - id: local-user-admin-password
-    name: Local User / Administrator Password
-    description: >
-      Jira local users, including the administrator created during setup,
-      authenticate with passwords stored in Jira's configured user directory.
-      For the internal directory, the password hash is stored in Jira's
-      database rather than in dbconfig.xml.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: 'cwd_user.*credential'
-        detail: >
-          Jira internal-directory password material in the database; the
-          exact hash value has no Jira-specific textual prefix and is
-          identified by table and column context
-      - pattern: '[^\\s:@]+@[^\\s:@]+:[^\\s:]+'
-        detail: >
-          raw Basic-auth username:password form before Base64 encoding;
-          context is required because the password itself is arbitrary
-    location:
-      - type: database
-        detail: Jira internal user directory tables, including cwd_user credential data
-      - type: public_interface
-        path: /login.jsp
-        detail: Jira web login for local users and administrators
-      - type: public_interface
-        path: /rest/api/*
-        detail: REST API Basic authentication in Server/Data Center deployments
-      - type: source_code
-        detail: legacy scripts and integrations that still embed username/password auth
-    notes: >
-      There is no universal shipped Jira administrator password. The initial
-      administrator is created by the setup flow or by an operator, and
-      later users may be local, LDAP-backed, SSO-backed, or externally
-      managed. Include literal passwords only for product-specific defaults
-      or CVE-backed hardcoded accounts, not for Jira as a generic product.
+      '
+  - pattern: <password>[^<]*</password>
+    detail: 'database password element in dbconfig.xml; Jira can also be configured
+      to secure the database password rather than leaving the raw value directly readable
 
-  - id: data-center-personal-access-token
-    name: Data Center Personal Access Token
-    description: >
-      Jira Data Center and Server support personal access tokens for scripts
-      and external integrations. Atlassian documents PATs as bearer tokens
-      passed in the Authorization header for REST API calls.
-    type: token
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: 'Authorization:\s*Bearer\s+[^\s]+'
-        detail: >
-          no documented Jira-specific token prefix; identify Data Center PATs
-          by bearer-token use against Jira or Confluence REST endpoints
-    location:
-      - type: environment
-        path: JIRA_TOKEN, JIRA_PAT, ATLASSIAN_TOKEN
-      - type: source_code
-        detail: automation scripts, curl commands, CI jobs, integration config
-      - type: logs
-        detail: REST client debug logs when Authorization headers are printed
-      - type: secret_store
-        detail: CI/CD secret stores and deployment-platform variables
-    notes: >
-      PATs are a safer replacement for embedding a user password in scripts,
-      but they are still bearer credentials. The token inherits the creating
-      user's Jira permissions and remains usable until expiration or
-      revocation.
+      '
+  location:
+  - type: config_file
+    platform:
+    - linux
+    path: $JIRA_HOME/dbconfig.xml, /var/atlassian/application-data/jira/dbconfig.xml
+    detail: Jira home database configuration file
+  - type: artifact
+    detail: Jira home backups, migration bundles, VM snapshots, support zips
+  notes: 'dbconfig.xml is required to reconnect Jira to its database during server
+    migrations and upgrades, so it is frequently copied into backup sets and operational
+    runbooks. Access to the database account is often enough to read issue data, user
+    directories, plugin state, and stored integration metadata outside the Jira application
+    layer.
 
-  - id: cloud-api-token
-    name: Atlassian Cloud API Token
-    description: >
-      Jira Cloud REST clients authenticate with an Atlassian account email
-      address and API token using HTTP Basic authentication. Atlassian states
-      that password authentication for Jira Cloud REST APIs is deprecated.
-    type: token
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: 'Authorization:\s*Basic\s+[A-Za-z0-9+/=]+'
-        detail: >
-          Base64-encoded email-address:api-token pair for Atlassian Cloud;
-          decode context is required because the token itself has no fixed
-          Jira-specific prefix
-      - pattern: '[^\s:@]+@[^\s:@]+:[^\s:]+'
-        detail: >
-          raw Basic-auth username/token form used by curl --user before it is
-          Base64 encoded; the left side is the Atlassian account email
-    location:
-      - type: source_code
-        detail: curl commands, scripts, Terraform providers, custom integrations
-      - type: environment
-        path: ATLASSIAN_EMAIL, ATLASSIAN_API_TOKEN, JIRA_API_TOKEN
-      - type: config_file
-        detail: local REST client configuration and integration settings
-      - type: secret_store
-        detail: CI/CD variables and cloud secret managers used by integrations
-    notes: >
-      This token belongs to the Atlassian account, not only to one Jira site.
-      Its practical blast radius is determined by the account's access to
-      Jira Cloud, Confluence Cloud, and other Atlassian Cloud applications
-      that accept the same account token.
+    '
+- id: local-user-admin-password
+  name: Local User / Administrator Password
+  description: 'Jira local users, including the administrator created during setup,
+    authenticate with passwords stored in Jira''s configured user directory. For the
+    internal directory, the password hash is stored in Jira''s database rather than
+    in dbconfig.xml.
 
-  - id: application-link-basic-auth
-    name: Application Link Basic Auth Credential
-    description: >
-      Jira application links can use Basic HTTP authentication for connecting
-      Atlassian applications and integrations. The configured username and
-      password are integration credentials, not end-user session passwords.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: 'Authorization:\s*Basic\s+[A-Za-z0-9+/=]+'
-        detail: >
-          Basic-auth header for an application-link or integration request;
-          decode and request context are required to identify the Jira peer
-    location:
-      - type: database
-        detail: Jira application-link and plugin tables that persist integration settings
-      - type: config_file
-        detail: exported application-link or integration configuration
-      - type: logs
-        detail: HTTP client debug logs and reverse-proxy logs if headers are captured
-    notes: >
-      Basic-auth application links are legacy but still appear in older
-      Atlassian estates. Treat the stored credential as whatever account the
-      link was configured to use, which is often a long-lived integration or
-      service account with broad project access.
+    '
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: cwd_user.*credential
+    detail: 'Jira internal-directory password material in the database; the exact
+      hash value has no Jira-specific textual prefix and is identified by table and
+      column context
 
-  - id: application-link-oauth-private-key
-    name: Application Link OAuth Private Key
-    description: >
-      Jira application links can use OAuth for authenticated communication
-      between Atlassian applications. OAuth configurations rely on key
-      material or shared application-link secrets that should be treated as
-      integration credentials.
-    type: key_pair
-    nature: [generated_on_install, user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: '-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----'
-        detail: >
-          identified by a PEM private-key header; full key bodies are
-          multi-line and are omitted as compact specimens
-    location:
-      - type: database
-        detail: Jira application-link and plugin tables for OAuth configuration
-      - type: config_file
-        detail: exported or scripted application-link configuration
-      - type: build_artifact
-        detail: database dumps and Jira migration backups
-    notes: >
-      The credential is scoped to the linked application trust relationship,
-      not to an individual user password. Exposure can let an attacker forge
-      or impersonate integration traffic depending on the configured OAuth
-      mode and permissions of the linked application.
+      '
+  - pattern: '[^\\s:@]+@[^\\s:@]+:[^\\s:]+'
+    detail: 'raw Basic-auth username:password form before Base64 encoding; context
+      is required because the password itself is arbitrary
 
+      '
+  location:
+  - type: database
+    detail: Jira internal user directory tables, including cwd_user credential data
+  - type: public_interface
+    path: /login.jsp
+    detail: Jira web login for local users and administrators
+  - type: public_interface
+    path: /rest/api/*
+    detail: REST API Basic authentication in Server/Data Center deployments
+  - type: source_code
+    detail: legacy scripts and integrations that still embed username/password auth
+  notes: 'There is no universal shipped Jira administrator password. The initial administrator
+    is created by the setup flow or by an operator, and later users may be local,
+    LDAP-backed, SSO-backed, or externally managed. Include literal passwords only
+    for product-specific defaults or CVE-backed hardcoded accounts, not for Jira as
+    a generic product.
+
+    '
+- id: data-center-personal-access-token
+  name: Data Center Personal Access Token
+  description: 'Jira Data Center and Server support personal access tokens for scripts
+    and external integrations. Atlassian documents PATs as bearer tokens passed in
+    the Authorization header for REST API calls.
+
+    '
+  type: token
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: Authorization:\s*Bearer\s+[^\s]+
+    detail: 'no documented Jira-specific token prefix; identify Data Center PATs by
+      bearer-token use against Jira or Confluence REST endpoints
+
+      '
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Bearer PAT or Basic email:api-token authentication for Jira REST APIs
+  - type: source_code
+    detail: automation scripts, curl commands, CI jobs, integration config
+  - type: logs
+    detail: REST client debug logs when Authorization headers are printed
+  - type: secret_store
+    detail: CI/CD secret stores and deployment-platform variables
+  notes: 'PATs are a safer replacement for embedding a user password in scripts, but
+    they are still bearer credentials. The token inherits the creating user''s Jira
+    permissions and remains usable until expiration or revocation.
+
+    '
+- id: cloud-api-token
+  name: Atlassian Cloud API Token
+  description: 'Jira Cloud REST clients authenticate with an Atlassian account email
+    address and API token using HTTP Basic authentication. Atlassian states that password
+    authentication for Jira Cloud REST APIs is deprecated.
+
+    '
+  type: token
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: Authorization:\s*Basic\s+[A-Za-z0-9+/=]+
+    detail: 'Base64-encoded email-address:api-token pair for Atlassian Cloud; decode
+      context is required because the token itself has no fixed Jira-specific prefix
+
+      '
+  - pattern: '[^\s:@]+@[^\s:@]+:[^\s:]+'
+    detail: 'raw Basic-auth username/token form used by curl --user before it is Base64
+      encoded; the left side is the Atlassian account email
+
+      '
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Bearer PAT or Basic email:api-token authentication for Jira REST APIs
+  - type: source_code
+    detail: curl commands, scripts, Terraform providers, custom integrations
+  - type: config_file
+    detail: local REST client configuration and integration settings
+  - type: secret_store
+    detail: CI/CD variables and cloud secret managers used by integrations
+  notes: 'This token belongs to the Atlassian account, not only to one Jira site.
+    Its practical blast radius is determined by the account''s access to Jira Cloud,
+    Confluence Cloud, and other Atlassian Cloud applications that accept the same
+    account token.
+
+    '
+- id: application-link-basic-auth
+  name: Application Link Basic Auth Credential
+  description: 'Jira application links can use Basic HTTP authentication for connecting
+    Atlassian applications and integrations. The configured username and password
+    are integration credentials, not end-user session passwords.
+
+    '
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: Authorization:\s*Basic\s+[A-Za-z0-9+/=]+
+    detail: 'Basic-auth header for an application-link or integration request; decode
+      and request context are required to identify the Jira peer
+
+      '
+  location:
+  - type: config_file
+    path: applinks.json, application-links.json
+    detail: Exported or scripted application-link configuration
+  - type: database
+    detail: Jira application-link and plugin tables that persist integration settings
+  - type: logs
+    detail: HTTP client debug logs and reverse-proxy logs if headers are captured
+  notes: 'Basic-auth application links are legacy but still appear in older Atlassian
+    estates. Treat the stored credential as whatever account the link was configured
+    to use, which is often a long-lived integration or service account with broad
+    project access.
+
+    '
+- id: application-link-oauth-private-key
+  name: Application Link OAuth Private Key
+  description: 'Jira application links can use OAuth for authenticated communication
+    between Atlassian applications. OAuth configurations rely on key material or shared
+    application-link secrets that should be treated as integration credentials.
+
+    '
+  type: key_pair
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: '-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----'
+    detail: 'identified by a PEM private-key header; full key bodies are multi-line
+      and are omitted as compact specimens
+
+      '
+  location:
+  - type: config_file
+    path: applinks.json, application-links.json
+    detail: Exported or scripted application-link configuration
+  - type: database
+    detail: Jira application-link and plugin tables for OAuth configuration
+  - type: artifact
+    detail: database dumps and Jira migration backups
+  notes: 'The credential is scoped to the linked application trust relationship, not
+    to an individual user password. Exposure can let an attacker forge or impersonate
+    integration traffic depending on the configured OAuth mode and permissions of
+    the linked application.
+
+    '
 references:
-  - type: docs
-    url: https://confluence.atlassian.com/adminjiraserver/connecting-jira-applications-to-a-database-938846850.html
-  - type: docs
-    url: https://confluence.atlassian.com/adminjiraserver/important-directories-and-files-938847744.html
-  - type: docs
-    url: https://confluence.atlassian.com/adminjiraserver/securing-a-database-password-974378811.html
-  - type: docs
-    url: https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html
-  - type: docs
-    url: https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/
-  - type: docs
-    url: https://developer.atlassian.com/cloud/jira/platform/basic-auth-for-rest-apis/
-  - type: docs
-    url: https://confluence.atlassian.com/applinks/oauth-security-for-application-links-774045732.html
-  - type: docs
-    url: https://confluence.atlassian.com/adminjiraserver/managing-users-938847025.html
+- type: docs
+  url: https://confluence.atlassian.com/adminjiraserver/connecting-jira-applications-to-a-database-938846850.html
+- type: docs
+  url: https://confluence.atlassian.com/adminjiraserver/important-directories-and-files-938847744.html
+- type: docs
+  url: https://confluence.atlassian.com/adminjiraserver/securing-a-database-password-974378811.html
+- type: docs
+  url: https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html
+- type: docs
+  url: https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/
+- type: docs
+  url: https://developer.atlassian.com/cloud/jira/platform/basic-auth-for-rest-apis/
+- type: docs
+  url: https://confluence.atlassian.com/applinks/oauth-security-for-application-links-774045732.html
+- type: docs
+  url: https://confluence.atlassian.com/adminjiraserver/managing-users-938847025.html

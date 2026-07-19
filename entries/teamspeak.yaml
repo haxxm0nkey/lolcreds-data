@@ -15,20 +15,22 @@ credentials:
   sensitivity: secret
   location:
   - type: public_interface
-    path: ServerQuery TCP interface, SSH/telnet-style query clients, and management tools
+    path: ServerQuery TCP interface, SSH/telnet-style query clients, and management
+      tools
   - type: database
     detail: TeamSpeak server database client/server group and query login records
   - type: config_file
     detail: startup logs, provisioning scripts, and query client configs
+    path: ts3server.ini, ts3db.ini, query_ip_whitelist.txt
   - type: logs
-    detail: first-start server logs containing generated serveradmin password and privilege
-      key output
-  notes: The serveradmin password is generated at first launch; if lost it is reset through
-    TeamSpeak server tooling.
+    detail: first-start server logs containing generated serveradmin password and
+      privilege key output
+  notes: The serveradmin password is generated at first launch; if lost it is reset
+    through TeamSpeak server tooling.
 - id: privilege-key
   name: Privilege Key / Token
-  description: TeamSpeak generates privilege keys that grant server admin or group membership
-    when redeemed by a client.
+  description: TeamSpeak generates privilege keys that grant server admin or group
+    membership when redeemed by a client.
   type: token
   nature:
   - generated_on_install
@@ -36,7 +38,8 @@ credentials:
   sensitivity: secret
   looks_like:
   - pattern: ^[A-Za-z0-9+/]{20,}={0,2}$
-    detail: TeamSpeak privilege key/token specimen; context identifies it as a privilege key
+    detail: TeamSpeak privilege key/token specimen; context identifies it as a privilege
+      key
   location:
   - type: logs
     detail: first-start logs and token generation output
@@ -44,12 +47,14 @@ credentials:
     detail: TeamSpeak token/privilege key records
   - type: config_file
     detail: deployment notes, admin runbooks, and bot configs
+    path: ts3server.ini, ts3db.ini, privilege_keys.txt, serverquery.log
   - type: secret_store
     detail: password managers and server admin vaults
 - id: client-identity-and-api-secret
   name: Client Identity / Bot Credential
   description: TeamSpeak bots, query clients, and integrations use ServerQuery credentials,
-    API keys where enabled, and client identity/private key material for automated administration.
+    API keys where enabled, and client identity/private key material for automated
+    administration.
   type: secret_value
   nature:
   - user_defined
@@ -57,7 +62,9 @@ credentials:
   sensitivity: secret
   location:
   - type: config_file
-    detail: bot configs, query client configs, .env files, and service units
+    detail: 'bot configs, query client configs, .env files, and service units; Removed
+      generic/common scanner surface path(s) from product template: .env'
+    path: ts3clientui_qt.secrets.conf, settings.db, ts3clientui_qt.conf, teamspeak-client.json
   - type: database
     detail: TeamSpeak database client identities, permissions, and query accounts
   - type: secret_store
@@ -68,8 +75,8 @@ credentials:
     detail: bot debug logs and query traces
 - id: database-and-filetransfer-secrets
   name: Database / File Transfer / Voice Server Secrets
-  description: TeamSpeak deployments can store database credentials, file transfer secrets,
-    license keys, and service passwords in configuration and runtime files.
+  description: TeamSpeak deployments can store database credentials, file transfer
+    secrets, license keys, and service passwords in configuration and runtime files.
   type: secret_value
   nature:
   - user_defined
@@ -77,8 +84,9 @@ credentials:
   sensitivity: secret
   location:
   - type: config_file
-    detail: ts3server.ini, database plugin config, licensekey.dat, service units, and Docker
-      env files
+    detail: ts3server.ini, database plugin config, licensekey.dat, service units,
+      and Docker env files
+    path: ts3server.ini, ts3db.ini, filetransfer.ini, licensekey.dat
   - type: database
     detail: server database containing permissions, tokens, and client state
   - type: secret_store

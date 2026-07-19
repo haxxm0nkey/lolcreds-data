@@ -6,8 +6,8 @@ author: haxxm0nkey
 credentials:
 - id: local-user-password
   name: Local User Password
-  description: Gogs users authenticate to the web UI, Git over HTTP, SSH workflows, and API.
-    Administrators are created during installation or user provisioning.
+  description: Gogs users authenticate to the web UI, Git over HTTP, SSH workflows,
+    and API. Administrators are created during installation or user provisioning.
   type: username_password
   nature:
   - user_defined
@@ -19,7 +19,7 @@ credentials:
   - type: database
     detail: Gogs user table and password hash state
   - type: config_file
-    path: custom/conf/app.ini
+    path: custom/conf/app.ini, app.ini
     detail: authentication, database, mailer, and security configuration
   - type: secret_store
     detail: password managers and deployment vaults
@@ -40,7 +40,8 @@ credentials:
   - type: database
     detail: access token records in the Gogs database
   - type: config_file
-    detail: CLI configs, .env files, integration scripts, and .netrc
+    detail: Gogs API client/tooling config and integration settings
+    path: custom/conf/app.ini, app.ini, gogs.json
   - type: environment
     path: GOGS_TOKEN, GOGS_ACCESS_TOKEN
   - type: secret_store
@@ -49,10 +50,15 @@ credentials:
     detail: automation repositories and tests
   - type: logs
     detail: API client debug logs and CI output
+  looks_like:
+  - example: 0123456789abcdef0123456789abcdef01234567
+    pattern: '[a-f0-9]{40}'
+    detail: Gogs/Gitea-like access token shape in product context
 - id: security-and-integration-secrets
   name: Secret Key, Database, Mailer, and Webhook Secrets
-  description: Gogs app.ini and database records can contain SECRET_KEY, database passwords,
-    mailer credentials, webhook secrets, OAuth app secrets, and external auth bind credentials.
+  description: Gogs app.ini and database records can contain SECRET_KEY, database
+    passwords, mailer credentials, webhook secrets, OAuth app secrets, and external
+    auth bind credentials.
   type: secret_value
   nature:
   - generated_on_install
@@ -63,7 +69,7 @@ credentials:
     detail: Gogs app.ini security secret assignment
   location:
   - type: config_file
-    path: custom/conf/app.ini
+    path: custom/conf/app.ini, app.ini
     detail: security, database, mailer, webhook, and auth settings
   - type: database
     detail: webhook, OAuth, token, and login source records

@@ -19,16 +19,16 @@ credentials:
   - type: database
     detail: Gitea user table and password hash state
   - type: config_file
-    path: app.ini
-    detail: security, auth, mailer, and database configuration
+    path: custom/conf/app.ini, app.ini
+    detail: Gitea authentication, database, mailer, and security configuration
   - type: secret_store
     detail: password managers and deployment vaults
   - type: source_code
     detail: Docker Compose files, Helm values, and integration tests
 - id: personal-access-token
   name: Personal Access Token / OAuth Token
-  description: Gitea users can create access tokens for API and Git operations. OAuth2 application
-    secrets and tokens are also stored for integrations.
+  description: Gitea users can create access tokens for API and Git operations. OAuth2
+    application secrets and tokens are also stored for integrations.
   type: token
   nature:
   - generated_on_install
@@ -41,7 +41,8 @@ credentials:
   - type: database
     detail: access token and OAuth application/token tables
   - type: config_file
-    detail: CLI configs, integration scripts, .netrc, and .env files
+    detail: Gitea CLI/tooling configs and integration settings
+    path: custom/conf/app.ini, app.ini, tea.yml
   - type: environment
     path: GITEA_TOKEN, GITEA_ACCESS_TOKEN
   - type: secret_store
@@ -50,10 +51,15 @@ credentials:
     detail: automation scripts, GitHub Actions, and tests
   - type: logs
     detail: API debug logs and CI output
+  looks_like:
+  - example: 0123456789abcdef0123456789abcdef01234567
+    pattern: '[a-f0-9]{40}'
+    detail: Gitea access token shape from public scanner rules; use with Gitea context
 - id: internal-security-secrets
   name: Internal Token, Secret Key, JWT and LFS Secrets
-  description: Gitea app.ini contains generated security values such as SECRET_KEY, INTERNAL_TOKEN,
-    JWT_SECRET, and LFS_JWT_SECRET used for internal signing, sessions, and service communication.
+  description: Gitea app.ini contains generated security values such as SECRET_KEY,
+    INTERNAL_TOKEN, JWT_SECRET, and LFS_JWT_SECRET used for internal signing, sessions,
+    and service communication.
   type: secret_value
   nature:
   - generated_on_install
@@ -64,25 +70,26 @@ credentials:
     detail: Gitea app.ini security secret assignment
   location:
   - type: config_file
-    path: custom/conf/app.ini
-    detail: Gitea security and server secrets
+    path: custom/conf/app.ini, app.ini, /etc/gitea/secret_key, /etc/gitea/internal_token
+    detail: Gitea security config plus optional *_URI secret files
   - type: environment
-    path: GITEA__security__SECRET_KEY, GITEA__security__INTERNAL_TOKEN
+    path: GITEA__SECURITY__SECRET_KEY, GITEA__SECURITY__INTERNAL_TOKEN
+    detail: Gitea config override env vars carrying secret material
   - type: secret_store
     detail: Kubernetes Secrets, Docker secrets, and configuration vaults
   - type: artifact
     detail: application backups and support bundles
 - id: database-mailer-webhook-secrets
   name: Database, Mailer, Webhook, and Integration Secrets
-  description: Gitea deployments store database passwords, SMTP credentials, webhook secrets,
-    OAuth app client secrets, and external auth bind credentials.
+  description: Gitea deployments store database passwords, SMTP credentials, webhook
+    secrets, OAuth app client secrets, and external auth bind credentials.
   type: secret_value
   nature:
   - user_defined
   sensitivity: secret
   location:
   - type: config_file
-    path: app.ini
+    path: custom/conf/app.ini, app.ini
     detail: database, mailer, webhook, OAuth2, and auth source sections
   - type: database
     detail: OAuth applications, webhook secrets, and external login source configuration

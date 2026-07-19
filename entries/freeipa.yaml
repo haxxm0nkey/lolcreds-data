@@ -3,115 +3,131 @@ name: FreeIPA
 category: identity
 vendor: FreeIPA Project
 author: haxxm0nkey
-
 credentials:
+- id: directory-manager-password
+  name: Directory Manager Password
+  description: 'FreeIPA LDAP administration uses Directory Manager credentials for
+    some installation and certificate-management operations. FreeIPA docs show DM_PASSWORD
+    used with ipa-cacert-manage when installing CA certificates.
 
-  - id: directory-manager-password
-    name: Directory Manager Password
-    description: >
-      FreeIPA LDAP administration uses Directory Manager credentials for some
-      installation and certificate-management operations. FreeIPA docs show
-      DM_PASSWORD used with ipa-cacert-manage when installing CA certificates.
-    type: username_password
-    nature: [generated_on_install, user_defined]
-    sensitivity: secret
-    location:
-      - type: config_file
-        detail: FreeIPA install answer files, administrative scripts, and deployment manifests
-      - type: environment
-        path: DM_PASSWORD, IPA_DM_PASSWORD
-      - type: secret_store
-        detail: password vaults, Ansible Vault, Kubernetes Secrets, and cloud secret managers
-      - type: source_code
-        detail: committed install playbooks, scripts, and test configs
-      - type: logs
-        detail: installation logs, certificate-management command output, and shell history
-      - type: public_interface
-        path: LDAP/LDAPS, FreeIPA admin tools
-    notes: >
-      Directory Manager is a highly privileged LDAP administrative identity.
-      Keep its password separate from ordinary IPA user passwords.
+    '
+  type: username_password
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: config_file
+    detail: FreeIPA install answer files, administrative scripts, and deployment manifests
+    path: ipa-server-install-options, inventory.yml, vars.yml, freeipa.yml
+  - type: environment
+    path: DM_PASSWORD, IPA_DM_PASSWORD
+  - type: secret_store
+    detail: password vaults, Ansible Vault, Kubernetes Secrets, and cloud secret managers
+  - type: source_code
+    detail: committed install playbooks, scripts, and test configs
+  - type: logs
+    detail: installation logs, certificate-management command output, and shell history
+  - type: public_interface
+    path: LDAP/LDAPS, FreeIPA admin tools
+  notes: 'Directory Manager is a highly privileged LDAP administrative identity. Keep
+    its password separate from ordinary IPA user passwords.
 
-  - id: admin-user-password
-    name: IPA Admin/User Password
-    description: >
-      FreeIPA manages users and administrators through Kerberos and LDAP-backed
-      identity data. The initial admin user password is created during server
-      installation and then used for IPA web UI, CLI, and Kerberos login.
-    type: username_password
-    nature: [generated_on_install, user_defined]
-    sensitivity: secret
-    location:
-      - type: database
-        detail: FreeIPA LDAP/389 Directory Server and Kerberos database storing identity and credential verifier state
-      - type: public_interface
-        path: FreeIPA web UI, Kerberos, LDAP/LDAPS
-      - type: environment
-        path: IPA_ADMIN_PASSWORD, ADMIN_PASSWORD
-      - type: secret_store
-        detail: Ansible Vault, password vaults, and provisioning secrets
-      - type: source_code
-        detail: installation playbooks, tests, and committed variables
-      - type: logs
-        detail: ipa-server-install logs, kinit traces, and shell history
-    notes: >
-      The username admin is conventional for the first administrative account,
-      but the password is installation-specific.
+    '
+- id: admin-user-password
+  name: IPA Admin/User Password
+  description: 'FreeIPA manages users and administrators through Kerberos and LDAP-backed
+    identity data. The initial admin user password is created during server installation
+    and then used for IPA web UI, CLI, and Kerberos login.
 
-  - id: keytab
-    name: Kerberos Keytab
-    description: >
-      FreeIPA issues Kerberos principals and keytabs for services and hosts.
-      Keytab files act as reusable credentials for non-interactive
-      authentication to IPA-managed services.
-    type: key_pair
-    nature: [generated_on_install]
-    sensitivity: secret
-    looks_like:
-      - pattern: '-----BEGIN .*KEYTAB.*-----'
-        detail: textual/keytab export context; binary keytab files are usually identified by path and use rather than inline text
-    location:
-      - type: config_file
-        path: /etc/krb5.keytab, *.keytab
-        detail: host and service keytab files
-      - type: secret_store
-        detail: configuration management vaults, Kubernetes Secrets, and service keytab stores
-      - type: source_code
-        detail: accidentally committed keytabs and deployment bundles
-      - type: artifact
-        detail: host backups, VM images, and container images containing keytabs
-      - type: logs
-        detail: kinit, ipa-getkeytab, and service startup troubleshooting output
-    notes: >
-      A keytab can authenticate as the corresponding Kerberos principal until
-      the principal keys are rotated.
+    '
+  type: username_password
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: database
+    detail: FreeIPA LDAP/389 Directory Server and Kerberos database storing identity
+      and credential verifier state
+  - type: public_interface
+    path: FreeIPA web UI, Kerberos, LDAP/LDAPS
+  - type: environment
+    path: IPA_ADMIN_PASSWORD, ADMIN_PASSWORD
+  - type: secret_store
+    detail: Ansible Vault, password vaults, and provisioning secrets
+  - type: source_code
+    detail: installation playbooks, tests, and committed variables
+  - type: logs
+    detail: ipa-server-install logs, kinit traces, and shell history
+  notes: 'The username admin is conventional for the first administrative account,
+    but the password is installation-specific.
 
-  - id: certificate-private-key-password
-    name: Certificate / PKCS#12 Password
-    description: >
-      FreeIPA certificate replacement workflows can use PKCS#12 bundles protected
-      by passwords, including http_pin and dirsrv_pin values for HTTP and LDAP
-      service certificates.
-    type: password
-    nature: [user_defined]
-    sensitivity: secret
-    location:
-      - type: config_file
-        detail: certificate deployment scripts and IPA certificate install commands
-      - type: secret_store
-        detail: PKCS#12 bundles, NSS databases, HSM/KMS stores, and vault entries
-      - type: source_code
-        detail: committed certificate automation and Ansible variables
-      - type: artifact
-        detail: certificate bundles and host backups
-      - type: logs
-        detail: certutil, ipa-server-certinstall, and shell command history output
-    notes: >
-      These passwords protect private keys for FreeIPA HTTP and directory
-      services and should be rotated if exposed.
+    '
+- id: keytab
+  name: Kerberos Keytab
+  description: 'FreeIPA issues Kerberos principals and keytabs for services and hosts.
+    Keytab files act as reusable credentials for non-interactive authentication to
+    IPA-managed services.
 
+    '
+  type: key_pair
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - pattern: '-----BEGIN .*KEYTAB.*-----'
+    detail: Textual/keytab export context; binary keytab files are usually identified
+      by path and use rather than inline text
+  location:
+  - type: config_file
+    path: /etc/krb5.keytab, krb5.keytab, http.keytab, dirsrv.keytab, ldap.keytab
+    detail: Host and service keytab files
+    platform:
+    - linux
+  - type: secret_store
+    detail: configuration management vaults, Kubernetes Secrets, and service keytab
+      stores
+  - type: source_code
+    detail: accidentally committed keytabs and deployment bundles
+  - type: artifact
+    detail: host backups, VM images, and container images containing keytabs
+  - type: logs
+    detail: kinit, ipa-getkeytab, and service startup troubleshooting output
+  notes: 'A keytab can authenticate as the corresponding Kerberos principal until
+    the principal keys are rotated.
+
+    '
+- id: certificate-private-key-password
+  name: Certificate / PKCS#12 Password
+  description: 'FreeIPA certificate replacement workflows can use PKCS#12 bundles
+    protected by passwords, including http_pin and dirsrv_pin values for HTTP and
+    LDAP service certificates.
+
+    '
+  type: password
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: config_file
+    detail: PKCS#12 bundles and certificate install scripts with http_pin/dirsrv_pin
+      values
+    path: newcert.pk12, http.p12, dirsrv.p12, ca.p12, certinstall.sh
+  - type: secret_store
+    detail: PKCS#12 bundles, NSS databases, HSM/KMS stores, and vault entries
+  - type: source_code
+    detail: committed certificate automation and Ansible variables
+  - type: artifact
+    detail: certificate bundles and host backups
+  - type: logs
+    detail: certutil, ipa-server-certinstall, and shell command history output
+  notes: 'These passwords protect private keys for FreeIPA HTTP and directory services
+    and should be rotated if exposed.
+
+    '
 references:
-  - type: docs
-    url: https://www.freeipa.org/page/Using_3rd_part_certificates_for_HTTP/LDAP
-  - type: docs
-    url: https://www.freeipa.org/page/Documentation
+- type: docs
+  url: https://www.freeipa.org/page/Using_3rd_part_certificates_for_HTTP/LDAP
+- type: docs
+  url: https://www.freeipa.org/page/Documentation

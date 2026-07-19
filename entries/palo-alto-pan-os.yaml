@@ -6,9 +6,9 @@ author: haxxm0nkey
 credentials:
 - id: default-admin-login
   name: Default Administrator Login
-  description: PAN-OS initial setup documentation for firewalls includes logging in to the
-    management interface with the built-in admin account and default password before changing
-    it.
+  description: PAN-OS initial setup documentation for firewalls includes logging in
+    to the management interface with the built-in admin account and default password
+    before changing it.
   type: username_password
   nature:
   - static_default
@@ -23,14 +23,16 @@ credentials:
     detail: Administrative login surfaces
   - type: config_file
     detail: PAN-OS configuration XML administrator entries
+    path: panos.xml, running-config.xml, candidate-config.xml, panorama.xml, tech-support.tgz
   - type: artifact
     detail: configuration backups and device-state exports
-  notes: Treat admin/admin as an initial setup default only; production deployments should
-    change it and may use generated bootstrap passwords or external authentication.
+  notes: Treat admin/admin as an initial setup default only; production deployments
+    should change it and may use generated bootstrap passwords or external authentication.
 - id: local-admin-password
   name: Local Administrator Password
-  description: PAN-OS local administrators authenticate to the GUI, CLI, and APIs. Config
-    exports contain administrator account definitions and password hash/secret material.
+  description: PAN-OS local administrators authenticate to the GUI, CLI, and APIs.
+    Config exports contain administrator account definitions and password hash/secret
+    material.
   type: username_password
   nature:
   - user_defined
@@ -42,7 +44,9 @@ credentials:
     detail: PAN-OS administrator password hash field in configuration XML
   location:
   - type: config_file
-    detail: PAN-OS configuration XML under mgt-config/users or administrator-related stanzas
+    detail: PAN-OS configuration XML under mgt-config/users or administrator-related
+      stanzas
+    path: panos.xml, running-config.xml, candidate-config.xml, panorama.xml, tech-support.tgz
   - type: public_interface
     path: web UI / CLI / API
     detail: Management surfaces accepting local administrator credentials
@@ -52,8 +56,9 @@ credentials:
     detail: configuration snapshots and tech-support bundles
 - id: api-key
   name: XML / REST API Key
-  description: PAN-OS supports API keys for XML API and REST API automation. API keys are
-    generated for administrative users and used by clients in request parameters or headers.
+  description: PAN-OS supports API keys for XML API and REST API automation. API keys
+    are generated for administrative users and used by clients in request parameters
+    or headers.
   type: api_key
   nature:
   - generated_on_install
@@ -66,9 +71,13 @@ credentials:
     path: X-PAN-KEY
     detail: PAN-OS REST API key header used by some clients
   - type: config_file
-    detail: automation scripts, Terraform provider config, Ansible inventory, and .env files
+    detail: 'automation scripts, Terraform provider config, Ansible inventory, and
+      .env files; Removed generic/common scanner surface path(s) from product template:
+      .env'
+    path: panos.xml, running-config.xml, candidate-config.xml, panorama.xml, panos.json,
+      terraform.tfvars, provider.tf
   - type: environment
-    path: PANOS_API_KEY, PANOS_API_TOKEN, PANOS_PASSWORD
+    path: PANOS_API_KEY, PANOS_API_TOKEN
   - type: secret_store
     detail: CI/CD variables, cloud secret managers, and vault entries
   - type: source_code
@@ -77,8 +86,8 @@ credentials:
     detail: HTTP traces, debug logs, and CI output containing API requests
 - id: vpn-and-ike-secrets
   name: IKE/IPsec and GlobalProtect Shared Secrets
-  description: PAN-OS stores IKE pre-shared keys, GlobalProtect portal/gateway secrets, and
-    related VPN authentication secrets in configuration objects.
+  description: PAN-OS stores IKE pre-shared keys, GlobalProtect portal/gateway secrets,
+    and related VPN authentication secrets in configuration objects.
   type: secret_value
   nature:
   - user_defined
@@ -91,6 +100,7 @@ credentials:
   location:
   - type: config_file
     detail: PAN-OS XML configuration under network/ike/gateway/portal related objects
+    path: panos.xml, running-config.xml, candidate-config.xml, panorama.xml, tech-support.tgz
   - type: artifact
     detail: configuration backups, device-state bundles, and Panorama exports
   - type: source_code
@@ -111,6 +121,7 @@ credentials:
   location:
   - type: config_file
     detail: PAN-OS XML deviceconfig/system/snmp and server profile configuration
+    path: panos.xml, running-config.xml, candidate-config.xml, panorama.xml, tech-support.tgz
   - type: artifact
     detail: configuration backups and tech-support bundles
   - type: source_code

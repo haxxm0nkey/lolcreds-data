@@ -3,84 +3,100 @@ name: MySQL
 category: database
 vendor: Oracle
 author: haxxm0nkey
-
 credentials:
+- id: account-password
+  name: MySQL Account Password
+  description: 'MySQL accounts authenticate with passwords assigned by account-management
+    statements such as CREATE USER and ALTER USER. MySQL documents CREATE USER ...
+    IDENTIFIED BY for assigning account passwords and stores internal credentials
+    in grant tables such as mysql.user.
 
-  - id: account-password
-    name: MySQL Account Password
-    description: >
-      MySQL accounts authenticate with passwords assigned by account-management
-      statements such as CREATE USER and ALTER USER. MySQL documents CREATE USER
-      ... IDENTIFIED BY for assigning account passwords and stores internal
-      credentials in grant tables such as mysql.user.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: 'CREATE\s+USER\s+''[^''\r\n]+''@''[^''\r\n]+''\s+IDENTIFIED\s+BY\s+''[^''\r\n]+'''
-        detail: MySQL CREATE USER statement assigning a password; the password value itself has no MySQL-specific shape
-      - pattern: 'ALTER\s+USER\s+''[^''\r\n]+''@''[^''\r\n]+''\s+IDENTIFIED\s+BY\s+''[^''\r\n]+'''
-        detail: MySQL ALTER USER statement changing a password
-    location:
-      - type: database
-        path: mysql.user.authentication_string
-        detail: internal credential verifier storage for MySQL accounts, depending on authentication plugin
-      - type: config_file
-        detail: application config, .env files, JDBC/DSN connection strings, and deployment manifests
-      - type: environment
-        path: MYSQL_PWD, MYSQL_USER, MYSQL_PASSWORD, MYSQL_ROOT_PASSWORD, DATABASE_URL
-      - type: secret_store
-        detail: Kubernetes Secrets, cloud secret managers, CI/CD variables, and database password vault entries
-      - type: source_code
-        detail: application connection strings, migration scripts, test fixtures, and accidentally committed configs
-      - type: logs
-        detail: failed connection traces, ORM debug logs, and CI output
-      - type: public_interface
-        path: tcp/3306
-        detail: MySQL client protocol login endpoint
-    notes: >
-      There is no universal MySQL server default password. Container images,
-      appliances, or installers may generate or require deployment-specific root
-      passwords that should be modeled separately when sourced.
+    '
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: CREATE\s+USER\s+'[^'\r\n]+'@'[^'\r\n]+'\s+IDENTIFIED\s+BY\s+'[^'\r\n]+'
+    detail: MySQL CREATE USER statement assigning a password; the password value itself
+      has no MySQL-specific shape
+  - pattern: ALTER\s+USER\s+'[^'\r\n]+'@'[^'\r\n]+'\s+IDENTIFIED\s+BY\s+'[^'\r\n]+'
+    detail: MySQL ALTER USER statement changing a password
+  location:
+  - type: database
+    path: mysql.user.authentication_string
+    detail: internal credential verifier storage for MySQL accounts, depending on
+      authentication plugin
+  - type: config_file
+    detail: 'application config, .env files, JDBC/DSN connection strings, and deployment
+      manifests; Removed generic/common scanner surface path(s) from product template:
+      .env'
+    path: my.cnf, mysqld.cnf, application.yml, application.properties, jdbc.properties
+  - type: environment
+    path: MYSQL_PWD, MYSQL_USER, MYSQL_PASSWORD, MYSQL_ROOT_PASSWORD, DATABASE_URL
+  - type: secret_store
+    detail: Kubernetes Secrets, cloud secret managers, CI/CD variables, and database
+      password vault entries
+  - type: source_code
+    detail: application connection strings, migration scripts, test fixtures, and
+      accidentally committed configs
+  - type: logs
+    detail: failed connection traces, ORM debug logs, and CI output
+  - type: public_interface
+    path: tcp/3306
+    detail: MySQL client protocol login endpoint
+  notes: 'There is no universal MySQL server default password. Container images, appliances,
+    or installers may generate or require deployment-specific root passwords that
+    should be modeled separately when sourced.
 
-  - id: option-file-password
-    name: Client Option File / Login Path Password
-    description: >
-      MySQL clients can read connection options from option files, and MySQL
-      documents .mylogin.cnf login paths that permit host, user, password, port,
-      and socket options. Command options also include --password for connecting
-      to a server.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: '^password\s*=\s*[^\r\n]+$'
-        detail: MySQL option-file password assignment; context identifies it as MySQL client credentials
-      - pattern: 'mysql://[^\s:@]+:[^\s@]+@[^\s/]+'
-        detail: MySQL connection URL containing username and password
-    location:
-      - type: config_file
-        path: ~/.my.cnf, .mylogin.cnf, my.cnf
-        detail: MySQL client option files and encrypted login-path file
-      - type: environment
-        path: MYSQL_TEST_LOGIN_FILE, MYSQL_PWD
-        detail: overrides login path file location or supplies client password
-      - type: secret_store
-        detail: deployment secrets and workstation credential stores that materialize MySQL option files
-      - type: source_code
-        detail: accidentally committed option files, Docker contexts, and test configuration
-      - type: logs
-        detail: shell history, command traces, and debug output containing --password or connection URLs
-    notes: >
-      MySQL discourages exposing passwords on command lines because they can leak
-      through process listings, shell history, and logs.
+    '
+- id: option-file-password
+  name: Client Option File / Login Path Password
+  description: 'MySQL clients can read connection options from option files, and MySQL
+    documents .mylogin.cnf login paths that permit host, user, password, port, and
+    socket options. Command options also include --password for connecting to a server.
 
+    '
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: ^password\s*=\s*[^\r\n]+$
+    detail: MySQL option-file password assignment; context identifies it as MySQL
+      client credentials
+  - pattern: mysql://[^\s:@]+:[^\s@]+@[^\s/]+
+    detail: MySQL connection URL containing username and password
+  location:
+  - type: config_file
+    path: ~/.my.cnf, ~/.mylogin.cnf
+    detail: MySQL client option files and encrypted login-path file
+    platform:
+    - linux
+  - type: config_file
+    path: .mylogin.cnf, my.cnf, mysql.cnf
+    detail: MySQL client option files and encrypted login-path file
+  - type: environment
+    path: MYSQL_PWD
+    detail: overrides login path file location or supplies client password
+  - type: secret_store
+    detail: deployment secrets and workstation credential stores that materialize
+      MySQL option files
+  - type: source_code
+    detail: accidentally committed option files, Docker contexts, and test configuration
+  - type: logs
+    detail: shell history, command traces, and debug output containing --password
+      or connection URLs
+  notes: 'MySQL discourages exposing passwords on command lines because they can leak
+    through process listings, shell history, and logs.
+
+    '
 references:
-  - type: docs
-    url: https://docs.oracle.com/cd/E17952_01/mysql-8.4-en/creating-accounts.html
-  - type: docs
-    url: https://docs.oracle.com/cd/E17952_01/mysql-8.4-en/password-management.html
-  - type: docs
-    url: https://docs.oracle.com/cd/E17952_01/mysql-8.4-en/connection-options.html
-  - type: docs
-    url: https://docs.oracle.com/cd/E17952_01/mysql-8.4-en/option-files.html
+- type: docs
+  url: https://docs.oracle.com/cd/E17952_01/mysql-8.4-en/creating-accounts.html
+- type: docs
+  url: https://docs.oracle.com/cd/E17952_01/mysql-8.4-en/password-management.html
+- type: docs
+  url: https://docs.oracle.com/cd/E17952_01/mysql-8.4-en/connection-options.html
+- type: docs
+  url: https://docs.oracle.com/cd/E17952_01/mysql-8.4-en/option-files.html

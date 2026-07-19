@@ -3,89 +3,100 @@ name: Sonatype Nexus Repository
 category: ci_cd
 vendor: Sonatype
 author: haxxm0nkey
-
 credentials:
+- id: admin-password
+  name: Administrator Password
+  description: 'Nexus Repository uses administrator and user accounts for UI and API
+    access. Sonatype documentation covers resetting the admin password and local/remote
+    authentication integrations.
 
-  - id: admin-password
-    name: Administrator Password
-    description: >
-      Nexus Repository uses administrator and user accounts for UI and API
-      access. Sonatype documentation covers resetting the admin password and
-      local/remote authentication integrations.
-    type: username_password
-    nature: [generated_on_install, user_defined]
-    sensitivity: secret
-    location:
-      - type: database
-        detail: Nexus security database storing users, roles, and password verifier data
-      - type: config_file
-        detail: nexus.properties, runtime environment configuration, and deployment manifests
-      - type: public_interface
-        path: Nexus Repository UI and REST APIs
-      - type: secret_store
-        detail: Kubernetes Secrets, cloud secret managers, and deployment vaults
-      - type: source_code
-        detail: Docker Compose files, Helm values, tests, and committed configuration
-      - type: logs
-        detail: startup logs, admin password reset output, and authentication traces
-    notes: >
-      Initial administrator passwords are deployment-generated or operator-set;
-      do not treat examples as universal defaults.
+    '
+  type: username_password
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: database
+    detail: Nexus security database storing users, roles, and password verifier data
+  - type: config_file
+    detail: nexus.properties, runtime environment configuration, and deployment manifests
+    path: nexus.properties, admin.password, users.xml, security.xml
+  - type: public_interface
+    path: Nexus Repository UI and REST APIs
+  - type: secret_store
+    detail: Kubernetes Secrets, cloud secret managers, and deployment vaults
+  - type: source_code
+    detail: Docker Compose files, Helm values, tests, and committed configuration
+  - type: logs
+    detail: startup logs, admin password reset output, and authentication traces
+  notes: 'Initial administrator passwords are deployment-generated or operator-set;
+    do not treat examples as universal defaults.
 
-  - id: user-token
-    name: User Token
-    description: >
-      Nexus Repository supports user tokens as an alternative to using a user's
-      real password with package managers and repository clients. Sonatype docs
-      cover user tokens and migrations between authentication backends.
-    type: token
-    nature: [user_defined]
-    sensitivity: secret
-    location:
-      - type: http_header
-        path: Authorization
-        detail: Basic authentication using Nexus user-token name/code or token-derived credentials
-      - type: database
-        detail: Nexus token and user security stores
-      - type: config_file
-        detail: Maven settings.xml, npmrc, pip.conf, NuGet config, Docker config, and CI manifests
-      - type: environment
-        path: NEXUS_USERNAME, NEXUS_PASSWORD, NEXUS_TOKEN
-      - type: secret_store
-        detail: CI/CD variables, build platform secrets, and cloud secret managers
-      - type: source_code
-        detail: build scripts, dependency manager config, tests, and committed examples
-      - type: logs
-        detail: package manager debug logs and CI output
-    notes: >
-      User tokens inherit the repository privileges of the owning Nexus user.
+    '
+- id: user-token
+  name: User Token
+  description: 'Nexus Repository supports user tokens as an alternative to using a
+    user''s real password with package managers and repository clients. Sonatype docs
+    cover user tokens and migrations between authentication backends.
 
-  - id: database-blobstore-secret
-    name: Database / Blob Store Secret
-    description: >
-      Nexus Repository deployments can use external databases and blob stores.
-      Runtime environment and storage documentation include database and cloud
-      storage credentials used by the repository manager.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    location:
-      - type: config_file
-        detail: nexus.properties, database config, blob store config, and deployment manifests
-      - type: environment
-        path: NEXUS_DATASTORE_USERNAME, NEXUS_DATASTORE_PASSWORD, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
-      - type: secret_store
-        detail: External Secrets Operator, Kubernetes Secrets, cloud secret managers, and database vault entries
-      - type: source_code
-        detail: Helm values, Docker Compose files, and committed deployment config
-      - type: logs
-        detail: runtime connection errors and support bundles
-    notes: >
-      These secrets can expose repository metadata, artifacts, blob stores, and
-      credentials stored by integrations.
+    '
+  type: token
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Basic authentication using Nexus user-token name/code or token-derived
+      credentials
+  - type: database
+    detail: Nexus token and user security stores
+  - type: config_file
+    detail: Maven settings.xml, npmrc, pip.conf, NuGet config, Docker config, and
+      CI manifests
+    path: settings.xml, pip.conf, .npmrc, nuget.config, gradle.properties, nexus.json
+  - type: environment
+    path: NEXUS_USERNAME, NEXUS_PASSWORD, NEXUS_TOKEN
+  - type: secret_store
+    detail: CI/CD variables, build platform secrets, and cloud secret managers
+  - type: source_code
+    detail: build scripts, dependency manager config, tests, and committed examples
+  - type: logs
+    detail: package manager debug logs and CI output
+  notes: 'User tokens inherit the repository privileges of the owning Nexus user.
 
+    '
+- id: database-blobstore-secret
+  name: Database / Blob Store Secret
+  description: 'Nexus Repository deployments can use external databases and blob stores.
+    Runtime environment and storage documentation include database and cloud storage
+    credentials used by the repository manager.
+
+    '
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: config_file
+    detail: nexus.properties, database config, blob store config, and deployment manifests
+    path: nexus.properties, datastore.properties, blobstores.json, s3-blobstore.json
+  - type: environment
+    path: NEXUS_DATASTORE_USERNAME, NEXUS_DATASTORE_PASSWORD, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
+  - type: secret_store
+    detail: External Secrets Operator, Kubernetes Secrets, cloud secret managers,
+      and database vault entries
+  - type: source_code
+    detail: Helm values, Docker Compose files, and committed deployment config
+  - type: logs
+    detail: runtime connection errors and support bundles
+  notes: 'These secrets can expose repository metadata, artifacts, blob stores, and
+    credentials stored by integrations.
+
+    '
 references:
-  - type: docs
-    url: https://help.sonatype.com/en/user-tokens.html
-  - type: docs
-    url: https://help.sonatype.com/en/configuring-the-runtime-environment.html
+- type: docs
+  url: https://help.sonatype.com/en/user-tokens.html
+- type: docs
+  url: https://help.sonatype.com/en/configuring-the-runtime-environment.html

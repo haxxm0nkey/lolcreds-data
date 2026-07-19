@@ -3,98 +3,141 @@ name: MongoDB
 category: database
 vendor: MongoDB, Inc.
 author: haxxm0nkey
-
 credentials:
+- id: unauthenticated-default
+  name: Unauthenticated Default Deployment
+  description: 'Self-managed MongoDB deployments do not require username/password
+    authentication until access control is enabled. MongoDB security docs instruct
+    administrators to enable access control and create users for authenticated deployments.
 
-  - id: unauthenticated-default
-    name: Unauthenticated Default Deployment
-    description: >
-      Self-managed MongoDB deployments do not require username/password
-      authentication until access control is enabled. MongoDB security docs
-      instruct administrators to enable access control and create users for
-      authenticated deployments.
-    type: username_password
-    nature: [static_default]
-    sensitivity: secret
-    default:
-      username: (empty)
-      password: (empty)
-    location:
-      - type: public_interface
-        path: mongodb://<host>:27017
-        detail: MongoDB wire protocol listener; modern packages usually bind locally unless reconfigured
-      - type: config_file
-        path: mongod.conf
-        detail: security.authorization controls access control
-    notes: >
-      This represents no authentication, not a password. Exposure depends on
-      bindIp, firewalling, localhost exception behavior, and whether access
-      control has been enabled.
+    '
+  type: other
+  nature:
+  - unauthenticated_default
+  sensitivity: secret
+  default:
+    username: null
+    password: null
+  location:
+  - type: public_interface
+    path: mongodb://<host>:27017
+    detail: MongoDB wire protocol listener; modern packages usually bind locally unless
+      reconfigured
+  - type: config_file
+    path: mongod.conf, mongodb.conf
+    detail: security.authorization controls access control
+  notes: 'This represents no authentication, not a password. Exposure depends on bindIp,
+    firewalling, localhost exception behavior, and whether access control has been
+    enabled.
 
-  - id: scram-user-password
-    name: SCRAM User Password
-    description: >
-      MongoDB users authenticate with usernames and passwords stored in the
-      admin or application databases when access control is enabled. SCRAM is
-      MongoDB's default challenge-response authentication mechanism for users.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - example: 'mongodb://username:XXXXXXXXXXXXXXXX@host:27017/admin'
-        pattern: 'mongodb(\+srv)?://[^:/@\s]+:[^@\s]+@[^\s]+'
-        detail: MongoDB connection string containing inline username and password
-    location:
-      - type: config_file
-        detail: application config, .env files, Kubernetes manifests, connection-string files
-      - type: environment
-        path: MONGODB_URI, MONGO_URI, MONGO_URL, MONGODB_URL
-      - type: database
-        detail: MongoDB system users collection stores user credentials and roles
-      - type: secret_store
-        detail: Kubernetes Secrets, CI/CD variables, cloud secret managers, Atlas app secrets
-      - type: source_code
-        detail: application code, notebooks, tests, committed connection strings
-      - type: logs
-        detail: startup logs, driver debug logs, exception traces containing connection strings
-    notes: >
-      Inline credentials in MongoDB URIs are common in application config and
-      logs. Percent-encoding can obscure special characters in the password.
+    '
+- id: scram-user-password
+  name: SCRAM User Password
+  description: 'MongoDB users authenticate with usernames and passwords stored in
+    the admin or application databases when access control is enabled. SCRAM is MongoDB''s
+    default challenge-response authentication mechanism for users.
 
-  - id: internal-keyfile
-    name: Internal Keyfile Authentication Secret
-    description: >
-      MongoDB replica set and sharded cluster members can authenticate to each
-      other with a shared keyfile. MongoDB documents that the keyfile contents
-      are used as the shared password for internal membership authentication.
-    type: secret_value
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: '^[A-Za-z0-9+/=]{6,1024}$'
-        detail: >
-          keyfile content is a 6-1024 character shared secret; identify by
-          keyFile configuration context to avoid false positives
-    location:
-      - type: config_file
-        path: mongod.conf
-        detail: security.keyFile points to the keyfile path
-      - type: config_file
-        detail: keyfile on each mongod host; permissions are part of deployment hardening
-      - type: secret_store
-        detail: Kubernetes Secrets, Ansible Vault, cloud secret managers
-      - type: artifact
-        detail: replica set deployment bundles, host backups, automation tarballs
-    notes: >
-      Any member with the correct keyfile can join the cluster trust boundary.
-      MongoDB recommends X.509 for production internal authentication.
+    '
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - example: mongodb://username:XXXXXXXXXXXXXXXX@host:27017/admin
+    pattern: mongodb(\+srv)?://[^:/@\s]+:[^@\s]+@[^\s]+
+    detail: MongoDB connection string containing inline username and password
+  location:
+  - type: config_file
+    detail: 'application config, .env files, Kubernetes manifests, connection-string
+      files; Removed generic/common scanner surface path(s) from product template:
+      .env'
+    path: mongod.conf, mongodb.conf, application.yml, application.properties, mongoid.yml
+  - type: environment
+    path: MONGODB_URI, MONGO_URI, MONGO_URL, MONGODB_URL
+  - type: database
+    detail: MongoDB system users collection stores user credentials and roles
+  - type: secret_store
+    detail: Kubernetes Secrets, CI/CD variables, cloud secret managers, Atlas app
+      secrets
+  - type: source_code
+    detail: application code, notebooks, tests, committed connection strings
+  - type: logs
+    detail: startup logs, driver debug logs, exception traces containing connection
+      strings
+  notes: 'Inline credentials in MongoDB URIs are common in application config and
+    logs. Percent-encoding can obscure special characters in the password.
 
+    '
+- id: internal-keyfile
+  name: Internal Keyfile Authentication Secret
+  description: 'MongoDB replica set and sharded cluster members can authenticate to
+    each other with a shared keyfile. MongoDB documents that the keyfile contents
+    are used as the shared password for internal membership authentication.
+
+    '
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: ^[A-Za-z0-9+/=]{6,1000}[A-Za-z0-9+/=]{0,24}$
+    detail: 'keyfile content is a 6-1024 character shared secret; the quantifier is
+      split to stay within Go regexp repeat-count limits, and keyFile configuration
+      context is required to avoid false positives
+
+      '
+  location:
+  - type: config_file
+    path: mongod.conf, mongodb.conf
+    detail: security.keyFile points to the keyfile path
+  - type: config_file
+    detail: keyfile on each mongod host; permissions are part of deployment hardening
+    path: mongodb-keyfile, keyfile, mongo-keyfile
+  - type: secret_store
+    detail: Kubernetes Secrets, Ansible Vault, cloud secret managers
+  - type: artifact
+    detail: replica set deployment bundles, host backups, automation tarballs
+  notes: 'Any member with the correct keyfile can join the cluster trust boundary.
+    MongoDB recommends X.509 for production internal authentication.
+
+    '
+- id: atlas-service-account-secret
+  name: MongoDB Atlas Service Account Secret
+  description: MongoDB Atlas service accounts use a client ID and client secret for
+    Atlas Administration API OAuth client-credentials flows.
+  type: secret_value
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - example: mdb_sa_sk_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmn
+    pattern: mdb_sa_sk_[A-Za-z0-9_\-]{40}
+    detail: MongoDB Atlas service account client secret shape from public scanner
+      rules
+  location:
+  - type: environment
+    path: MONGODB_ATLAS_CLIENT_SECRET, MONGODB_ATLAS_PUBLIC_KEY, MONGODB_ATLAS_PRIVATE_KEY
+    detail: Atlas API/service account secret env vars used by automation
+  - type: config_file
+    path: atlas.json, mongodb-atlas.json, terraform.tfvars, provider.tf
+    detail: Atlas automation and IaC config
+  - type: http_header
+    path: Authorization
+    detail: OAuth Basic/client credential exchange or Bearer token derived from service
+      account
+  - type: secret_store
+    detail: CI/CD variables, cloud secret managers, and infrastructure automation
+      secrets
+  - type: source_code
+    detail: Terraform, scripts, and accidentally committed Atlas automation config
+  notes: The companion client ID is an identifier; the client secret is credential
+    material.
 references:
-  - type: docs
-    url: https://www.mongodb.com/docs/manual/administration/security-checklist/
-  - type: docs
-    url: https://www.mongodb.com/docs/manual/core/authentication/
-  - type: docs
-    url: https://www.mongodb.com/docs/manual/reference/connection-string/
-  - type: docs
-    url: https://www.mongodb.com/docs/manual/tutorial/enforce-keyfile-access-control-in-existing-replica-set/
+- type: docs
+  url: https://www.mongodb.com/docs/manual/administration/security-checklist/
+- type: docs
+  url: https://www.mongodb.com/docs/manual/core/authentication/
+- type: docs
+  url: https://www.mongodb.com/docs/manual/reference/connection-string/
+- type: docs
+  url: https://www.mongodb.com/docs/manual/tutorial/enforce-keyfile-access-control-in-existing-replica-set/

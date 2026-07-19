@@ -6,9 +6,9 @@ author: haxxm0nkey
 credentials:
 - id: admin-user-password
   name: QNAP Administrator/User Password
-  description: QNAP systems use local and directory users for the web admin UI, SSH, file
-    services, apps, and APIs. Modern firmware may disable the default admin account or require
-    setup-defined credentials.
+  description: QNAP systems use local and directory users for the web admin UI, SSH,
+    file services, apps, and APIs. Modern firmware may disable the default admin account
+    or require setup-defined credentials.
   type: username_password
   nature:
   - generated_on_install
@@ -19,14 +19,17 @@ credentials:
     path: QTS/QuTS hero web UI, SSH, SMB/NFS/AFP, WebDAV, apps, and management APIs
   - type: config_file
     detail: /etc/config/shadow, account config files, and app configuration
+    path: /etc/config/shadow, /etc/shadow, /etc/config/passwd
+    platform:
+    - linux
   - type: database
     detail: system and application databases storing user/session metadata
   - type: secret_store
     detail: password vaults, HBS backup stores, and directory services
   - type: logs
     detail: system event logs, auth logs, web logs, and app logs
-  notes: No universal QNAP admin password is modeled; default admin behavior changed across
-    firmware and setup modes.
+  notes: No universal QNAP admin password is modeled; default admin behavior changed
+    across firmware and setup modes.
 - id: api-session-token
   name: QTS API Session Token
   description: QNAP web/API clients authenticate with session IDs, cookies, or CSRF-style
@@ -43,13 +46,14 @@ credentials:
     detail: API login responses containing session ID/token fields
   - type: config_file
     detail: automation client caches and scripts
+    path: qnap-session.json, qnap.json, qts-client.json
   - type: logs
     detail: web access logs, API traces, and reverse proxy logs
 - id: app-backup-cloud-secrets
   name: App, Backup, Cloud, and Service Secrets
-  description: QNAP apps and services store credentials for HBS/Hybrid Backup Sync, cloud
-    storage, myQNAPcloud, containers, virtualization, surveillance cameras, LDAP/AD, SMTP,
-    VPN, and databases.
+  description: QNAP apps and services store credentials for HBS/Hybrid Backup Sync,
+    cloud storage, myQNAPcloud, containers, virtualization, surveillance cameras,
+    LDAP/AD, SMTP, VPN, and databases.
   type: secret_value
   nature:
   - user_defined
@@ -57,8 +61,12 @@ credentials:
   sensitivity: secret
   location:
   - type: config_file
-    detail: QPKG app configs, /etc/config, Container Station compose files, VPN and cloud
-      sync configs
+    detail: QPKG app configs, /etc/config, Container Station compose files, VPN and
+      cloud sync configs
+    path: /etc/config/uLinux.conf, /etc/config/qpkg.conf, /etc/config/cloudconnector.conf,
+      /etc/config/backup_conf.sh, qnap-backup.json
+    platform:
+    - linux
   - type: database
     detail: QNAP app databases and system credential records
   - type: secret_store
@@ -69,19 +77,20 @@ credentials:
     detail: HBS, cloud, container, VPN, and app debug logs
 - id: certificate-ssh-vpn-key
   name: Certificate / SSH / VPN Private Key
-  description: QNAP devices store TLS certificate keys, SSH host/user keys, VPN keys, and
-    app-specific private keys.
+  description: QNAP devices store TLS certificate keys, SSH host/user keys, VPN keys,
+    and app-specific private keys.
   type: key_pair
   nature:
   - generated_on_install
   - user_defined
   sensitivity: secret
   looks_like:
-  - pattern: '-----BEGIN (RSA |EC |OPENSSH |ENCRYPTED |)PRIVATE KEY-----'
+  - pattern: '-----BEGIN (RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----'
     detail: private key material from QNAP TLS, SSH, VPN, or app configurations
   location:
   - type: config_file
     detail: certificate directories, SSH keys, VPN configs, and QPKG app key files
+    path: /etc/stunnel/stunnel.pem, /etc/config/ssh/ssh_host_rsa_key, vpn.conf, openvpn.conf
   - type: secret_store
     detail: certificate stores and backup vaults
   - type: artifact

@@ -3,125 +3,143 @@ name: Oracle DBMS
 category: database
 vendor: Oracle
 author: haxxm0nkey
-
 credentials:
+- id: database-user-password
+  name: Database User Password
+  description: 'Oracle Database authenticates database users using information in
+    the database itself and supports creating passwords with SQL statements that use
+    the IDENTIFIED BY clause. Oracle documents password protections, profiles, and
+    password management for database users.
 
-  - id: database-user-password
-    name: Database User Password
-    description: >
-      Oracle Database authenticates database users using information in the
-      database itself and supports creating passwords with SQL statements that
-      use the IDENTIFIED BY clause. Oracle documents password protections,
-      profiles, and password management for database users.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: 'CREATE\s+USER\s+\S+\s+IDENTIFIED\s+BY\s+"?[^";\r\n]+"?'
-        detail: Oracle CREATE USER statement assigning a database user password
-      - pattern: 'ALTER\s+USER\s+\S+\s+IDENTIFIED\s+BY\s+"?[^";\r\n]+"?'
-        detail: Oracle ALTER USER statement changing a database user password
-    location:
-      - type: database
-        detail: Oracle data dictionary password verifier state for database users, visible only to privileged users
-      - type: config_file
-        detail: application config, JDBC URLs, wallet setup files, .env files, and deployment manifests
-      - type: environment
-        path: ORACLE_USER, ORACLE_PASSWORD, TNS_ADMIN, DATABASE_URL
-      - type: secret_store
-        detail: Oracle Wallet, cloud secret managers, Kubernetes Secrets, and CI/CD variables
-      - type: source_code
-        detail: application connection strings, SQL scripts, tests, and accidentally committed configs
-      - type: logs
-        detail: failed connection traces, JDBC debug logs, SQL*Plus command history, and CI output
-      - type: public_interface
-        path: tcp/1521
-        detail: Oracle Net listener connection endpoint
-    notes: >
-      Oracle user passwords are deployment-specific. Do not treat sample users
-      or examples as universal defaults unless a specific image or installer
-      explicitly ships them.
+    '
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: CREATE\s+USER\s+\S+\s+IDENTIFIED\s+BY\s+"?[^";\r\n]+"?
+    detail: Oracle CREATE USER statement assigning a database user password
+  - pattern: ALTER\s+USER\s+\S+\s+IDENTIFIED\s+BY\s+"?[^";\r\n]+"?
+    detail: Oracle ALTER USER statement changing a database user password
+  location:
+  - type: database
+    detail: Oracle data dictionary password verifier state for database users, visible
+      only to privileged users
+  - type: config_file
+    detail: 'application config, JDBC URLs, wallet setup files, .env files, and deployment
+      manifests; Removed generic/common scanner surface path(s) from product template:
+      .env'
+    path: tnsnames.ora, sqlnet.ora, jdbc.properties, application.properties, application.yml,
+      datasource.xml
+  - type: environment
+    path: ORACLE_USER, ORACLE_PASSWORD, DATABASE_URL
+  - type: secret_store
+    detail: Oracle Wallet, cloud secret managers, Kubernetes Secrets, and CI/CD variables
+  - type: source_code
+    detail: application connection strings, SQL scripts, tests, and accidentally committed
+      configs
+  - type: logs
+    detail: failed connection traces, JDBC debug logs, SQL*Plus command history, and
+      CI output
+  - type: public_interface
+    path: tcp/1521
+    detail: Oracle Net listener connection endpoint
+  notes: 'Oracle user passwords are deployment-specific. Do not treat sample users
+    or examples as universal defaults unless a specific image or installer explicitly
+    ships them.
 
-  - id: secure-external-password-store
-    name: Secure External Password Store Wallet Credential
-    description: >
-      Oracle Secure External Password Store (SEPS) is a client-side wallet used
-      to store password credentials. Oracle documents SEPS as a secure external
-      password store for client-side password credentials.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    location:
-      - type: secret_store
-        path: Oracle Wallet, cwallet.sso, ewallet.p12
-        detail: client-side wallet files containing database connection credentials
-      - type: config_file
-        path: sqlnet.ora, tnsnames.ora
-        detail: Oracle Net configuration that locates wallets and maps connect descriptors
-      - type: environment
-        path: TNS_ADMIN, ORACLE_HOME
-      - type: source_code
-        detail: accidentally committed wallet files, container build contexts, and deployment bundles
-      - type: image
-        detail: VM or container images containing wallet files
-    notes: >
-      Wallet files can allow passwordless database access from clients that can
-      read the wallet and reach the configured service.
+    '
+- id: secure-external-password-store
+  name: Secure External Password Store Wallet Credential
+  description: 'Oracle Secure External Password Store (SEPS) is a client-side wallet
+    used to store password credentials. Oracle documents SEPS as a secure external
+    password store for client-side password credentials.
 
-  - id: administrative-password-file
-    name: Administrative Password File Credential
-    description: >
-      Oracle documents special protections for administrative user passwords,
-      including password files. Administrative users such as SYSDBA can be
-      authenticated by password files, operating system authentication, or other
-      configured methods.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    location:
-      - type: config_file
-        path: orapw*, PWD*.ora
-        detail: Oracle database password file used for administrative authentication
-      - type: secret_store
-        detail: backup stores and infrastructure secrets containing database password files
-      - type: image
-        detail: database server images, backups, and cloned Oracle homes containing password files
-      - type: logs
-        detail: database creation logs and administrative scripts that print password file paths or passwords
-    notes: >
-      Administrative password files are highly sensitive because they can enable
-      privileged SYSDBA-style access depending on server configuration.
+    '
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: secret_store
+    path: Oracle Wallet, cwallet.sso, ewallet.p12
+    detail: client-side wallet files containing database connection credentials
+  - type: config_file
+    path: sqlnet.ora, tnsnames.ora, cwallet.sso, ewallet.p12
+    detail: Oracle Net configuration that locates wallets and maps connect descriptors
+  - type: environment
+  - type: source_code
+    detail: accidentally committed wallet files, container build contexts, and deployment
+      bundles
+  - type: image
+    detail: VM or container images containing wallet files
+  notes: 'Wallet files can allow passwordless database access from clients that can
+    read the wallet and reach the configured service.
 
-  - id: net-service-connection-secret
-    name: Net Service Connection Credential
-    description: >
-      Oracle Net local naming uses tnsnames.ora to map network service names to
-      connect descriptors. Applications often pair these descriptors with
-      username/password credentials in configuration files or wallets.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: '[A-Za-z0-9_.$#]+/[^\s@]+@[^\s]+'
-        detail: SQL*Plus-style username/password@connect_identifier string; context identifies Oracle credentials
-    location:
-      - type: config_file
-        path: tnsnames.ora, sqlnet.ora
-        detail: Oracle Net service names and wallet configuration
-      - type: environment
-        path: TNS_ADMIN, ORACLE_CONNECT_STRING
-      - type: source_code
-        detail: SQL scripts, application configs, deployment scripts, and accidentally committed connect strings
-      - type: logs
-        detail: command history, connection errors, and debug traces
-    notes: >
-      tnsnames.ora usually holds network descriptors rather than passwords, but
-      it is important context for nearby Oracle credentials and wallets.
+    '
+- id: administrative-password-file
+  name: Administrative Password File Credential
+  description: 'Oracle documents special protections for administrative user passwords,
+    including password files. Administrative users such as SYSDBA can be authenticated
+    by password files, operating system authentication, or other configured methods.
 
+    '
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: config_file
+    detail: Oracle administrative password files; examples are exact filenames commonly
+      used for ORCL/XE SIDs
+    path: orapwORCL, orapwXE, PWDORCL.ora, PWDXE.ora
+  - type: secret_store
+    detail: backup stores and infrastructure secrets containing database password
+      files
+  - type: image
+    detail: database server images, backups, and cloned Oracle homes containing password
+      files
+  - type: logs
+    detail: database creation logs and administrative scripts that print password
+      file paths or passwords
+  notes: 'Administrative password files are highly sensitive because they can enable
+    privileged SYSDBA-style access depending on server configuration.
+
+    '
+- id: net-service-connection-secret
+  name: Net Service Connection Credential
+  description: 'Oracle Net local naming uses tnsnames.ora to map network service names
+    to connect descriptors. Applications often pair these descriptors with username/password
+    credentials in configuration files or wallets.
+
+    '
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: '[A-Za-z0-9_.$#]+/[^\s@]+@[^\s]+'
+    detail: SQL*Plus-style username/password@connect_identifier string; context identifies
+      Oracle credentials
+  location:
+  - type: config_file
+    path: tnsnames.ora, sqlnet.ora, jdbc.properties, application.properties, application.yml
+    detail: Oracle Net service names and wallet configuration
+  - type: environment
+    path: ORACLE_PASSWORD, DATABASE_URL
+  - type: source_code
+    detail: SQL scripts, application configs, deployment scripts, and accidentally
+      committed connect strings
+  - type: logs
+    detail: command history, connection errors, and debug traces
+  notes: 'tnsnames.ora usually holds network descriptors rather than passwords, but
+    it is important context for nearby Oracle credentials and wallets.
+
+    '
 references:
-  - type: docs
-    url: https://docs.oracle.com/en/database/oracle/oracle-database/23/dbseg/configuring-authentication.html
-  - type: docs
-    url: https://docs.oracle.com/en/database/oracle/oracle-database/23/dbseg/managing-security-for-oracle-database-users.html
-  - type: docs
-    url: https://docs.oracle.com/en/database/oracle/oracle-database/23/netag/configuring-naming-methods.html
+- type: docs
+  url: https://docs.oracle.com/en/database/oracle/oracle-database/23/dbseg/configuring-authentication.html
+- type: docs
+  url: https://docs.oracle.com/en/database/oracle/oracle-database/23/dbseg/managing-security-for-oracle-database-users.html
+- type: docs
+  url: https://docs.oracle.com/en/database/oracle/oracle-database/23/netag/configuring-naming-methods.html

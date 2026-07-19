@@ -6,8 +6,8 @@ author: haxxm0nkey
 credentials:
 - id: user-password
   name: TeamCity User Password
-  description: TeamCity users authenticate to the web UI, REST API, and build tools through
-    local or external authentication backends.
+  description: TeamCity users authenticate to the web UI, REST API, and build tools
+    through local or external authentication backends.
   type: username_password
   nature:
   - user_defined
@@ -20,6 +20,7 @@ credentials:
     detail: TeamCity user records and password verifier state for local authentication
   - type: config_file
     detail: server configuration, auth modules, and deployment manifests
+    path: config/database.properties, config/ldap-config.properties, config/ntlm-config.properties
   - type: secret_store
     detail: password managers and deployment vaults
   - type: logs
@@ -39,7 +40,10 @@ credentials:
   - type: database
     detail: TeamCity token storage associated with users
   - type: config_file
-    detail: build scripts, service connection config, IDE/CLI caches, and .env files
+    detail: 'build scripts, service connection config, IDE/CLI caches, and .env files;
+      Removed generic/common scanner surface path(s) from product template: .env'
+    path: secure/credentials.json, config/projects-config.xml, config/vcs-roots.xml,
+      teamcity-cli.json, teamcity.json
   - type: environment
     path: TEAMCITY_TOKEN, TEAMCITY_ACCESS_TOKEN
   - type: secret_store
@@ -50,8 +54,8 @@ credentials:
     detail: REST debug logs and build output
 - id: super-user-token
   name: Super User Authentication Token
-  description: TeamCity can provide a super user authentication token for emergency administration
-    when normal authentication is unavailable.
+  description: TeamCity can provide a super user authentication token for emergency
+    administration when normal authentication is unavailable.
   type: token
   nature:
   - generated_on_install
@@ -63,12 +67,14 @@ credentials:
     path: TeamCity login page super user token flow
   - type: artifact
     detail: support bundles and collected server logs
-  notes: Treat this as highly privileged emergency access; rotate/restart according to TeamCity
-    guidance if exposed.
+  - type: config_file
+    path: logs/teamcity-server.log, teamcity-server.log, catalina.out
+  notes: Treat this as highly privileged emergency access; rotate/restart according
+    to TeamCity guidance if exposed.
 - id: secure-project-parameter
   name: Secure Project Parameter / VCS Settings Token
-  description: TeamCity stores secure parameters, VCS root passwords/tokens, SSH keys, cloud
-    profiles, and deployment credentials for build configurations.
+  description: TeamCity stores secure parameters, VCS root passwords/tokens, SSH keys,
+    cloud profiles, and deployment credentials for build configurations.
   type: secret_value
   nature:
   - user_defined
@@ -78,6 +84,8 @@ credentials:
     detail: TeamCity configuration database and secure value storage
   - type: config_file
     detail: project settings, Kotlin DSL, VCS root config, and data directory XML
+    path: config/projects-config.xml, secure/credentials.json, settings.kts, .teamcity/settings.kts,
+      buildType.xml, vcs-roots.xml
   - type: secret_store
     detail: TeamCity credentials storage and external secret integrations
   - type: source_code

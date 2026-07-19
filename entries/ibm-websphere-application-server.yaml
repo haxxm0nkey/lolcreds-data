@@ -1,14 +1,14 @@
 id: ibm-websphere-application-server
 name: IBM WebSphere Application Server
-category: middleware
+category: other
 vendor: IBM
 author: haxxm0nkey
 credentials:
 - id: administrative-user-password
   name: Administrative User Password
-  description: WebSphere Application Server administrative security uses users and groups
-    from a local file registry, LDAP, federated repository, or OS registry to protect the
-    admin console, wsadmin, and management APIs.
+  description: WebSphere Application Server administrative security uses users and
+    groups from a local file registry, LDAP, federated repository, or OS registry
+    to protect the admin console, wsadmin, and management APIs.
   type: username_password
   nature:
   - user_defined
@@ -18,26 +18,29 @@ credentials:
   - type: public_interface
     path: Integrated Solutions Console, wsadmin, JMX, REST management, and SOAP connector
   - type: config_file
-    detail: security.xml, fileRegistry.xml, soap.client.props, sas.client.props, and deployment
-      response files
+    detail: security.xml, fileRegistry.xml, soap.client.props, sas.client.props, and
+      deployment response files
+    path: security.xml, fileRegistry.xml, wimconfig.xml, soap.client.props, sas.client.props
   - type: database
-    detail: registry or LDAP backend storing local/federated user password verifier data
+    detail: registry or LDAP backend storing local/federated user password verifier
+      data
   - type: secret_store
     detail: WebSphere credential stores, password vaults, and deployment secrets
   - type: logs
     detail: SystemOut/SystemErr, security audit, wsadmin, and FFDC logs
 - id: wasadmin-script-password
   name: wsadmin / SOAP Client Password
-  description: Administrative scripts often store WebSphere usernames and passwords for wsadmin,
-    SOAP connector, deployment automation, and CI/CD tasks.
+  description: Administrative scripts often store WebSphere usernames and passwords
+    for wsadmin, SOAP connector, deployment automation, and CI/CD tasks.
   type: username_password
   nature:
   - user_defined
   sensitivity: secret
   location:
   - type: config_file
-    path: soap.client.props, sas.client.props, wsadmin.properties
-    detail: administrative client credential files and scripts
+    path: wsadmin.properties, soap.client.props, sas.client.props
+    detail: 'administrative client credential files and scripts. Additional non-path
+      context from previous path: soap.client.props, sas.client.props.'
   - type: environment
     path: WAS_USER, WAS_PASSWORD, WEBSPHERE_USER, WEBSPHERE_PASSWORD
   - type: secret_store
@@ -48,8 +51,9 @@ credentials:
     detail: wsadmin traces and deployment logs
 - id: ltpa-and-cell-secrets
   name: LTPA Keys / Cell Signing Secrets
-  description: WebSphere uses LTPA keys, cell/node secrets, and token keys for SSO and trust
-    between servers. Leaked keys can enable token forgery or trust abuse within the cell/domain.
+  description: WebSphere uses LTPA keys, cell/node secrets, and token keys for SSO
+    and trust between servers. Leaked keys can enable token forgery or trust abuse
+    within the cell/domain.
   type: secret_value
   nature:
   - generated_on_install
@@ -59,14 +63,16 @@ credentials:
   - type: config_file
     detail: security.xml, ltpa.keys exports, cell/node config repositories, and backupConfig
       archives
+    path: security.xml, ltpa.keys, backupConfig.zip
   - type: secret_store
     detail: WebSphere key stores, credential stores, and backup vaults
   - type: artifact
     detail: profile backups, support bundles, and configuration archives
 - id: keystore-and-datasource-secrets
   name: Keystore, Data Source, JMS, and JAAS Secrets
-  description: WebSphere stores data source passwords, JAAS auth aliases, JMS provider credentials,
-    LDAP bind passwords, and SSL keystore/truststore passwords in cell configuration.
+  description: WebSphere stores data source passwords, JAAS auth aliases, JMS provider
+    credentials, LDAP bind passwords, and SSL keystore/truststore passwords in cell
+    configuration.
   type: secret_value
   nature:
   - user_defined
@@ -77,8 +83,9 @@ credentials:
     detail: WebSphere XOR-obfuscated password value often found in configuration files
   location:
   - type: config_file
-    detail: resources.xml, security.xml, ssl.client.props, key.p12/trust.p12 settings, and
-      JAAS auth data
+    detail: resources.xml, security.xml, ssl.client.props, key.p12/trust.p12 settings,
+      and JAAS auth data
+    path: resources.xml, security.xml, ssl.client.props, key.p12, trust.p12, server.xml
   - type: secret_store
     detail: WebSphere configuration repository, keystores, and external vaults
   - type: source_code

@@ -3,76 +3,89 @@ name: Microsoft SQL Server
 category: database
 vendor: Microsoft
 author: haxxm0nkey
-
 credentials:
+- id: sql-login-password
+  name: SQL Server Login Password
+  description: 'SQL Server supports SQL Server Authentication when the Database Engine
+    is configured for mixed mode authentication. Microsoft documents creating SQL
+    logins with CREATE LOGIN and PASSWORD, and SQL Server stores password hashes for
+    SQL logins internally.
 
-  - id: sql-login-password
-    name: SQL Server Login Password
-    description: >
-      SQL Server supports SQL Server Authentication when the Database Engine is
-      configured for mixed mode authentication. Microsoft documents creating SQL
-      logins with CREATE LOGIN and PASSWORD, and SQL Server stores password
-      hashes for SQL logins internally.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: 'CREATE\s+LOGIN\s+\S+\s+WITH\s+PASSWORD\s*=\s*''[^''\r\n]+'''
-        detail: SQL Server CREATE LOGIN statement assigning a login password
-      - pattern: '(?:Server|Data Source)=[^;\r\n]+;.*(?:User ID|UID)=[^;\r\n]+;.*(?:Password|PWD)=[^;\r\n]+'
-        detail: SQL Server connection string containing username and password
-    location:
-      - type: database
-        path: sys.sql_logins
-        detail: catalog view exposing SQL login metadata and password hash state to privileged users
-      - type: config_file
-        detail: appsettings.json, web.config, .env files, ODBC DSNs, JDBC URLs, and deployment manifests
-      - type: environment
-        path: MSSQL_SA_PASSWORD, SA_PASSWORD, SQLSERVER_PASSWORD, DB_PASSWORD, DATABASE_URL
-      - type: secret_store
-        detail: Windows Credential Manager, cloud secret managers, Kubernetes Secrets, and CI/CD variables
-      - type: windows_registry
-        detail: ODBC DSN and application configuration values on Windows hosts
-      - type: source_code
-        detail: connection strings in application code, migrations, tests, and committed configs
-      - type: logs
-        detail: failed connection traces, ORM debug logs, installer logs, and CI output
-      - type: public_interface
-        path: tcp/1433
-        detail: SQL Server Tabular Data Stream login endpoint
-    notes: >
-      SQL Server Authentication passwords are user-defined. The sa account is a
-      built-in login name, but a default sa password is not universal and should
-      not be modeled without product- or image-specific sourcing.
+    '
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: CREATE\s+LOGIN\s+\S+\s+WITH\s+PASSWORD\s*=\s*'[^'\r\n]+'
+    detail: SQL Server CREATE LOGIN statement assigning a login password
+  - pattern: (?:Server|Data Source)=[^;\r\n]+;.*(?:User ID|UID)=[^;\r\n]+;.*(?:Password|PWD)=[^;\r\n]+
+    detail: SQL Server connection string containing username and password
+  location:
+  - type: database
+    path: sys.sql_logins
+    detail: catalog view exposing SQL login metadata and password hash state to privileged
+      users
+  - type: config_file
+    detail: 'appsettings.json, web.config, .env files, ODBC DSNs, JDBC URLs, and deployment
+      manifests; Removed generic/common scanner surface path(s) from product template:
+      .env'
+    path: appsettings.json, web.config, mssql.conf, odbc.ini, freetds.conf
+  - type: environment
+    path: MSSQL_SA_PASSWORD, SA_PASSWORD, MSSQL_PASSWORD, DATABASE_URL
+  - type: secret_store
+    detail: Windows Credential Manager, cloud secret managers, Kubernetes Secrets,
+      and CI/CD variables
+  - type: windows_registry
+    detail: ODBC DSN and application configuration values on Windows hosts
+    path: HKLM:\Software\ODBC\ODBC.INI, HKCU:\Software\ODBC\ODBC.INI
+  - type: source_code
+    detail: connection strings in application code, migrations, tests, and committed
+      configs
+  - type: logs
+    detail: failed connection traces, ORM debug logs, installer logs, and CI output
+  - type: public_interface
+    path: tcp/1433
+    detail: SQL Server Tabular Data Stream login endpoint
+  notes: 'SQL Server Authentication passwords are user-defined. The sa account is
+    a built-in login name, but a default sa password is not universal and should not
+    be modeled without product- or image-specific sourcing.
 
-  - id: windows-entra-login
-    name: Windows / Microsoft Entra Login
-    description: >
-      SQL Server also supports Windows authentication and Microsoft Entra
-      authentication, where database access is tied to external identity
-      credentials rather than a SQL login password stored in SQL Server.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: context_dependent
-    location:
-      - type: public_interface
-        path: tcp/1433
-        detail: SQL Server login using integrated Windows or Microsoft Entra authentication
-      - type: config_file
-        detail: connection strings using Integrated Security, Trusted_Connection, or Entra authentication modes
-      - type: environment
-        path: SQLAUTHENTICATION, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET
-      - type: secret_store
-        detail: service account passwords, managed identity configuration, and cloud identity secrets
-      - type: windows_registry
-        detail: ODBC DSNs and service account configuration on Windows hosts
-    notes: >
-      The credential material may live in Active Directory, Microsoft Entra ID,
-      local service accounts, Kerberos tickets, or client certificates rather
-      than in SQL Server itself.
+    '
+- id: windows-entra-login
+  name: Windows / Microsoft Entra Login
+  description: 'SQL Server also supports Windows authentication and Microsoft Entra
+    authentication, where database access is tied to external identity credentials
+    rather than a SQL login password stored in SQL Server.
 
+    '
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: context_dependent
+  location:
+  - type: public_interface
+    path: tcp/1433
+    detail: SQL Server login using integrated Windows or Microsoft Entra authentication
+  - type: config_file
+    detail: connection strings using Integrated Security, Trusted_Connection, or Entra
+      authentication modes
+    path: appsettings.json, web.config, odbc.ini, mssql.conf
+  - type: environment
+    path: AZURE_CLIENT_SECRET
+  - type: secret_store
+    detail: service account passwords, managed identity configuration, and cloud identity
+      secrets
+  - type: windows_registry
+    detail: ODBC DSNs and service account configuration on Windows hosts
+    path: HKLM:\Software\ODBC\ODBC.INI, HKCU:\Software\ODBC\ODBC.INI
+  notes: 'The credential material may live in Active Directory, Microsoft Entra ID,
+    local service accounts, Kerberos tickets, or client certificates rather than in
+    SQL Server itself.
+
+    '
 references:
-  - type: docs
-    url: https://learn.microsoft.com/en-us/sql/relational-databases/security/authentication-access/create-a-login?view=sql-server-ver16
-  - type: docs
-    url: https://learn.microsoft.com/en-us/sql/t-sql/statements/create-login-transact-sql?view=sql-server-ver16
+- type: docs
+  url: https://learn.microsoft.com/en-us/sql/relational-databases/security/authentication-access/create-a-login?view=sql-server-ver16
+- type: docs
+  url: https://learn.microsoft.com/en-us/sql/t-sql/statements/create-login-transact-sql?view=sql-server-ver16

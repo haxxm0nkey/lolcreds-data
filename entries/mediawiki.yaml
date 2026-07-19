@@ -1,13 +1,13 @@
 id: mediawiki
 name: MediaWiki
-category: cms
+category: other
 vendor: MediaWiki
 author: haxxm0nkey
 credentials:
 - id: user-password-hash
   name: User Password Hash
-  description: MediaWiki stores local user password hashes in its database for wiki logins
-    unless external authentication replaces local auth.
+  description: MediaWiki stores local user password hashes in its database for wiki
+    logins unless external authentication replaces local auth.
   type: username_password
   nature:
   - user_defined
@@ -21,8 +21,8 @@ credentials:
     detail: database dumps and wiki backups
 - id: bot-password
   name: Bot Password
-  description: MediaWiki bot passwords let users create limited credentials for bots and API
-    clients without using the main account password.
+  description: MediaWiki bot passwords let users create limited credentials for bots
+    and API clients without using the main account password.
   type: username_password
   nature:
   - generated_on_install
@@ -33,6 +33,7 @@ credentials:
     detail: bot password tables and associated grants/restrictions
   - type: config_file
     detail: bot scripts, Pywikibot config, .netrc, and CI variables
+    path: user-config.py, pywikibot.lwp, bot-passwords.json
   - type: environment
     path: MEDIAWIKI_BOT_USERNAME, MEDIAWIKI_BOT_PASSWORD
   - type: secret_store
@@ -58,6 +59,7 @@ credentials:
     detail: OAuth consumer and access token tables
   - type: config_file
     detail: bot configs, OAuth client configs, and integration scripts
+    path: oauth.ini, oauth.json, user-config.py, pywikibot.lwp
   - type: secret_store
     detail: bot vaults and CI/CD secrets
   - type: logs
@@ -72,9 +74,9 @@ credentials:
   - user_defined
   sensitivity: secret
   looks_like:
-  - pattern: \$wgSecretKey\s*=\s*[\'\"][^\'\"]+[\'\"]\s*;
+  - pattern: \$wgSecretKey\s*=\s*['"][^'"]+['"]\s*;
     detail: MediaWiki LocalSettings.php secret key assignment
-  - pattern: \$wgDBpassword\s*=\s*[\'\"][^\'\"]+[\'\"]\s*;
+  - pattern: \$wgDBpassword\s*=\s*['"][^'"]+['"]\s*;
     detail: MediaWiki database password assignment
   location:
   - type: config_file

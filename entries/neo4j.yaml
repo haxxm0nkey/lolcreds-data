@@ -7,7 +7,8 @@ credentials:
 - id: default-neo4j
   name: Initial neo4j User Password
   description: Neo4j creates a default neo4j user for initial database access. Historical/default
-    startup credentials use neo4j/neo4j and require changing the password before normal use.
+    startup credentials use neo4j/neo4j and require changing the password before normal
+    use.
   type: username_password
   nature:
   - static_default
@@ -23,14 +24,15 @@ credentials:
     detail: system database auth records and password hashes
   - type: config_file
     detail: initial password files, deployment manifests, and dbms security settings
+    path: neo4j.conf, neo4j-admin.conf, auth.ini
   - type: logs
     detail: debug.log, security.log, query logs, and authentication errors
   notes: neo4j/neo4j is the initial password pattern; modern deployments force a password
     change or accept a deployment-provided initial password.
 - id: database-user-password
   name: Database User Password
-  description: Neo4j native users and roles authenticate for database, cluster, and API access
-    through native auth or external providers.
+  description: Neo4j native users and roles authenticate for database, cluster, and
+    API access through native auth or external providers.
   type: username_password
   nature:
   - user_defined
@@ -47,17 +49,23 @@ credentials:
     detail: application configs, tests, and driver connection settings
   - type: logs
     detail: security logs, driver debug output, and query logs
+  - type: config_file
+    path: neo4j.conf, auth.ini
+    detail: Neo4j auth configuration and native user/password store context
 - id: driver-connection-secret
   name: Driver URI / Application Credential
-  description: Applications store Neo4j URIs, usernames, passwords, bearer tokens, and client
-    certificate keys for driver connections.
+  description: Applications store Neo4j URIs, usernames, passwords, bearer tokens,
+    and client certificate keys for driver connections.
   type: username_password
   nature:
   - user_defined
   sensitivity: secret
   location:
   - type: config_file
-    detail: application.yml, .env files, driver configs, Helm values, and Docker Compose files
+    detail: 'application.yml, .env files, driver configs, Helm values, and Docker
+      Compose files; Removed generic/common scanner surface path(s) from product template:
+      .env'
+    path: application.yml, application.properties, neo4j.conf, neo4j.json
   - type: environment
     path: NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD, NEO4J_AUTH
   - type: secret_store
@@ -68,20 +76,22 @@ credentials:
     detail: driver connection errors and debug traces
 - id: ssl-cluster-secrets
   name: TLS, Cluster, and Backup Secrets
-  description: Neo4j deployments use TLS private keys, cluster discovery secrets, backup credentials,
-    and sometimes Kerberos/LDAP bind credentials for enterprise security.
+  description: Neo4j deployments use TLS private keys, cluster discovery secrets,
+    backup credentials, and sometimes Kerberos/LDAP bind credentials for enterprise
+    security.
   type: secret_value
   nature:
   - generated_on_install
   - user_defined
   sensitivity: secret
   looks_like:
-  - pattern: '-----BEGIN (RSA |EC |ENCRYPTED |)PRIVATE KEY-----'
+  - pattern: '-----BEGIN (RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----'
     detail: private key material for Neo4j Bolt/HTTPS or client certificate auth
   location:
   - type: config_file
-    path: neo4j.conf, certificates/
-    detail: TLS, auth provider, clustering, and backup settings
+    path: neo4j.conf, server.key, bolt.key, https.key, neo4j.key
+    detail: 'TLS, auth provider, clustering, and backup settings. Additional non-path
+      context from previous path: certificates/.'
   - type: secret_store
     detail: certificate stores, Kubernetes Secrets, and vaults
   - type: artifact

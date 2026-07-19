@@ -1,13 +1,13 @@
 id: tikiwiki
 name: TikiWiki / Tiki CMS Groupware
-category: cms
+category: other
 vendor: Tiki Software Community Association
 author: haxxm0nkey
 credentials:
 - id: user-password-hash
   name: User Password Hash
-  description: Tiki stores local users and password verifier data in its database for wiki/CMS/groupware
-    authentication unless external auth is used.
+  description: Tiki stores local users and password verifier data in its database
+    for wiki/CMS/groupware authentication unless external auth is used.
   type: username_password
   nature:
   - user_defined
@@ -19,10 +19,12 @@ credentials:
     path: Tiki login, web UI, and service endpoints
   - type: artifact
     detail: database dumps and site backups
+  - type: config_file
+    path: db/local.php, tiki-admin_security.php
 - id: token-access
   name: Token Access Secret
-  description: Tiki supports token access features that allow generated tokens to grant access
-    according to configured permissions and expiry.
+  description: Tiki supports token access features that allow generated tokens to
+    grant access according to configured permissions and expiry.
   type: token
   nature:
   - generated_on_install
@@ -36,15 +38,16 @@ credentials:
     detail: Tiki token access records and permissions
   - type: config_file
     detail: integration scripts, URL tokens, and automation settings
+    path: db/local.php, tikiwiki.json, tikiwiki.yaml, token-access.json
   - type: secret_store
     detail: password managers and CI/CD secrets
   - type: logs
     detail: web server access logs and integration traces
 - id: db-mail-ldap-oauth-secrets
   name: Database, Mail, LDAP, and OAuth Secrets
-  description: Tiki installations contain database credentials, SMTP passwords, LDAP bind
-    credentials, OAuth client secrets, and other integration secrets in local config and database
-    settings.
+  description: Tiki installations contain database credentials, SMTP passwords, LDAP
+    bind credentials, OAuth client secrets, and other integration secrets in local
+    config and database settings.
   type: secret_value
   nature:
   - user_defined
@@ -52,7 +55,7 @@ credentials:
   sensitivity: secret
   location:
   - type: config_file
-    path: db/local.php
+    path: db/local.php, local.php, tiki.ini, mail.php, ldap.php, oauth.php
     detail: database connection credentials and local site configuration
   - type: database
     detail: preference and integration tables containing service secrets

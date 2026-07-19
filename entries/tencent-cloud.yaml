@@ -1,0 +1,135 @@
+id: tencent-cloud
+name: Tencent Cloud
+category: cloud
+vendor: Tencent Cloud
+author: haxxm0nkey
+credentials:
+- id: api-key
+  name: Tencent Cloud API Key / Access Key
+  description: Tencent Cloud API keys, access keys, or tokens authorize API, CLI,
+    SDK, Terraform, and automation access to cloud resources according to the principal,
+    account, project, or policy scope.
+  type: api_key
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - example: AKIDXXXXXXXXXXXXX
+    pattern: AKID[A-Za-z0-9]{13,}
+    detail: Tencent Cloud API/access key identifier or token format; paired secret
+      or context may be required
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Tencent Cloud API authorization header or signed request context
+  - type: config_file
+    path: ~/.tccli/default.credential, ~/.tccli/default.configure, credentials.json,
+      tencentcloud.json, terraform.tfvars, provider.tf
+    detail: 'Tencent Cloud CLI/SDK/Terraform/provider credentials and profiles. Additional
+      non-path context from previous path: Terraform/provider configs.'
+  - type: environment
+    path: TENCENTCLOUD_SECRET_ID, TENCENTCLOUD_SECRET_KEY
+  - type: secret_store
+    detail: Tencent Cloud secret managers, CI/CD variables, Kubernetes Secrets, Terraform
+      variables, and vaults
+  - type: source_code
+    detail: IaC repositories, deployment scripts, application configs, notebooks,
+      and tests
+  - type: logs
+    detail: CLI/API debug output, SDK traces, failed request logs, and CI output
+- id: object-storage-key
+  name: Tencent Cloud COS S3-Compatible Object Storage Key
+  description: Tencent Cloud COS object storage credentials use access key IDs and
+    secret keys for S3-compatible or provider-specific bucket/object access.
+  type: api_key
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: config_file
+    path: coscli.yaml, ~/.cos.yaml, coscmd_config, rclone.conf, s3cfg
+    detail: 'object storage client configs, backup tools, rclone, s3cmd, and .aws/credentials-style
+      profiles. Previous non-machine-readable path context: COS SDK/coscli/S3-compatible
+      configs.'
+  - type: environment
+    path: COS_SECRETID, COS_SECRETKEY, TENCENTCLOUD_SECRET_ID, TENCENTCLOUD_SECRET_KEY
+  - type: secret_store
+    detail: cloud secret stores, CI/CD variables, Kubernetes Secrets, and backup vaults
+  - type: source_code
+    detail: backup scripts, data pipeline configs, and tests
+  - type: logs
+    detail: S3/client debug output and signed request traces
+- id: console-user-password
+  name: Tencent Cloud Console User Password
+  description: Tencent Cloud console users authenticate through local account, IAM,
+    enterprise identity, or SSO login flows. Passwords are user-defined and typically
+    protected with MFA/2FA.
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: Tencent Cloud console, CAM user, and SSO login
+  - type: secret_store
+    detail: password managers, break-glass vaults, and enterprise IdP credential stores
+  - type: logs
+    detail: account audit logs, sign-in logs, and IdP authentication logs
+- id: ssh-private-key
+  name: Tencent Cloud Instance SSH Private Key
+  description: Tencent Cloud compute instances/bare-metal servers are commonly accessed
+    with SSH key pairs. The private key grants OS-level access where the public key
+    is installed.
+  type: key_pair
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - pattern: '-----BEGIN (RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----'
+    detail: private SSH key used for Tencent Cloud compute or bare-metal access
+  location:
+  - type: config_file
+    path: tencent-key.pem, cvm-key.pem, server.key
+    detail: 'SSH private keys and cloud-init/provisioning material. Additional non-path
+      context from previous path: cloud-init, Terraform variables.'
+  - type: secret_store
+    detail: CI/CD deploy keys, password managers, and automation vaults
+  - type: source_code
+    detail: provisioning repos, Packer/image builds, and tests
+  - type: artifact
+    detail: machine images, server backups, and support bundles
+- id: kubeconfig-and-workload-secret
+  name: Tencent Cloud Managed Kubernetes / Workload Secret
+  description: Tencent Cloud managed Kubernetes and container services use kubeconfigs,
+    service account tokens, registry passwords, pull secrets, and workload identity
+    credentials.
+  type: secret_value
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+
+    detail: JWT-style Kubernetes service account, OIDC, or workload token
+  location:
+  - type: config_file
+    path: kubeconfig, tke-kubeconfig.yaml, cluster.kubeconfig, service-account-token
+    detail: 'cluster credentials, pull secrets, registry credentials, and workload
+      auth config. Additional non-path context from previous path: Helm values, Terraform
+      variables, manifests.'
+  - type: secret_store
+    detail: Kubernetes Secrets, cloud secret stores, CI/CD variables, and vaults
+  - type: source_code
+    detail: GitOps repos, deployment manifests, and tests
+  - type: logs
+    detail: cluster bootstrap, registry, and deployment logs
+references:
+- type: docs
+  url: https://www.tencentcloud.com/document/product/598/32675
+- type: docs
+  url: https://www.tencentcloud.com/document/product/440/34012
+- type: docs
+  url: https://www.tencentcloud.com/document/product/440/36922

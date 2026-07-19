@@ -1,75 +1,141 @@
 id: apache-tomcat
 name: Apache Tomcat
-category: middleware
+category: other
 vendor: Apache Software Foundation
 author: haxxm0nkey
 
 credentials:
+- id: manager-user-password
+  name: Manager / Host Manager User Password
+  description: >
+    Tomcat Manager and Host Manager authenticate users through a configured
+    Realm. The default UserDatabaseRealm is typically backed by
+    $CATALINA_BASE/conf/tomcat-users.xml, where operators define usernames,
+    passwords, and manager roles.
+  type: username_password
+  nature: [user_defined]
+  sensitivity: secret
+  looks_like:
+  - pattern: '<user\s+[^>]*username="[^"]+"[^>]*password="[^"]+"[^>]*roles="[^"]*(manager-gui|manager-script|manager-jmx|manager-status|admin-gui|admin-script)[^"]*"[^>]*/?>'
+    detail: tomcat-users.xml user entry with Manager or Host Manager role
+  location:
+  - type: config_file
+    platform: [linux]
+    path: $CATALINA_BASE/conf/tomcat-users.xml, /etc/tomcat/tomcat-users.xml, /usr/local/tomcat/conf/tomcat-users.xml, /opt/tomcat/conf/tomcat-users.xml
+    detail: Tomcat user database files containing username/password/role entries
+  - type: config_file
+    platform: [linux]
+    path: $CATALINA_BASE/conf/server.xml, /etc/tomcat/server.xml, /usr/local/tomcat/conf/server.xml, /opt/tomcat/conf/server.xml
+    detail: Realm configuration can point authentication at XML, JDBC, JNDI, JAAS, or custom stores
+  - type: config_file
+    platform: [windows]
+    path: '%CATALINA_BASE%\conf\tomcat-users.xml, C:\Program Files\Apache Software Foundation\Tomcat\conf\tomcat-users.xml'
+    detail: Windows Tomcat user database files
+  - type: public_interface
+    path: /manager/html, /manager/text, /manager/jmxproxy, /host-manager/html
+  - type: secret_store
+    detail: Deployment vaults, Kubernetes Secrets, CI/CD variables, and password managers
+  - type: source_code
+    detail: Dockerfiles, lab compose files, deployment examples, golden Tomcat configs
+  - type: artifact
+    detail: WAR deployment bundles, config backups, AMI/container build artifacts
+  - type: logs
+    detail: Manager authentication logs, access logs, and deployment traces
+  notes: >
+    Tomcat documentation states no username in the default users file is assigned
+    Manager roles, so Manager access is disabled by default. Do not treat example
+    users as shipped defaults.
 
-  - id: manager-user-password
-    name: Manager / Host Manager User Password
-    description: >
-      Tomcat Manager and Host Manager authenticate users through a configured
-      Realm. The default UserDatabaseRealm is typically backed by
-      $CATALINA_BASE/conf/tomcat-users.xml, where operators define usernames,
-      passwords, and manager roles.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: '<user\s+username="[^"]+"\s+password="[^"]+"\s+roles="[^"]*(manager-gui|manager-script|manager-jmx|manager-status|admin-gui|admin-script)[^"]*"\s*/?>'
-        detail: >
-          tomcat-users.xml user entry; the password attribute is the
-          credential and manager/admin roles identify privileged web-console access
-    location:
-      - type: config_file
-        path: $CATALINA_BASE/conf/tomcat-users.xml
-      - type: config_file
-        path: $CATALINA_BASE/conf/server.xml
-        detail: Realm configuration can point authentication at XML, JDBC, JNDI, JAAS, or custom stores
-      - type: public_interface
-        path: /manager/html, /manager/text, /manager/jmxproxy, /host-manager/html
-      - type: source_code
-        detail: Dockerfiles, lab compose files, deployment examples, golden Tomcat configs
-      - type: artifact
-        detail: WAR deployment bundles, config backups, AMI/container build artifacts
-    notes: >
-      Tomcat documentation states that no username in the default users file
-      is assigned Manager roles, so Manager access is disabled by default.
-      Do not treat example users as shipped defaults; include only operator
-      configured users and passwords.
+- id: realm-user-password
+  name: Realm User Password
+  description: >
+    Tomcat web applications using container-managed security authenticate users
+    through a Realm. Realms may store usernames, passwords, and roles in
+    tomcat-users.xml, a database, LDAP/JNDI, JAAS, or a custom backend.
+  type: username_password
+  nature: [user_defined]
+  sensitivity: secret
+  looks_like:
+  - pattern: '<user\s+[^>]*username="[^"]+"[^>]*password="[^"]+"[^>]*roles="[^"]*"[^>]*/?>'
+    detail: tomcat-users.xml user entry for MemoryRealm or UserDatabaseRealm
+  location:
+  - type: config_file
+    platform: [linux]
+    path: $CATALINA_BASE/conf/tomcat-users.xml, /etc/tomcat/tomcat-users.xml, /usr/local/tomcat/conf/tomcat-users.xml, /opt/tomcat/conf/tomcat-users.xml
+    detail: Tomcat XML user database files
+  - type: config_file
+    platform: [linux]
+    path: $CATALINA_BASE/conf/server.xml, /etc/tomcat/server.xml, /usr/local/tomcat/conf/server.xml, /opt/tomcat/conf/server.xml
+    detail: Realm, DataSourceRealm, JDBCRealm, JNDIRealm, and JAASRealm configuration
+  - type: config_file
+    path: META-INF/context.xml, WEB-INF/web.xml, context.xml
+    detail: Web application security constraints and context-level Realm/configuration
+  - type: database
+    detail: JDBCRealm or DataSourceRealm user and role tables
+  - type: public_interface
+    detail: Application login forms protected by Servlet security constraints
+  - type: secret_store
+    detail: Password managers, LDAP bind stores, JNDI secrets, and deployment secret stores
+  - type: source_code
+    detail: context.xml, web.xml, test fixtures, deployment templates
+  notes: >
+    Realm password storage depends on the configured Realm and digest settings.
 
-  - id: realm-user-password
-    name: Realm User Password
-    description: >
-      Tomcat web applications using container-managed security authenticate
-      users through a Realm. Realms may store usernames, passwords, and roles
-      in tomcat-users.xml, a database, LDAP/JNDI, JAAS, or a custom backend.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: '<user\s+username="[^"]+"\s+password="[^"]+"\s+roles="[^"]*"\s*/?>'
-        detail: tomcat-users.xml user entry for a MemoryRealm or UserDatabaseRealm
-    location:
-      - type: config_file
-        path: $CATALINA_BASE/conf/tomcat-users.xml
-      - type: config_file
-        path: $CATALINA_BASE/conf/server.xml, META-INF/context.xml
-        detail: Realm, DataSourceRealm, JDBCRealm, JNDIRealm, and JAASRealm configuration
-      - type: database
-        detail: JDBCRealm or DataSourceRealm user and role tables
-      - type: public_interface
-        detail: application login forms protected by Servlet security constraints
-      - type: source_code
-        detail: context.xml, web.xml, test fixtures, deployment templates
-    notes: >
-      Realm password storage depends on the configured Realm and digest
-      settings. For LOLCreds purposes, the concrete credential location is the
-      configured Realm backend plus any copied deployment artifacts.
+- id: datasource-credential
+  name: JNDI DataSource Credential
+  description: >
+    Tomcat commonly defines JDBC resources in server.xml or context.xml with
+    username and password attributes for application database access.
+  type: username_password
+  nature: [user_defined]
+  sensitivity: secret
+  looks_like:
+  - pattern: '<Resource\s+[^>]*(username|user)="[^"]+"[^>]*password="[^"]+"[^>]*/?>'
+    detail: Tomcat JNDI Resource/DataSource with username and password attributes
+  location:
+  - type: config_file
+    platform: [linux]
+    path: $CATALINA_BASE/conf/server.xml, /etc/tomcat/server.xml, /usr/local/tomcat/conf/server.xml, /opt/tomcat/conf/server.xml
+    detail: Global JNDI resource and datasource definitions
+  - type: config_file
+    path: META-INF/context.xml, context.xml
+    detail: Application context JNDI Resource/DataSource definitions
+  - type: secret_store
+    detail: Deployment vaults, Kubernetes Secrets, and externalized datasource password stores
+  - type: source_code
+    detail: Application context files, deployment descriptors, and test fixtures
+  - type: logs
+    detail: JDBC connection errors, deployment logs, and support bundles
+
+- id: tls-keystore-password
+  name: TLS Keystore / Private Key Password
+  description: >
+    Tomcat HTTPS connectors can reference keystores, truststores, certificates,
+    private keys, and passwords in server.xml.
+  type: password
+  nature: [user_defined, generated_on_install]
+  sensitivity: secret
+  looks_like:
+  - pattern: '(?:keystorePass|certificateKeyPassword|truststorePass)="[^"]{1,255}"'
+    detail: Tomcat Connector TLS keystore/private-key password attribute
+  location:
+  - type: config_file
+    platform: [linux]
+    path: $CATALINA_BASE/conf/server.xml, /etc/tomcat/server.xml, /usr/local/tomcat/conf/server.xml, /opt/tomcat/conf/server.xml
+    detail: HTTPS Connector TLS key/trust store configuration
+  - type: config_file
+    platform: [windows]
+    path: '%CATALINA_BASE%\conf\server.xml, C:\Program Files\Apache Software Foundation\Tomcat\conf\server.xml'
+    detail: Windows Tomcat TLS Connector configuration
+  - type: secret_store
+    detail: Java keystores, certificate vaults, Kubernetes Secrets, and deployment secret stores
+  - type: artifact
+    detail: Config backups, support bundles, and container images
 
 references:
-  - type: docs
-    url: https://tomcat.apache.org/tomcat-9.0-doc/manager-howto.html
-  - type: docs
-    url: https://tomcat.apache.org/tomcat-9.0-doc/realm-howto.html
+- type: docs
+  url: https://tomcat.apache.org/tomcat-9.0-doc/manager-howto.html
+- type: docs
+  url: https://tomcat.apache.org/tomcat-9.0-doc/realm-howto.html
+- type: docs
+  url: https://tomcat.apache.org/tomcat-9.0-doc/config/http.html

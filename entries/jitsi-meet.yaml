@@ -1,109 +1,126 @@
 id: jitsi-meet
 name: Jitsi Meet
-category: collaboration
+category: other
 vendor: Jitsi
 author: haxxm0nkey
-
 credentials:
+- id: prosody-user-password
+  name: Prosody / Secure Domain User Password
+  description: 'Jitsi Meet secure domain configuration prompts users for a username
+    and password before allowing creation of new rooms. Jitsi documentation shows
+    configuring Prosody authentication for authenticated room creation.
 
-  - id: prosody-user-password
-    name: Prosody / Secure Domain User Password
-    description: >
-      Jitsi Meet secure domain configuration prompts users for a username and
-      password before allowing creation of new rooms. Jitsi documentation shows
-      configuring Prosody authentication for authenticated room creation.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    location:
-      - type: config_file
-        path: /etc/prosody/conf.avail/*.cfg.lua
-        detail: Prosody virtual host authentication configuration for Jitsi Meet
-      - type: database
-        detail: Prosody internal storage or configured auth backend containing user password verifier data
-      - type: secret_store
-        detail: deployment secrets, Ansible Vault, Kubernetes Secrets, and password vaults
-      - type: source_code
-        detail: Docker Compose files, Helm values, and committed Prosody configs
-      - type: logs
-        detail: Prosody authentication logs and Jitsi troubleshooting output
-      - type: public_interface
-        path: Jitsi Meet web UI, XMPP BOSH/WebSocket
-    notes: >
-      Secure-domain user credentials control who can create rooms, not
-      necessarily who can join existing anonymous-guest rooms.
+    '
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: config_file
+    path: jitsi.example.com.cfg.lua, prosody.cfg.lua
+    detail: 'Prosody virtual host authentication configuration for Jitsi Meet; Removed
+      unsupported glob/placeholder path hints for CredsHound: /etc/prosody/conf.avail/*.cfg.lua'
+  - type: database
+    detail: Prosody internal storage or configured auth backend containing user password
+      verifier data
+  - type: secret_store
+    detail: deployment secrets, Ansible Vault, Kubernetes Secrets, and password vaults
+  - type: source_code
+    detail: Docker Compose files, Helm values, and committed Prosody configs
+  - type: logs
+    detail: Prosody authentication logs and Jitsi troubleshooting output
+  - type: public_interface
+    path: Jitsi Meet web UI, XMPP BOSH/WebSocket
+  notes: 'Secure-domain user credentials control who can create rooms, not necessarily
+    who can join existing anonymous-guest rooms.
 
-  - id: component-shared-secrets
-    name: Jicofo / JVB / Prosody Component Secrets
-    description: >
-      Jitsi Meet deployments use Prosody component and service account secrets
-      for components such as Jicofo and Jitsi Videobridge. Package and Docker
-      deployments store these in Prosody and Jitsi component configuration.
-    type: secret_value
-    nature: [generated_on_install]
-    sensitivity: secret
-    location:
-      - type: environment
-        path: JICOFO_AUTH_PASSWORD, JVB_AUTH_PASSWORD, JIGASI_XMPP_PASSWORD, JIBRI_XMPP_PASSWORD
-      - type: config_file
-        detail: Prosody config, jicofo.conf, sip-communicator.properties, JVB config, and .env files
-      - type: secret_store
-        detail: Docker/Kubernetes secrets, Ansible Vault, and cloud secret managers
-      - type: source_code
-        detail: committed .env files, Docker Compose configs, Helm values, and deployment scripts
-      - type: logs
-        detail: XMPP component authentication errors and startup traces
-    notes: >
-      Component secrets can let an attacker impersonate core Jitsi services on
-      the XMPP control plane.
+    '
+- id: component-shared-secrets
+  name: Jicofo / JVB / Prosody Component Secrets
+  description: 'Jitsi Meet deployments use Prosody component and service account secrets
+    for components such as Jicofo and Jitsi Videobridge. Package and Docker deployments
+    store these in Prosody and Jitsi component configuration.
 
-  - id: jwt-app-secret
-    name: JWT App Secret
-    description: >
-      Jitsi Meet supports token authentication for deployments that require JWTs
-      to authorize meetings. Token auth uses application IDs/secrets to validate
-      signed meeting tokens.
-    type: secret_value
-    nature: [user_defined]
-    sensitivity: secret
-    location:
-      - type: config_file
-        detail: Prosody token authentication config, Jitsi web config.js, and deployment .env files
-      - type: environment
-        path: JWT_APP_ID, JWT_APP_SECRET, ENABLE_AUTH, ENABLE_GUESTS
-      - type: secret_store
-        detail: Kubernetes Secrets, deployment vaults, and cloud secret managers
-      - type: source_code
-        detail: token generator code, tests, Docker Compose files, and Helm values
-      - type: logs
-        detail: JWT validation errors and authentication debug output
-    notes: >
-      JWT app secrets can mint tokens accepted by the Jitsi deployment until
-      rotated or invalidated.
+    '
+  type: secret_value
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: environment
+    path: JICOFO_AUTH_PASSWORD, JVB_AUTH_PASSWORD, JIGASI_XMPP_PASSWORD, JIGASI_TRANSCRIBER_PASSWORD,
+      JIBRI_RECORDER_PASSWORD, JIBRI_XMPP_PASSWORD
+  - type: config_file
+    detail: 'Prosody config, jicofo.conf, sip-communicator.properties, JVB config,
+      and .env files; Removed generic/common scanner surface path(s) from product
+      template: .env'
+    path: jicofo.conf, sip-communicator.properties, prosody.cfg.lua, jvb.conf
+  - type: secret_store
+    detail: Docker/Kubernetes secrets, Ansible Vault, and cloud secret managers
+  - type: source_code
+    detail: committed .env files, Docker Compose configs, Helm values, and deployment
+      scripts
+  - type: logs
+    detail: XMPP component authentication errors and startup traces
+  notes: 'Component secrets can let an attacker impersonate core Jitsi services on
+    the XMPP control plane.
 
-  - id: room-password
-    name: Room Password
-    description: >
-      Jitsi Meet rooms can be protected with a password set from the meeting UI.
-      Jitsi documentation describes room-level password access control managed
-      inside rooms after creation.
-    type: password
-    nature: [user_defined]
-    sensitivity: secret
-    location:
-      - type: public_interface
-        path: Jitsi Meet room UI
-        detail: room-level password prompt for attendees
-      - type: logs
-        detail: browser automation, test logs, or meeting support traces if room passwords are recorded
-      - type: source_code
-        detail: automated meeting tests and integration scripts
-    notes: >
-      Room passwords are ephemeral collaboration secrets and are separate from
-      deployment admin or component credentials.
+    '
+- id: jwt-app-secret
+  name: JWT App Secret
+  description: 'Jitsi Meet supports token authentication for deployments that require
+    JWTs to authorize meetings. Token auth uses application IDs/secrets to validate
+    signed meeting tokens.
 
+    '
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: config_file
+    detail: 'Prosody token authentication config, Jitsi web config.js, and deployment
+      .env files; Removed generic/common scanner surface path(s) from product template:
+      .env'
+    path: jitsi.example.com.cfg.lua, prosody.cfg.lua, config.js, interface_config.js
+  - type: environment
+    path: JWT_APP_SECRET
+  - type: secret_store
+    detail: Kubernetes Secrets, deployment vaults, and cloud secret managers
+  - type: source_code
+    detail: token generator code, tests, Docker Compose files, and Helm values
+  - type: logs
+    detail: JWT validation errors and authentication debug output
+  notes: 'JWT app secrets can mint tokens accepted by the Jitsi deployment until rotated
+    or invalidated.
+
+    '
+- id: room-password
+  name: Room Password
+  description: 'Jitsi Meet rooms can be protected with a password set from the meeting
+    UI. Jitsi documentation describes room-level password access control managed inside
+    rooms after creation.
+
+    '
+  type: password
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: Jitsi Meet room UI
+    detail: room-level password prompt for attendees
+  - type: logs
+    detail: browser automation, test logs, or meeting support traces if room passwords
+      are recorded
+  - type: source_code
+    detail: automated meeting tests and integration scripts
+  notes: 'Room passwords are ephemeral collaboration secrets and are separate from
+    deployment admin or component credentials.
+
+    '
 references:
-  - type: docs
-    url: https://jitsi.github.io/handbook/docs/devops-guide/devops-guide-quickstart/
-  - type: docs
-    url: https://jitsi.github.io/handbook/docs/devops-guide/secure-domain/
+- type: docs
+  url: https://jitsi.github.io/handbook/docs/devops-guide/devops-guide-quickstart/
+- type: docs
+  url: https://jitsi.github.io/handbook/docs/devops-guide/secure-domain/

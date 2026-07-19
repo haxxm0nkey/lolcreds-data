@@ -6,8 +6,8 @@ author: haxxm0nkey
 credentials:
 - id: api-token
   name: API Token
-  description: Travis CI API tokens authenticate CLI and API clients for repository, build,
-    and environment-variable management.
+  description: Travis CI API tokens authenticate CLI and API clients for repository,
+    build, and environment-variable management.
   type: api_key
   nature:
   - generated_on_install
@@ -21,8 +21,10 @@ credentials:
     path: Authorization
     detail: token used by Travis CI API clients
   - type: config_file
-    detail: Travis CLI config, .travis.yml encrypted variables workflow, scripts, and .env
-      files
+    detail: 'Travis CLI config, .travis.yml encrypted variables workflow, scripts,
+      and .env files; Removed generic/common scanner surface path(s) from product
+      template: .env'
+    path: ~/.travis/config.yml, .travis.yml, travis.json
   - type: environment
     path: TRAVIS_TOKEN, TRAVIS_API_TOKEN
   - type: secret_store
@@ -31,10 +33,15 @@ credentials:
     detail: automation repos and accidentally committed configs
   - type: logs
     detail: CLI debug output and curl traces
+  looks_like:
+  - example: abcdefghijklmnopqrstuv
+    pattern: '[a-z0-9]{22}'
+    detail: Travis CI access token shape from public scanner rules
 - id: env-var-secret
   name: Repository Environment Variable / Encrypted Variable
-  description: Travis CI repository settings and .travis.yml encrypted variables hold deployment
-    credentials, cloud keys, package tokens, and passwords injected into builds.
+  description: Travis CI repository settings and .travis.yml encrypted variables hold
+    deployment credentials, cloud keys, package tokens, and passwords injected into
+    builds.
   type: secret_value
   nature:
   - user_defined
@@ -43,28 +50,29 @@ credentials:
   - type: secret_store
     detail: Travis repository environment variables and encrypted variables
   - type: config_file
-    path: .travis.yml
+    path: .travis.yml, travis-env.json, repository-settings.json
     detail: encrypted env/global values and deploy provider settings
-  - type: environment
-    detail: runtime build environment variables injected by Travis CI
   - type: source_code
     detail: repository CI configuration and deployment scripts
   - type: logs
     detail: build logs if secrets are printed or masking fails
+  notes: 'Environment variable storage noted but omitted from CredsHound location
+    data because no exact variable name is documented: runtime build environment variables
+    injected by Travis CI'
 - id: deploy-key-and-provider-secret
   name: Deploy Key / Provider Token
-  description: Travis deployment providers and repository access features use SSH keys, GitHub
-    tokens, package tokens, and cloud credentials to publish artifacts.
+  description: Travis deployment providers and repository access features use SSH
+    keys, GitHub tokens, package tokens, and cloud credentials to publish artifacts.
   type: secret_value
   nature:
   - user_defined
   sensitivity: secret
   looks_like:
-  - pattern: '-----BEGIN (RSA |OPENSSH |EC |)PRIVATE KEY-----'
+  - pattern: '-----BEGIN (RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----'
     detail: private SSH deploy key used by Travis jobs
   location:
   - type: config_file
-    path: .travis.yml
+    path: .travis.yml, deploy_key.pem, id_rsa.enc, travis-deploy.json
     detail: deploy provider token fields and encrypted credentials
   - type: secret_store
     detail: Travis secure env vars and deployment provider secrets

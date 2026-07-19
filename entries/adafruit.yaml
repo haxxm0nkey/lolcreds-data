@@ -1,0 +1,121 @@
+id: adafruit
+name: Adafruit
+category: saas
+vendor: Adafruit
+author: haxxm0nkey
+
+credentials:
+- id: user-password
+  name: Adafruit User Password
+  description: >
+    Adafruit users authenticate to Adafruit and Adafruit IO web interfaces with
+    user-defined account credentials. This entry models ordinary user login
+    context and does not claim a static vendor default.
+  type: username_password
+  nature: [user_defined]
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: /users/sign_in, /account, /io
+    detail: Adafruit account and Adafruit IO web sign-in contexts
+  - type: secret_store
+    detail: Password managers, enterprise IdP stores, break-glass account vaults, and team credential stores
+  - type: logs
+    detail: Web sign-in logs, audit events, support traces, browser exports, and copied troubleshooting output
+  notes: >
+    No static Adafruit default password was found or modeled.
+
+- id: adafruit-io-key
+  name: Adafruit IO Key
+  description: >
+    Adafruit IO keys authenticate REST and MQTT access to Adafruit IO feeds,
+    groups, and dashboard data. Official API docs show the key sent in the
+    X-AIO-Key header or x-aio-key query parameter; official CircuitPython and
+    Arduino examples store the key in settings.toml or config.h.
+  type: api_key
+  nature: [generated_on_install, user_defined]
+  sensitivity: secret
+  looks_like:
+  - example: b780002b85d6411ca0ad9f9c60195f72
+    pattern: '\b[a-f0-9]{32}\b'
+    detail: Adafruit IO docs and Betterleaks adafruit-api-key rule use 32 lowercase hex-like API keys; use only with Adafruit-specific context
+  - example: adafruit_api_key = b780002b85d6411ca0ad9f9c60195f72
+    pattern: '(?i)(?:adafruit|aio|x-aio-key)(?:[ \t\w.-]{0,30})[\s''"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60''"\s=]{0,5}([a-f0-9]{32})(?:\\?[''"\x60]|[\s;,&]|\\[nr]|$)'
+    detail: Contextual Adafruit/Adafruit IO key assignment compatible with Betterleaks adafruit-api-key structure
+  location:
+  - type: environment
+    path: ADAFRUIT_AIO_KEY
+    detail: Official CircuitPython examples read this key from settings.toml using os.getenv
+  - type: http_header
+    path: X-AIO-Key
+    detail: Official Adafruit IO API header for API-key authentication
+  - type: public_interface
+    path: /api/v2
+    detail: Adafruit IO REST API endpoints that accept X-AIO-Key or x-aio-key
+  - type: config_file
+    path: settings.toml, secrets.py, config.h, secrets.h, .env
+    detail: CircuitPython, Python, Arduino, and local environment files that commonly store Adafruit IO credentials
+  - type: secret_store
+    detail: CI/CD variables, microcontroller secrets stores, cloud secret managers, password vaults, and automation vaults
+  - type: source_code
+    detail: CircuitPython code, Arduino sketches, Python scripts, notebooks, examples, tests, and MQTT/REST clients
+  - type: logs
+    detail: Serial console logs, MQTT client logs, REST debug logs, CI output, exception traces, and support bundles
+  notes: >
+    The bare 32-character key pattern is intentionally documented as contextual;
+    scanners should require Adafruit-specific locations, headers, config keys, or
+    surrounding text to avoid matching arbitrary hex strings.
+
+- id: adafruit-io-username
+  name: Adafruit IO Username
+  description: >
+    Adafruit IO clients pair the account username with an IO key for REST and
+    MQTT authentication. The username is not secret by itself, but it is useful
+    triage context next to an Adafruit IO key.
+  type: other
+  nature: [user_defined]
+  sensitivity: public_by_design
+  location:
+  - type: environment
+    path: ADAFRUIT_AIO_USERNAME
+  - type: config_file
+    path: settings.toml, secrets.py, config.h, secrets.h, .env
+    detail: CircuitPython, Python, Arduino, and local environment files that commonly store Adafruit IO usernames
+  - type: source_code
+    detail: Adafruit IO client examples and application code that pairs username with key material
+  notes: >
+    Username findings should not create secret findings alone; use them as
+    context for nearby Adafruit IO key material.
+
+- id: mqtt-credential
+  name: Adafruit IO MQTT Credential
+  description: >
+    Adafruit IO MQTT clients authenticate with the Adafruit IO username and IO
+    key. Embedded sketches and IoT configuration often store these together with
+    Wi-Fi credentials.
+  type: secret_value
+  nature: [user_defined]
+  sensitivity: secret
+  location:
+  - type: config_file
+    path: settings.toml, secrets.py, config.h, secrets.h
+    detail: Microcontroller and IoT project files containing Adafruit IO username/key pairs and MQTT client configuration
+  - type: secret_store
+    detail: Device provisioning stores, CI/CD variables, password vaults, and firmware build secret stores
+  - type: source_code
+    detail: Arduino sketches, CircuitPython examples, MQTT scripts, device firmware, and tests
+  - type: logs
+    detail: Serial console logs, MQTT connection logs, firmware debug logs, and captured device output
+  notes: >
+    Generic Wi-Fi SSIDs/passwords are not modeled here; this block is scoped to
+    Adafruit IO credential use in MQTT/device clients.
+
+references:
+- type: docs
+  url: https://io.adafruit.com/api/docs/
+- type: docs
+  url: https://github.com/adafruit/Adafruit_CircuitPython_AdafruitIO/blob/main/examples/adafruit_io_simpletest.py
+- type: docs
+  url: https://github.com/adafruit/Adafruit_IO_Arduino/blob/master/examples/adafruitio_00_publish/config.h
+- type: docs
+  url: https://raw.githubusercontent.com/betterleaks/betterleaks/main/config/betterleaks.toml

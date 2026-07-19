@@ -7,8 +7,8 @@ credentials:
 - id: root-authentication
   name: Root Authentication Password / SSH Key
   description: Junos stores the root login authentication material under system root-authentication.
-    Deployments commonly use an encrypted root password and/or SSH public keys for emergency
-    and direct device administration.
+    Deployments commonly use an encrypted root password and/or SSH public keys for
+    emergency and direct device administration.
   type: username_password
   nature:
   - user_defined
@@ -18,22 +18,24 @@ credentials:
     detail: Junos configuration stanza that contains root encrypted-password or ssh-rsa/ssh-ed25519
       keys
   - pattern: ^\s*encrypted-password\s+"?\$[156y]\$[^";]+"?;
-    detail: Junos encrypted password hash line; context determines root versus named user
+    detail: Junos encrypted password hash line; context determines root versus named
+      user
   location:
   - type: config_file
     detail: Junos candidate/active configuration under system root-authentication
+    path: juniper.conf, junos.conf, rescue.conf, configuration.txt, set-commands.txt
   - type: public_interface
     path: SSH / console / J-Web
     detail: Administrative login interfaces using the configured root authentication
   - type: artifact
     detail: configuration backups, rescue configs, network automation exports
-  notes: No universal Junos root password is modeled here; operators configure root authentication
-    during installation or deployment.
+  notes: No universal Junos root password is modeled here; operators configure root
+    authentication during installation or deployment.
 - id: local-user-password
   name: Local User Password / SSH Key
-  description: Junos local login users are configured under system login user with class/uid
-    and password or SSH key authentication. These accounts are used for CLI, SSH, J-Web, NETCONF,
-    and automation access.
+  description: Junos local login users are configured under system login user with
+    class/uid and password or SSH key authentication. These accounts are used for
+    CLI, SSH, J-Web, NETCONF, and automation access.
   type: username_password
   nature:
   - user_defined
@@ -48,6 +50,7 @@ credentials:
   location:
   - type: config_file
     detail: system login user authentication stanzas in Junos configuration
+    path: juniper.conf, junos.conf, rescue.conf, configuration.txt, set-commands.txt
   - type: public_interface
     path: SSH / J-Web / NETCONF
     detail: Administrative interfaces that accept local user credentials
@@ -63,20 +66,21 @@ credentials:
   sensitivity: secret
   looks_like:
   - pattern: ^\s*community\s+\S+\s*\{
-    detail: SNMP community stanza in Junos configuration; the community name is the shared
-      secret
+    detail: SNMP community stanza in Junos configuration; the community name is the
+      shared secret
   location:
   - type: config_file
     detail: snmp community configuration in Junos
+    path: juniper.conf, junos.conf, rescue.conf, configuration.txt, set-commands.txt
   - type: source_code
     detail: monitoring templates and network automation configs
   - type: artifact
     detail: device configuration backups
 - id: aaa-shared-secret
   name: RADIUS / TACACS+ Shared Secret
-  description: Junos devices use shared secrets when talking to RADIUS or TACACS+ servers
-    for AAA. The secret authenticates the network device to the AAA server and commonly appears
-    in reusable configuration templates.
+  description: Junos devices use shared secrets when talking to RADIUS or TACACS+
+    servers for AAA. The secret authenticates the network device to the AAA server
+    and commonly appears in reusable configuration templates.
   type: secret_value
   nature:
   - user_defined
@@ -84,18 +88,21 @@ credentials:
   looks_like:
   - pattern: ^\s*(radius-server|tacplus-server)\s+\S+\s+secret\s+"?[^";]+"?;
     detail: Junos AAA server shared secret line; the secret follows the secret keyword
+  - pattern: shared-secret\s+"?[^";]+"?;
+    detail: Junos authentication-server/shared-secret syntax in AAA context
   location:
   - type: config_file
-    detail: access radius-server / tacplus-server or system authentication-order related AAA
-      configuration
+    detail: access radius-server / tacplus-server or system authentication-order related
+      AAA configuration
+    path: juniper.conf, junos.conf, rescue.conf, configuration.txt, set-commands.txt
   - type: source_code
     detail: AAA bootstrap templates and network-as-code repositories
   - type: artifact
     detail: configuration backups and migration exports
 - id: vpn-routing-shared-secret
   name: VPN / Routing Protocol Shared Secret
-  description: Junos configurations can contain IKE/IPsec pre-shared keys and routing protocol
-    authentication keys for BGP, OSPF, IS-IS, and other peer relationships.
+  description: Junos configurations can contain IKE/IPsec pre-shared keys and routing
+    protocol authentication keys for BGP, OSPF, IS-IS, and other peer relationships.
   type: secret_value
   nature:
   - user_defined
@@ -104,10 +111,12 @@ credentials:
   - pattern: pre-shared-key\s+(ascii-text|hexadecimal)\s+"?[^";]+"?;
     detail: Junos IKE/IPsec pre-shared key in security ike policy/keyring context
   - pattern: authentication-key\s+"?[^";]+"?;
-    detail: routing protocol authentication key; surrounding protocol stanza identifies BGP/OSPF/IS-IS/etc.
+    detail: routing protocol authentication key; surrounding protocol stanza identifies
+      BGP/OSPF/IS-IS/etc.
   location:
   - type: config_file
     detail: security ike/ipsec and protocol authentication stanzas in Junos configuration
+    path: juniper.conf, junos.conf, rescue.conf, configuration.txt, set-commands.txt
   - type: artifact
     detail: config backups, migration bundles, and HA replacement configs
 references:

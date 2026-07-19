@@ -1,94 +1,93 @@
 id: apache-activemq
 name: Apache ActiveMQ
-category: middleware
+category: other
 vendor: Apache Software Foundation
 author: haxxm0nkey
 
 credentials:
+- id: jaas-user-password
+  name: JAAS User Password
+  description: >
+    ActiveMQ Classic commonly uses JAAS PropertiesLoginModule authentication with
+    users.properties and groups.properties referenced from login.config and the
+    broker configuration.
+  type: username_password
+  nature: [user_defined]
+  sensitivity: secret
+  looks_like:
+  - pattern: '(?m)^[A-Za-z0-9_.@-]{1,128}\s*=\s*[^#\r\n]{1,255}$'
+    detail: ActiveMQ users.properties username=password entry; use only with ActiveMQ JAAS user file context
+  location:
+  - type: config_file
+    path: conf/users.properties, users.properties, conf/groups.properties, groups.properties, conf/login.config, login.config, conf/activemq.xml, activemq.xml
+    detail: JAAS user/password and group files referenced by ActiveMQ broker configuration
+  - type: secret_store
+    detail: Kubernetes Secrets, Docker secrets, cloud secret managers, and deployment vaults
+  - type: source_code
+    detail: Broker configs, Docker Compose files, tests, examples, and deployment repositories
+  - type: logs
+    detail: Broker authentication failures, startup logs, debug traces, and CI output
+  - type: public_interface
+    path: tcp/61616, /admin
+    detail: ActiveMQ broker and web management login surfaces
+  notes: >
+    No ASF-owned credential-value environment variables were confirmed for this
+    block; deployment images may define their own variables.
 
-  - id: jaas-user-password
-    name: JAAS User Password
-    description: >
-      ActiveMQ Classic provides pluggable security and commonly uses JAAS for
-      authentication. ActiveMQ documents the PropertiesLoginModule with
-      users.properties and groups.properties files for username/password and
-      group mapping.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: '^[^#=\r\n]+\s*=\s*[^\r\n]+$'
-        detail: ActiveMQ users.properties username=password entry; context identifies ActiveMQ JAAS users
-    location:
-      - type: config_file
-        path: users.properties, groups.properties, login.config, activemq.xml
-        detail: JAAS user/password and group files referenced by ActiveMQ broker configuration
-      - type: environment
-        path: ACTIVEMQ_USER, ACTIVEMQ_PASSWORD, ACTIVEMQ_ADMIN_LOGIN, ACTIVEMQ_ADMIN_PASSWORD
-      - type: secret_store
-        detail: Kubernetes Secrets, Docker secrets, cloud secret managers, and deployment vaults
-      - type: source_code
-        detail: broker configs, Docker Compose files, tests, and committed examples
-      - type: logs
-        detail: broker authentication failures, startup logs, and CI output
-      - type: public_interface
-        path: OpenWire 61616, web console
-        detail: ActiveMQ broker and management login surfaces
-    notes: >
-      ActiveMQ credentials may protect broker destinations, JMX, and web console
-      access depending on configuration.
+- id: anonymous-access
+  name: Anonymous Access Configuration
+  description: >
+    ActiveMQ can allow anonymous broker access by setting anonymousAccessAllowed
+    on the simpleAuthenticationPlugin. Clients without username and password are
+    assigned an anonymous identity/group.
+  type: other
+  nature: [user_defined]
+  sensitivity: context_dependent
+  looks_like:
+  - pattern: 'anonymousAccessAllowed\s*=\s*[''"]?true[''"]?'
+    detail: ActiveMQ configuration allowing clients without credentials
+  location:
+  - type: config_file
+    path: conf/activemq.xml, activemq.xml
+    detail: Broker authentication plugin configuration
+  - type: source_code
+    detail: Committed broker configs, Helm charts, Docker Compose files, and examples
+  - type: image
+    detail: Container images or VM images containing permissive broker config
+  notes: >
+    Anonymous access is not a credential, but it creates passwordless broker
+    access and should be triaged with network exposure and destination ACLs.
 
-  - id: anonymous-access
-    name: Anonymous Access Configuration
-    description: >
-      ActiveMQ can allow anonymous access by setting anonymousAccessAllowed. The
-      documentation states that clients connecting without username and password
-      are assigned a default anonymous username and group unless changed.
-    type: other
-    nature: [user_defined]
-    sensitivity: context_dependent
-    looks_like:
-      - pattern: 'anonymousAccessAllowed\s*=\s*["'']?true["'']?'
-        detail: ActiveMQ configuration allowing clients without credentials
-    location:
-      - type: config_file
-        path: activemq.xml
-        detail: broker authentication plugin configuration
-      - type: source_code
-        detail: committed broker configs, Helm charts, and Docker Compose files
-      - type: image
-        detail: container images or VM images containing permissive broker config
-    notes: >
-      Anonymous access is not a credential, but it creates passwordless broker
-      access and should be triaged with network exposure and destination ACLs.
-
-  - id: web-console-password
-    name: Web Console Password
-    description: >
-      ActiveMQ deployments often protect the web console with web application or
-      JAAS credentials separate from broker clients. These credentials are stored
-      in deployment-specific configuration.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    location:
-      - type: config_file
-        detail: jetty-realm.properties, web console config, login.config, and activemq.xml
-      - type: public_interface
-        path: ActiveMQ web console
-        detail: browser-based broker management interface
-      - type: secret_store
-        detail: deployment vaults, container secrets, and CI/CD variables
-      - type: source_code
-        detail: committed web console realm files and examples
-      - type: logs
-        detail: web console authentication logs and startup output
-    notes: >
-      Do not model admin/admin or other example credentials as universal
-      defaults unless a specific package or image source states they ship that way.
+- id: web-console-password
+  name: Web Console Password
+  description: >
+    ActiveMQ deployments often protect the web console with Jetty realm or JAAS
+    credentials separate from broker client credentials.
+  type: username_password
+  nature: [user_defined]
+  sensitivity: secret
+  looks_like:
+  - pattern: '(?m)^[A-Za-z0-9_.@-]{1,128}\s*:\s*[^,\r\n]{1,255}\s*,\s*[A-Za-z0-9_, -]+'
+    detail: Jetty realm user entry in jetty-realm.properties; use only with ActiveMQ web-console context
+  location:
+  - type: config_file
+    path: conf/jetty-realm.properties, jetty-realm.properties, conf/login.config, login.config, conf/activemq.xml, activemq.xml
+    detail: Web console realm files, JAAS configuration, and broker web config
+  - type: public_interface
+    path: /admin
+    detail: Browser-based broker management interface
+  - type: secret_store
+    detail: Deployment vaults, container secrets, and CI/CD variables
+  - type: source_code
+    detail: Committed web-console realm files, examples, and deployment repos
+  - type: logs
+    detail: Web console authentication logs and startup output
+  notes: >
+    Do not model admin/admin or other sample credentials as universal defaults
+    unless a specific package or image source states they ship that way.
 
 references:
-  - type: docs
-    url: https://activemq.apache.org/security
-  - type: docs
-    url: https://activemq.apache.org/components/classic/documentation/security
+- type: docs
+  url: https://activemq.apache.org/security
+- type: docs
+  url: https://activemq.apache.org/components/classic/documentation/security

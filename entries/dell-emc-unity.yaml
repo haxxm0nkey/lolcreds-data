@@ -6,9 +6,9 @@ author: haxxm0nkey
 credentials:
 - id: admin-password
   name: Unity Administrator Password
-  description: Dell EMC Unity storage arrays are managed through Unisphere, CLI, and REST
-    APIs using local or directory-backed administrative accounts. The local admin password
-    is set during initialization.
+  description: Dell EMC Unity storage arrays are managed through Unisphere, CLI, and
+    REST APIs using local or directory-backed administrative accounts. The local admin
+    password is set during initialization.
   type: username_password
   nature:
   - generated_on_install
@@ -18,17 +18,19 @@ credentials:
   - type: public_interface
     path: Unisphere web UI, Unisphere CLI, REST API, SSH/service interfaces
   - type: config_file
-    detail: Unity configuration exports, deployment worksheets, and automation scripts
+    detail: Unity configuration exports, deployment worksheets, and support/service
+      data archives
+    path: unity-config.xml, unity-config.json, unisphere-config.xml, service-data.zip
   - type: secret_store
     detail: password managers, storage admin vaults, and deployment secrets
   - type: logs
     detail: management server logs, audit logs, and REST/CLI traces
-  notes: No universal Unity admin password is modeled; arrays require initialization credentials
-    or changed defaults depending on generation and policy.
+  notes: No universal Unity admin password is modeled; arrays require initialization
+    credentials or changed defaults depending on generation and policy.
 - id: rest-session-token
   name: REST API Session Token
-  description: Unity REST API clients authenticate and receive session/cookie material used
-    for subsequent management operations.
+  description: Unity REST API clients authenticate and receive session/cookie material
+    used for subsequent management operations.
   type: token
   nature:
   - generated_on_install
@@ -41,13 +43,19 @@ credentials:
     path: Cookie
     detail: management session cookie used by REST/Unisphere clients
   - type: config_file
-    detail: API client caches, automation scripts, and .env files
+    detail: Unity REST/Unisphere automation client session caches; session values
+      more commonly appear in Cookie/header/log locations
+    path: unity-session.json, unisphere-session.json
   - type: logs
     detail: REST debug traces and reverse proxy logs
+  - type: http_header
+    path: EMC-CSRF-TOKEN
+    detail: Unity/Unisphere REST CSRF/session-related header context
 - id: directory-snmp-replication-secrets
   name: Directory, SNMP, Replication, and NAS Secrets
   description: Unity configurations can contain LDAP/AD bind credentials, SNMP communities/users,
-    replication secrets, NAS server credentials, CHAP secrets, and storage integration passwords.
+    replication secrets, NAS server credentials, CHAP secrets, and storage integration
+    passwords.
   type: secret_value
   nature:
   - user_defined
@@ -55,8 +63,9 @@ credentials:
   sensitivity: secret
   location:
   - type: config_file
-    detail: Unity configuration exports for directory services, SNMP, replication, NAS, iSCSI
-      CHAP, and alerts
+    detail: Unity configuration exports, deployment worksheets, and support/service
+      data archives
+    path: unity-config.xml, unity-config.json, unisphere-config.xml, service-data.zip
   - type: secret_store
     detail: array internal credential store, password vaults, and storage admin secrets
   - type: source_code
@@ -65,19 +74,20 @@ credentials:
     detail: replication, directory, SNMP, and management logs
 - id: certificate-private-key
   name: Management Certificate Private Key
-  description: Unity arrays use certificates and private keys for Unisphere/REST TLS and trusted
-    communication.
+  description: Unity arrays use certificates and private keys for Unisphere/REST TLS
+    and trusted communication.
   type: key_pair
   nature:
   - generated_on_install
   - user_defined
   sensitivity: secret
   looks_like:
-  - pattern: '-----BEGIN (RSA |EC |ENCRYPTED |)PRIVATE KEY-----'
+  - pattern: '-----BEGIN (RSA |EC |OPENSSH |ENCRYPTED )?PRIVATE KEY-----'
     detail: private key material for Unity management TLS or imported certificates
   location:
   - type: config_file
-    detail: certificate import/export artifacts and array configuration backups
+    detail: Unity/Unisphere management certificate private-key files or exports
+    path: unity-cert.key, unisphere.key, privkey.pem
   - type: secret_store
     detail: certificate vaults and storage admin key stores
   - type: artifact

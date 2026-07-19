@@ -6,8 +6,8 @@ author: haxxm0nkey
 credentials:
 - id: default-admin
   name: Default Administrator Login
-  description: pfSense ships with an initial webConfigurator/console administrator credential
-    that should be changed during the setup wizard.
+  description: pfSense ships with an initial webConfigurator/console administrator
+    credential that should be changed during the setup wizard.
   type: username_password
   nature:
   - static_default
@@ -18,27 +18,33 @@ credentials:
     password: pfsense
   location:
   - type: public_interface
-    path: pfSense webConfigurator, SSH/console shell, XMLRPC, and API packages where installed
+    path: pfSense webConfigurator, SSH/console shell, XMLRPC, and API packages where
+      installed
   - type: config_file
     path: /conf/config.xml
     detail: local user password hashes and system configuration
+    platform:
+    - linux
   - type: artifact
     detail: configuration backups and diagnostics bundles
 - id: local-user-password
   name: Local User Password Hash
-  description: pfSense local users and privilege assignments are stored in the XML configuration
-    and used for webConfigurator, SSH, VPN, captive portal, and package access.
+  description: pfSense local users and privilege assignments are stored in the XML
+    configuration and used for webConfigurator, SSH, VPN, captive portal, and package
+    access.
   type: username_password
   nature:
   - user_defined
   sensitivity: secret
   looks_like:
-  - pattern: <user>.*?<name>[^<]+</name>.*?<password>[^<]+</password>
+  - pattern: <user>[\s\S]*?<name>[^<]+</name>[\s\S]*?<password>[^<]+</password>
     detail: pfSense config.xml user entry containing username and password hash
   location:
   - type: config_file
     path: /conf/config.xml
     detail: user manager entries, password hashes, privileges, and auth server config
+    platform:
+    - linux
   - type: public_interface
     path: webConfigurator, SSH, console, VPN, captive portal, and package UIs
   - type: secret_store
@@ -47,8 +53,8 @@ credentials:
     detail: system, auth, VPN, and captive portal logs
 - id: api-key-and-session
   name: API Key / Web Session Cookie
-  description: pfSense installations with REST/API packages or automation can use API keys,
-    Basic auth, and PHP/webConfigurator session cookies as bearer credentials.
+  description: pfSense installations with REST/API packages or automation can use
+    API keys, Basic auth, and PHP/webConfigurator session cookies as bearer credentials.
   type: api_key
   nature:
   - generated_on_install
@@ -63,6 +69,7 @@ credentials:
     detail: pfSense webConfigurator PHP session cookie
   - type: config_file
     detail: automation scripts, Terraform/Ansible configs, and API package settings
+    path: /conf/config.xml, config.xml, pfsense-api.json, pfsense.json
   - type: secret_store
     detail: CI/CD variables and network automation vaults
   - type: logs
@@ -70,20 +77,22 @@ credentials:
 - id: vpn-snmp-ldap-radius-secrets
   name: VPN, SNMP, LDAP, RADIUS, and Certificate Secrets
   description: pfSense configurations hold IPsec/OpenVPN/WireGuard keys, SNMP communities,
-    LDAP/RADIUS secrets, certificates/private keys, PPPoE credentials, and package integration
-    secrets.
+    LDAP/RADIUS secrets, certificates/private keys, PPPoE credentials, and package
+    integration secrets.
   type: secret_value
   nature:
   - user_defined
   - generated_on_install
   sensitivity: secret
   looks_like:
-  - pattern: '-----BEGIN (RSA |EC |OPENVPN |ENCRYPTED |)PRIVATE KEY-----'
+  - pattern: '-----BEGIN (RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----'
     detail: private key material from pfSense certificate or VPN exports
   location:
   - type: config_file
     path: /conf/config.xml
     detail: VPN, SNMP, auth server, certificate, gateway, package, and PPP secrets
+    platform:
+    - linux
   - type: secret_store
     detail: configuration backup vaults and certificate stores
   - type: artifact

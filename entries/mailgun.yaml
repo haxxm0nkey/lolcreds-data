@@ -3,93 +3,109 @@ name: Mailgun
 category: saas
 vendor: Mailgun
 author: haxxm0nkey
-
 credentials:
+- id: api-key
+  name: API Key
+  description: 'Mailgun APIs use Basic authentication for API requests. Mailgun endpoint
+    references mark requests with basicAuth, where the API key is used with the api
+    username for authenticated calls.
 
-  - id: api-key
-    name: API Key
-    description: >
-      Mailgun APIs use Basic authentication for API requests. Mailgun endpoint
-      references mark requests with basicAuth, where the API key is used with
-      the api username for authenticated calls.
-    type: api_key
-    nature: [generated_on_install]
-    sensitivity: secret
-    looks_like:
-      - example: 'key-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
-        pattern: 'key-[A-Za-z0-9]{16,}'
-        detail: Mailgun private API key prefix commonly used in Mailgun API examples
-    location:
-      - type: environment
-        path: MAILGUN_API_KEY, MG_API_KEY
-      - type: http_header
-        path: Authorization
-        detail: Basic authentication using api as username and API key as password
-      - type: config_file
-        detail: .env files, email service config, deployment manifests, and SDK config
-      - type: secret_store
-        detail: cloud secret managers, CI/CD variables, and platform app secrets
-      - type: source_code
-        detail: mail sending scripts, SDK examples, tests, and committed config
-      - type: logs
-        detail: HTTP client traces, failed send logs, and CI output
-    notes: >
-      API key blast radius depends on whether the key is account-wide or scoped
-      for a sending domain or service function.
+    '
+  type: api_key
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - example: key-0123456789abcdef0123456789abcdef
+    pattern: key-[a-f0-9]{32}
+    detail: Mailgun private API token shape from public scanner rules
+  location:
+  - type: environment
+    path: MAILGUN_API_KEY, MG_API_KEY
+  - type: http_header
+    path: Authorization
+    detail: Basic authentication using api as username and API key as password
+  - type: config_file
+    detail: '.env files, email service config, deployment manifests, and SDK config;
+      Removed generic/common scanner surface path(s) from product template: .env'
+    path: mailgun.json, mailgun.yaml, mailgun.env, config/mailgun.php
+  - type: secret_store
+    detail: cloud secret managers, CI/CD variables, and platform app secrets
+  - type: source_code
+    detail: mail sending scripts, SDK examples, tests, and committed config
+  - type: logs
+    detail: HTTP client traces, failed send logs, and CI output
+  notes: 'API key blast radius depends on whether the key is account-wide or scoped
+    for a sending domain or service function.
 
-  - id: smtp-credentials
-    name: SMTP Credentials
-    description: >
-      Mailgun domains can be used through SMTP as well as HTTP APIs. SMTP
-      credentials authenticate mail submission for a domain and are typically
-      stored by mail clients, applications, and delivery workers.
-    type: username_password
-    nature: [generated_on_install]
-    sensitivity: secret
-    looks_like:
-      - pattern: 'smtp(?:\.mailgun\.org|-[a-z]+\.mailgun\.org)'
-        detail: Mailgun SMTP host context; username and password values are stored in nearby mail configuration
-    location:
-      - type: environment
-        path: MAILGUN_SMTP_LOGIN, MAILGUN_SMTP_PASSWORD, SMTP_USERNAME, SMTP_PASSWORD
-      - type: config_file
-        detail: SMTP client config, .env files, application mailer settings, and deployment manifests
-      - type: secret_store
-        detail: mailer service secrets, CI/CD variables, and platform config vars
-      - type: source_code
-        detail: mailer examples, tests, and accidentally committed credentials
-      - type: logs
-        detail: SMTP debug logs and failed authentication traces
-    notes: >
-      SMTP credentials can send email through the associated Mailgun domain and
-      should be rotated when found in code or logs.
+    '
+- id: smtp-credentials
+  name: SMTP Credentials
+  description: 'Mailgun domains can be used through SMTP as well as HTTP APIs. SMTP
+    credentials authenticate mail submission for a domain and are typically stored
+    by mail clients, applications, and delivery workers.
 
-  - id: webhook-signing-key
-    name: Webhook Signing Key
-    description: >
-      Mailgun webhooks include signature data that applications can verify using
-      the account's HTTP webhook signing key. The signing key is a shared secret
-      used to validate webhook authenticity.
-    type: secret_value
-    nature: [generated_on_install]
-    sensitivity: secret
-    location:
-      - type: environment
-        path: MAILGUN_WEBHOOK_SIGNING_KEY, MAILGUN_SIGNING_KEY
-      - type: config_file
-        detail: webhook handler config, .env files, and deployment manifests
-      - type: secret_store
-        detail: cloud secret managers, CI/CD variables, and platform app secrets
-      - type: source_code
-        detail: webhook verification code, tests, and committed local config
-      - type: logs
-        detail: webhook verification debug logs and request traces
-    notes: >
-      Webhook signing key exposure can let an attacker forge Mailgun webhook
-      events accepted by applications that trust signature verification.
+    '
+  type: username_password
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - pattern: smtp(?:\.mailgun\.org|-[a-z]+\.mailgun\.org)
+    detail: Mailgun SMTP host context; username and password values are stored in
+      nearby mail configuration
+  location:
+  - type: environment
+    path: MAILGUN_SMTP_LOGIN, MAILGUN_SMTP_PASSWORD, SMTP_USERNAME, SMTP_PASSWORD
+  - type: config_file
+    detail: 'SMTP client config, .env files, application mailer settings, and deployment
+      manifests; Removed generic/common scanner surface path(s) from product template:
+      .env'
+    path: mailgun.json, mailgun.yaml, config/mail.php, config/mailgun.php
+  - type: secret_store
+    detail: mailer service secrets, CI/CD variables, and platform config vars
+  - type: source_code
+    detail: mailer examples, tests, and accidentally committed credentials
+  - type: logs
+    detail: SMTP debug logs and failed authentication traces
+  notes: 'SMTP credentials can send email through the associated Mailgun domain and
+    should be rotated when found in code or logs.
 
+    '
+- id: webhook-signing-key
+  name: Webhook Signing Key
+  description: 'Mailgun webhooks include signature data that applications can verify
+    using the account''s HTTP webhook signing key. The signing key is a shared secret
+    used to validate webhook authenticity.
+
+    '
+  type: secret_value
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: environment
+    path: MAILGUN_WEBHOOK_SIGNING_KEY, MAILGUN_SIGNING_KEY
+  - type: config_file
+    detail: 'webhook handler config, .env files, and deployment manifests; Removed
+      generic/common scanner surface path(s) from product template: .env'
+    path: mailgun.json, mailgun.yaml, webhook-config.json, config/mailgun.php
+  - type: secret_store
+    detail: cloud secret managers, CI/CD variables, and platform app secrets
+  - type: source_code
+    detail: webhook verification code, tests, and committed local config
+  - type: logs
+    detail: webhook verification debug logs and request traces
+  notes: 'Webhook signing key exposure can let an attacker forge Mailgun webhook events
+    accepted by applications that trust signature verification.
+
+    '
+  looks_like:
+  - example: 01234567-89ab-cdef-01234567
+    pattern: '[a-h0-9]{32}-[a-h0-9]{8}-[a-h0-9]{8}'
+    detail: Mailgun webhook signing key shape from public scanner rules
 references:
-  - type: docs
-    url: https://documentation.mailgun.com/docs/mailgun/api-reference/send/mailgun/messages/post-v3--domain-name--messages
-  - type: docs
-    url: https://documentation.mailgun.com/docs/mailgun/user-manual/get-started/
+- type: docs
+  url: https://documentation.mailgun.com/docs/mailgun/api-reference/send/mailgun/messages/post-v3--domain-name--messages
+- type: docs
+  url: https://documentation.mailgun.com/docs/mailgun/user-manual/get-started/

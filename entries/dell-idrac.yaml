@@ -7,8 +7,8 @@ credentials:
 - id: default-root-calvin
   name: Default root/calvin Login
   description: Many iDRAC generations document a default local account root with password
-    calvin, while newer systems may use a unique secure default password printed on the service
-    tag or require password changes.
+    calvin, while newer systems may use a unique secure default password printed on
+    the service tag or require password changes.
   type: username_password
   nature:
   - static_default
@@ -23,16 +23,21 @@ credentials:
     path: iDRAC web UI, SSH, Redfish, IPMI, RACADM
     detail: Out-of-band management interfaces
   - type: config_file
-    detail: iDRAC configuration exports and server profile XML/JSON
+    detail: iDRAC Server Configuration Profile and configuration export files
+    path: idrac-config.xml, idrac-config.json, ServerConfigurationProfile.xml, SCP.json
   - type: artifact
     detail: support bundles, deployment profiles, and factory configuration records
-  notes: 'Do not assume root/calvin on every Dell server: iDRAC9 and later deployments may
-    use a unique secure default password on the chassis tag or enforce password changes.'
+  - type: artifact
+    path: ServerConfigurationProfile.xml, SCP.json, racadm-output.txt, supportassist.zip
+    detail: iDRAC/RACADM exports and support bundles
+  notes: 'Do not assume root/calvin on every Dell server: iDRAC9 and later deployments
+    may use a unique secure default password on the chassis tag or enforce password
+    changes.'
 - id: local-user-password
   name: Local iDRAC User Password
-  description: iDRAC local users authenticate to web, SSH, Redfish, IPMI, and RACADM management
-    channels. Passwords and password hashes may appear in configuration exports, deployment
-    profiles, or management tooling.
+  description: iDRAC local users authenticate to web, SSH, Redfish, IPMI, and RACADM
+    management channels. Passwords and password hashes may appear in configuration
+    exports, deployment profiles, or management tooling.
   type: username_password
   nature:
   - user_defined
@@ -42,18 +47,22 @@ credentials:
   - type: public_interface
     path: iDRAC web UI / SSH / Redfish / IPMI / RACADM
   - type: config_file
-    detail: iDRAC Server Configuration Profile exports and RACADM set commands
+    detail: iDRAC Server Configuration Profile and configuration export files
+    path: idrac-config.xml, idrac-config.json, ServerConfigurationProfile.xml, SCP.json
   - type: secret_store
     detail: password managers, OpenManage Enterprise templates, and deployment vaults
   - type: source_code
     detail: RACADM scripts, Ansible playbooks, Terraform, and provisioning repos
   - type: logs
     detail: automation logs, RACADM output, and Redfish debug traces
+  - type: artifact
+    path: ServerConfigurationProfile.xml, SCP.json, racadm-output.txt, supportassist.zip
+    detail: iDRAC/RACADM exports and support bundles
 - id: redfish-session-token
   name: Redfish / Web Session Token
-  description: iDRAC Redfish and web sessions issue authentication/session tokens for API
-    clients. These tokens grant management access for the authenticated user until expiry
-    or logout.
+  description: iDRAC Redfish and web sessions issue authentication/session tokens
+    for API clients. These tokens grant management access for the authenticated user
+    until expiry or logout.
   type: token
   nature:
   - generated_on_install
@@ -61,12 +70,15 @@ credentials:
   location:
   - type: http_header
     path: X-Auth-Token
-    detail: Redfish session token returned by SessionService and sent on subsequent requests
+    detail: Redfish session token returned by SessionService and sent on subsequent
+      requests
   - type: http_response
     path: Location
     detail: Redfish session resource URI returned during login
   - type: config_file
-    detail: API client caches, scripts, and .env files
+    detail: Redfish/iDRAC automation client session caches; session values more commonly
+      appear in X-Auth-Token headers and logs
+    path: redfish-session.json, idrac-session.json
   - type: logs
     detail: HTTP traces and Redfish client debug output
 - id: snmp-ipmi-lan-secrets
@@ -79,13 +91,17 @@ credentials:
   sensitivity: secret
   location:
   - type: config_file
-    detail: iDRAC configuration exports for SNMP, IPMI LAN, and user settings
+    detail: iDRAC Server Configuration Profile and configuration export files
+    path: idrac-config.xml, idrac-config.json, ServerConfigurationProfile.xml, SCP.json
   - type: public_interface
     path: SNMP and IPMI LAN management services
   - type: source_code
     detail: monitoring configs and provisioning scripts
   - type: artifact
     detail: server configuration profiles and support bundles
+  - type: artifact
+    path: ServerConfigurationProfile.xml, SCP.json, racadm-output.txt, supportassist.zip
+    detail: iDRAC/RACADM exports and support bundles
 references:
 - type: docs
   url: https://www.dell.com/support/manuals/en-us/idrac9-lifecycle-controller-v7.x-series/idrac9_7.xx_ug/default-login-password?guid=guid-8983ff4b-05a1-4c99-a5d1-98c1d38ca133&lang=en-us

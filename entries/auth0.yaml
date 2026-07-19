@@ -3,117 +3,134 @@ name: Auth0
 category: identity
 vendor: Auth0
 author: haxxm0nkey
-
 credentials:
+- id: management-api-access-token
+  name: Management API Access Token
+  description: 'Auth0 Management API access tokens authorize calls to the Auth0 Management
+    API. Auth0 documents these as access tokens and discusses rotating or revoking
+    tokens according to their token type.
 
-  - id: management-api-access-token
-    name: Management API Access Token
-    description: >
-      Auth0 Management API access tokens authorize calls to the Auth0 Management
-      API. Auth0 documents these as access tokens and discusses rotating or
-      revoking tokens according to their token type.
-    type: token
-    nature: [generated_on_install]
-    sensitivity: secret
-    looks_like:
-      - pattern: 'eyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+'
-        detail: Auth0 access tokens are JWTs in common Management API flows; identify by Auth0 audience and Bearer context
-    location:
-      - type: environment
-        path: AUTH0_MANAGEMENT_API_TOKEN, AUTH0_TOKEN
-      - type: http_header
-        path: Authorization
-        detail: Bearer token used for Auth0 Management API calls
-      - type: http_response
-        detail: OAuth token endpoint responses containing access_token
-      - type: config_file
-        detail: automation .env files, deployment config, Terraform variables, and SDK config
-      - type: secret_store
-        detail: CI/CD variables, cloud secret managers, and identity automation secrets
-      - type: logs
-        detail: token exchange logs, Management API client traces, and CI output
-    notes: >
-      Management API token blast radius is controlled by requested audience,
-      scopes, and lifetime. Store short-lived tokens only where needed.
+    '
+  type: token
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - pattern: eyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+
+    detail: Auth0 access tokens are JWTs in common Management API flows; identify
+      by Auth0 audience and Bearer context
+  location:
+  - type: config_file
+    path: ~/.config/auth0/config.json
+    detail: Auth0 CLI config; client secrets are stored in OS keyring, but token/tenant
+      context may appear in CLI config and automation exports
+  - type: environment
+    path: AUTH0_API_TOKEN, AUTH0_MANAGEMENT_API_TOKEN
+    detail: Auth0 CLI/Terraform automation API-token variables; AUTH0_DOMAIN and AUTH0_CLIENT_ID
+      are context only
+  - type: http_header
+    path: Authorization
+    detail: Bearer token used for Auth0 Management API calls
+  - type: http_response
+    detail: OAuth token endpoint responses containing access_token
+  - type: secret_store
+    detail: CI/CD variables, cloud secret managers, and identity automation secrets
+  - type: logs
+    detail: token exchange logs, Management API client traces, and CI output
+  notes: 'Management API token blast radius is controlled by requested audience, scopes,
+    and lifetime. Store short-lived tokens only where needed.
 
-  - id: application-client-secret
-    name: Application Client Secret
-    description: >
-      Auth0 applications have client credentials in their application settings.
-      Auth0 documents client secret rotation and notes that client secrets are
-      used by confidential applications and token flows.
-    type: secret_value
-    nature: [generated_on_install]
-    sensitivity: secret
-    location:
-      - type: environment
-        path: AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET
-      - type: config_file
-        detail: application settings, .env files, backend auth config, and deployment manifests
-      - type: secret_store
-        detail: cloud secret managers, CI/CD variables, and platform app secrets
-      - type: source_code
-        detail: OAuth examples, tests, Terraform config, and accidentally committed app config
-      - type: logs
-        detail: OAuth token request dumps, failed login traces, and CI output
-    notes: >
-      The client ID identifies the application; the client secret is
-      confidential and can allow impersonation of the application in supported
-      OAuth flows.
+    '
+- id: application-client-secret
+  name: Application Client Secret
+  description: 'Auth0 applications have client credentials in their application settings.
+    Auth0 documents client secret rotation and notes that client secrets are used
+    by confidential applications and token flows.
 
-  - id: private-key-jwt-signing-key
-    name: Private Key JWT Signing Key
-    description: >
-      Auth0 applications can use private_key_jwt-style authentication for
-      advanced OAuth flows. Auth0 documents private key JWT authentication and
-      JSON Web Key Sets for verifying JWTs signed by Auth0.
-    type: key_pair
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: '-----BEGIN (?:RSA |EC |)PRIVATE KEY-----'
-        detail: PEM private key used by an Auth0 application for private key JWT authentication
-    location:
-      - type: config_file
-        detail: PEM files, JWKS generation inputs, backend auth config, and deployment manifests
-      - type: environment
-        path: AUTH0_PRIVATE_KEY, AUTH0_CLIENT_ASSERTION_PRIVATE_KEY
-      - type: secret_store
-        detail: cloud KMS, secret managers, CI/CD variables, and platform app secrets
-      - type: source_code
-        detail: test keys, OAuth client examples, and accidentally committed PEM files
-    notes: >
-      Public JWKS keys verify tokens, but the private signing key is a secret
-      credential and should stay in a server-side key store.
+    '
+  type: secret_value
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: config_file
+    path: ~/.config/auth0/config.json, auth0.json, auth_config.json, appsettings.json
+    detail: Auth0 CLI and application auth configuration
+  - type: environment
+    path: AUTH0_CLIENT_SECRET, NUXT_AUTH0_CLIENT_SECRET
+    detail: Auth0 application/client secret environment variables from Auth0 CLI quickstart
+      detection and integration tooling
+  - type: secret_store
+    detail: cloud secret managers, CI/CD variables, and platform app secrets
+  - type: source_code
+    detail: OAuth examples, tests, Terraform config, and accidentally committed app
+      config
+  - type: logs
+    detail: OAuth token request dumps, failed login traces, and CI output
+  notes: 'The client ID identifies the application; the client secret is confidential
+    and can allow impersonation of the application in supported OAuth flows.
 
-  - id: refresh-token
-    name: Refresh Token
-    description: >
-      Auth0 refresh tokens can be revoked through the Dashboard,
-      Authentication API, or Management API. Auth0 documents refresh token
-      rotation and expiration settings for applications.
-    type: token
-    nature: [generated_on_install]
-    sensitivity: secret
-    location:
-      - type: http_response
-        detail: OAuth token responses containing refresh_token
-      - type: database
-        detail: application token stores and session stores
-      - type: config_file
-        detail: development token caches and local OAuth test config
-      - type: secret_store
-        detail: encrypted app secret stores and secure session storage
-      - type: logs
-        detail: OAuth callback logs and token endpoint debug output
-    notes: >
-      Refresh token exposure can extend access beyond an access token's
-      lifetime until rotation, revocation, reuse detection, or expiration stops it.
+    '
+- id: private-key-jwt-signing-key
+  name: Private Key JWT Signing Key
+  description: 'Auth0 applications can use private_key_jwt-style authentication for
+    advanced OAuth flows. Auth0 documents private key JWT authentication and JSON
+    Web Key Sets for verifying JWTs signed by Auth0.
 
+    '
+  type: key_pair
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: '-----BEGIN (?:RSA |EC |)PRIVATE KEY-----'
+    detail: PEM private key used by an Auth0 application for private key JWT authentication
+  location:
+  - type: config_file
+    path: private_key.pem, auth0-private-key.pem, jwks.json
+    detail: Auth0 private-key-JWT and JWKS generation inputs
+  - type: environment
+    path: AUTH0_PRIVATE_KEY, AUTH0_CLIENT_ASSERTION_PRIVATE_KEY
+    detail: Private key JWT signing key material for Auth0/OAuth client authentication
+  - type: secret_store
+    detail: cloud KMS, secret managers, CI/CD variables, and platform app secrets
+  - type: source_code
+    detail: test keys, OAuth client examples, and accidentally committed PEM files
+  notes: 'Public JWKS keys verify tokens, but the private signing key is a secret
+    credential and should stay in a server-side key store.
+
+    '
+- id: refresh-token
+  name: Refresh Token
+  description: 'Auth0 refresh tokens can be revoked through the Dashboard, Authentication
+    API, or Management API. Auth0 documents refresh token rotation and expiration
+    settings for applications.
+
+    '
+  type: token
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: config_file
+    path: ~/.config/auth0/config.json, auth0.json, auth_config.json
+    detail: Development token caches and local OAuth test config
+  - type: http_response
+    detail: OAuth token responses containing refresh_token
+  - type: database
+    detail: application token stores and session stores
+  - type: secret_store
+    detail: encrypted app secret stores and secure session storage
+  - type: logs
+    detail: OAuth callback logs and token endpoint debug output
+  notes: 'Refresh token exposure can extend access beyond an access token''s lifetime
+    until rotation, revocation, reuse detection, or expiration stops it.
+
+    '
 references:
-  - type: docs
-    url: https://auth0.com/docs/secure/tokens/access-tokens/management-api-access-tokens
-  - type: docs
-    url: https://auth0.com/docs/get-started/applications/application-settings
-  - type: docs
-    url: https://auth0.com/docs/secure/tokens/json-web-tokens/json-web-key-sets
+- type: docs
+  url: https://auth0.com/docs/secure/tokens/access-tokens/management-api-access-tokens
+- type: docs
+  url: https://auth0.com/docs/get-started/applications/application-settings
+- type: docs
+  url: https://auth0.com/docs/secure/tokens/json-web-tokens/json-web-key-sets

@@ -3,97 +3,105 @@ name: Redis
 category: database
 vendor: Redis
 author: haxxm0nkey
-
 credentials:
+- id: default-user-nopass
+  name: Default User Without Password
+  description: 'Redis defaults to an enabled default user with nopass in ACL-enabled
+    Redis versions, preserving legacy behavior where clients can run all commands
+    without authenticating unless an administrator configures a password or ACLs.
 
-  - id: default-user-nopass
-    name: Default User Without Password
-    description: >
-      Redis defaults to an enabled default user with nopass in ACL-enabled
-      Redis versions, preserving legacy behavior where clients can run all
-      commands without authenticating unless an administrator configures a
-      password or ACLs.
-    type: username_password
-    nature: [static_default]
-    sensitivity: secret
-    default:
-      username: default
-      password: (empty)
-    location:
-      - type: public_interface
-        path: redis://<host>:6379
-        detail: Redis protocol listener; protected mode limits default exposure to loopback in default configuration
-      - type: config_file
-        path: redis.conf
-        detail: default ACL user, protected-mode, bind, requirepass, and aclfile directives
-    notes: >
-      This represents unauthenticated access, not a password. Redis protected
-      mode reduces accidental exposure when no password is configured, but
-      operators can disable protected mode or bind Redis to external interfaces.
+    '
+  type: other
+  nature:
+  - static_default
+  sensitivity: context_dependent
+  default:
+    username: null
+    password: null
+  location:
+  - type: public_interface
+    path: redis://<host>:6379
+    detail: Redis protocol listener; protected mode limits default exposure to loopback
+      in default configuration
+  - type: config_file
+    path: redis.conf, redis-stack.conf, users.acl
+    detail: default ACL user, protected-mode, bind, requirepass, and aclfile directives
+  notes: 'This represents unauthenticated access, not a password. Redis protected
+    mode reduces accidental exposure when no password is configured, but operators
+    can disable protected mode or bind Redis to external interfaces.
 
-  - id: requirepass-default-user-password
-    name: requirepass Password
-    description: >
-      Redis legacy authentication uses the requirepass directive in redis.conf.
-      Since Redis 6, requirepass is a compatibility layer that sets a password
-      for the ACL default user.
-    type: password
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: '^requirepass\s+[^\s#]+'
-        detail: redis.conf directive; the value after requirepass is the password for the default user
-    location:
-      - type: config_file
-        path: redis.conf
-      - type: environment
-        path: REDIS_PASSWORD, REDIS_URL
-      - type: source_code
-        detail: Docker Compose files, Helm values, app configs, committed .env files
-      - type: secret_store
-        detail: Kubernetes Secrets, CI/CD variables, cloud secret managers
-      - type: logs
-        detail: command histories, container logs, and connection errors containing AUTH strings
-    notes: >
-      Redis warns that this password is stored in clear text inside redis.conf
-      and should be long because Redis can process many authentication attempts
-      per second.
+    '
+- id: requirepass-default-user-password
+  name: requirepass Password
+  description: 'Redis legacy authentication uses the requirepass directive in redis.conf.
+    Since Redis 6, requirepass is a compatibility layer that sets a password for the
+    ACL default user.
 
-  - id: acl-user-password
-    name: ACL User Password
-    description: >
-      Redis ACLs define users, passwords, key patterns, and command categories
-      either directly in redis.conf or in an external aclfile. Clients
-      authenticate with AUTH <username> <password>.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: '^user\s+\S+\s+.*(>|#)[^\s]+'
-        detail: >
-          Redis ACL user rule; > stores a plaintext password to hash on load,
-          while # stores a password hash
-    location:
-      - type: config_file
-        path: redis.conf, users.acl
-        detail: inline ACL users or external aclfile contents
-      - type: environment
-        path: REDIS_USERNAME, REDIS_PASSWORD, REDIS_URL
-      - type: secret_store
-        detail: Kubernetes Secrets, CI/CD variables, cloud secret managers
-      - type: source_code
-        detail: app config, Docker Compose files, Helm values, connection strings
-      - type: logs
-        detail: CLI histories, driver debug logs, and failed AUTH traces
-    notes: >
-      Redis ACL rules include both authentication material and authorization
-      policy. The command context is needed to distinguish the username,
-      plaintext password marker, password hash marker, and permissions.
+    '
+  type: password
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: ^requirepass\s+[^\s#]+
+    detail: redis.conf directive; the value after requirepass is the password for
+      the default user
+  location:
+  - type: config_file
+    path: redis.conf, redis-stack.conf
+  - type: environment
+    path: REDIS_PASSWORD, REDIS_URL
+  - type: source_code
+    detail: Docker Compose files, Helm values, app configs, committed .env files
+  - type: secret_store
+    detail: Kubernetes Secrets, CI/CD variables, cloud secret managers
+  - type: logs
+    detail: command histories, container logs, and connection errors containing AUTH
+      strings
+  notes: 'Redis warns that this password is stored in clear text inside redis.conf
+    and should be long because Redis can process many authentication attempts per
+    second.
 
+    '
+- id: acl-user-password
+  name: ACL User Password
+  description: 'Redis ACLs define users, passwords, key patterns, and command categories
+    either directly in redis.conf or in an external aclfile. Clients authenticate
+    with AUTH <username> <password>.
+
+    '
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: ^user\s+\S+\s+.*(>|#)[^\s]+
+    detail: 'Redis ACL user rule; > stores a plaintext password to hash on load, while
+      # stores a password hash
+
+      '
+  location:
+  - type: config_file
+    path: redis.conf, users.acl
+    detail: 'inline ACL users or external aclfile contents. Additional non-path context
+      from previous path: users.acl.'
+  - type: environment
+    path: REDIS_USERNAME, REDIS_PASSWORD, REDIS_URL
+  - type: secret_store
+    detail: Kubernetes Secrets, CI/CD variables, cloud secret managers
+  - type: source_code
+    detail: app config, Docker Compose files, Helm values, connection strings
+  - type: logs
+    detail: CLI histories, driver debug logs, and failed AUTH traces
+  notes: 'Redis ACL rules include both authentication material and authorization policy.
+    The command context is needed to distinguish the username, plaintext password
+    marker, password hash marker, and permissions.
+
+    '
 references:
-  - type: docs
-    url: https://redis.io/docs/latest/operate/oss_and_stack/management/security/
-  - type: docs
-    url: https://redis.io/docs/latest/operate/oss_and_stack/management/security/acl/
-  - type: docs
-    url: https://raw.githubusercontent.com/redis/redis/unstable/redis.conf
+- type: docs
+  url: https://redis.io/docs/latest/operate/oss_and_stack/management/security/
+- type: docs
+  url: https://redis.io/docs/latest/operate/oss_and_stack/management/security/acl/
+- type: docs
+  url: https://raw.githubusercontent.com/redis/redis/unstable/redis.conf

@@ -1,99 +1,105 @@
 id: redmine
 name: Redmine
-category: devops
+category: other
 vendor: Redmine
 author: haxxm0nkey
-
 credentials:
+- id: database-credentials
+  name: Database Credentials
+  description: 'Redmine installation requires database users for MySQL, PostgreSQL,
+    SQL Server, or SQLite. Redmine docs show creating a database role/user and setting
+    a password before configuring the application.
 
-  - id: database-credentials
-    name: Database Credentials
-    description: >
-      Redmine installation requires database users for MySQL, PostgreSQL, SQL
-      Server, or SQLite. Redmine docs show creating a database role/user and
-      setting a password before configuring the application.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: >-
-          password:\s*[^\r\n]+
-        detail: Redmine database.yml password field
-    location:
-      - type: config_file
-        path: config/database.yml
-        detail: Redmine Rails database connection configuration
-      - type: environment
-        path: REDMINE_DB_PASSWORD, DATABASE_URL
-      - type: secret_store
-        detail: Docker/Kubernetes secrets, cloud secret managers, and database password vaults
-      - type: source_code
-        detail: committed database.yml files, Docker Compose files, and tests
-      - type: artifact
-        detail: application backups and container images containing database.yml
-      - type: logs
-        detail: installer logs and database connection traces
-    notes: >
-      Database access can expose Redmine users, password hashes, API keys,
-      issues, projects, and plugin settings.
+    '
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: password:\s*[^\r\n]+
+    detail: Redmine database.yml password field
+  location:
+  - type: config_file
+    path: config/database.yml
+    detail: Redmine Rails database connection configuration
+  - type: environment
+    path: REDMINE_DB_PASSWORD, DATABASE_URL
+  - type: secret_store
+    detail: Docker/Kubernetes secrets, cloud secret managers, and database password
+      vaults
+  - type: source_code
+    detail: committed database.yml files, Docker Compose files, and tests
+  - type: artifact
+    detail: application backups and container images containing database.yml
+  - type: logs
+    detail: installer logs and database connection traces
+  notes: 'Database access can expose Redmine users, password hashes, API keys, issues,
+    projects, and plugin settings.
 
-  - id: secret-token
-    name: Rails Session Secret Token
-    description: >
-      Redmine installation generates a random secret token used by Rails to
-      encode cookies storing session data. Redmine documents generating it with
-      bundle exec rake generate_secret_token and optionally storing it in
-      config/secrets.yml.
-    type: secret_value
-    nature: [generated_on_install]
-    sensitivity: secret
-    location:
-      - type: config_file
-        path: config/initializers/secret_token.rb, config/secrets.yml
-        detail: Redmine Rails session secret
-      - type: environment
-        path: SECRET_KEY_BASE, REDMINE_SECRET_KEY_BASE
-      - type: secret_store
-        detail: deployment vaults, Kubernetes Secrets, and cloud secret managers
-      - type: source_code
-        detail: committed Rails config, examples, and backups
-      - type: artifact
-        detail: application backups and container images
-    notes: >
-      Rotating the secret invalidates sessions and protects against tampering
-      with stolen session cookie material.
+    '
+- id: secret-token
+  name: Rails Session Secret Token
+  description: 'Redmine installation generates a random secret token used by Rails
+    to encode cookies storing session data. Redmine documents generating it with bundle
+    exec rake generate_secret_token and optionally storing it in config/secrets.yml.
 
-  - id: api-key
-    name: REST API Key
-    description: >
-      Redmine REST API supports authentication with either regular
-      login/password via HTTP Basic authentication or a per-user API key. Redmine
-      documents passing the API key as key parameter, Basic username, or
-      X-Redmine-API-Key header.
-    type: api_key
-    nature: [user_defined]
-    sensitivity: secret
-    location:
-      - type: http_header
-        path: X-Redmine-API-Key, Authorization
-        detail: Redmine API key header or Basic authentication context
-      - type: database
-        detail: Redmine user account records containing API key state
-      - type: environment
-        path: REDMINE_API_KEY
-      - type: config_file
-        detail: integration config, .env files, and automation scripts
-      - type: secret_store
-        detail: CI/CD variables, bot secrets, and cloud secret managers
-      - type: source_code
-        detail: API scripts, tests, and committed clients
-      - type: logs
-        detail: API request logs and automation traces
-    notes: >
-      API key permissions follow the owning Redmine user.
+    '
+  type: secret_value
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: config_file
+    path: config/secrets.yml, config/initializers/secret_token.rb, config/master.key,
+      config/credentials.yml.enc
+    detail: 'Redmine Rails session secret. Additional non-path context from previous
+      path: config/initializers/secret_token.rb.'
+  - type: environment
+    path: SECRET_KEY_BASE, REDMINE_SECRET_KEY_BASE
+  - type: secret_store
+    detail: deployment vaults, Kubernetes Secrets, and cloud secret managers
+  - type: source_code
+    detail: committed Rails config, examples, and backups
+  - type: artifact
+    detail: application backups and container images
+  notes: 'Rotating the secret invalidates sessions and protects against tampering
+    with stolen session cookie material.
 
+    '
+- id: api-key
+  name: REST API Key
+  description: 'Redmine REST API supports authentication with either regular login/password
+    via HTTP Basic authentication or a per-user API key. Redmine documents passing
+    the API key as key parameter, Basic username, or X-Redmine-API-Key header.
+
+    '
+  type: api_key
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: X-Redmine-API-Key, Authorization
+    detail: Redmine API key header or Basic authentication context
+  - type: database
+    detail: Redmine user account records containing API key state
+  - type: environment
+    path: REDMINE_API_KEY
+  - type: config_file
+    detail: 'integration config, .env files, and automation scripts; Removed generic/common
+      scanner surface path(s) from product template: .env'
+    path: redmine.yml, redmine.json, redmine-cli.json
+  - type: secret_store
+    detail: CI/CD variables, bot secrets, and cloud secret managers
+  - type: source_code
+    detail: API scripts, tests, and committed clients
+  - type: logs
+    detail: API request logs and automation traces
+  notes: 'API key permissions follow the owning Redmine user.
+
+    '
 references:
-  - type: docs
-    url: https://www.redmine.org/projects/redmine/wiki/RedmineInstall
-  - type: docs
-    url: https://www.redmine.org/projects/redmine/wiki/Rest_api
+- type: docs
+  url: https://www.redmine.org/projects/redmine/wiki/RedmineInstall
+- type: docs
+  url: https://www.redmine.org/projects/redmine/wiki/Rest_api

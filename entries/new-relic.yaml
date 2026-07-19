@@ -3,92 +3,109 @@ name: New Relic
 category: monitoring
 vendor: New Relic
 author: haxxm0nkey
-
 credentials:
+- id: user-api-key
+  name: User API Key
+  description: 'New Relic user API keys authenticate NerdGraph and other account APIs
+    on behalf of a user. New Relic documents user keys as one of the New Relic API
+    key types.
 
-  - id: user-api-key
-    name: User API Key
-    description: >
-      New Relic user API keys authenticate NerdGraph and other account APIs on
-      behalf of a user. New Relic documents user keys as one of the New Relic
-      API key types.
-    type: api_key
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - example: 'NRAK-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
-        pattern: 'NRAK-[A-Za-z0-9_\-]{20,}'
-        detail: New Relic user API key prefix
-    location:
-      - type: environment
-        path: NEW_RELIC_API_KEY, NEW_RELIC_USER_KEY, NEW_RELIC_API_KEY_US, NEW_RELIC_API_KEY_EU
-      - type: http_header
-        path: API-Key
-        detail: New Relic API key header used by NerdGraph and REST APIs
-      - type: config_file
-        detail: Terraform provider config, automation .env files, scripts, and deployment manifests
-      - type: secret_store
-        detail: CI/CD variables, cloud secret managers, and monitoring automation secrets
-      - type: source_code
-        detail: observability automation, IaC, examples, and committed scripts
-      - type: logs
-        detail: API client traces, Terraform logs, and CI output
-    notes: >
-      User keys inherit the creating user's access and can query or modify New
-      Relic resources according to account permissions.
+    '
+  type: api_key
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - example: NRAK-abcdefghijklmnopqrstuvwxy01
+    pattern: NRAK-[a-z0-9]{27}
+    detail: New Relic user API key shape from public scanner rules
+  location:
+  - type: environment
+    path: NEW_RELIC_API_KEY, NEW_RELIC_USER_KEY, NEW_RELIC_API_KEY_US, NEW_RELIC_API_KEY_EU
+  - type: http_header
+    path: API-Key
+    detail: New Relic API key header used by NerdGraph and REST APIs
+  - type: config_file
+    detail: 'Terraform provider config, automation .env files, scripts, and deployment
+      manifests; Removed generic/common scanner surface path(s) from product template:
+      .env'
+    path: newrelic.yml, newrelic.toml, terraform.tfvars, provider.tf
+  - type: secret_store
+    detail: CI/CD variables, cloud secret managers, and monitoring automation secrets
+  - type: source_code
+    detail: observability automation, IaC, examples, and committed scripts
+  - type: logs
+    detail: API client traces, Terraform logs, and CI output
+  notes: 'User keys inherit the creating user''s access and can query or modify New
+    Relic resources according to account permissions.
 
-  - id: ingest-license-key
-    name: Ingest License Key
-    description: >
-      New Relic ingest and license keys are used by agents and telemetry senders
-      to report data to New Relic. New Relic documents license and ingest keys
-      as API key types for telemetry ingestion.
-    type: api_key
-    nature: [generated_on_install]
-    sensitivity: secret
-    looks_like:
-      - example: 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
-        pattern: '[A-Fa-f0-9]{40}'
-        detail: New Relic license/ingest keys are commonly represented as 40-character hexadecimal strings
-    location:
-      - type: environment
-        path: NEW_RELIC_LICENSE_KEY, NEW_RELIC_INSERT_KEY, NEW_RELIC_INGEST_KEY
-      - type: config_file
-        detail: newrelic.yml, agent configs, Helm values, Docker Compose files, and deployment manifests
-      - type: secret_store
-        detail: Kubernetes Secrets, CI/CD variables, cloud secret managers, and platform app config
-      - type: source_code
-        detail: agent setup scripts, examples, and accidentally committed telemetry config
-      - type: logs
-        detail: agent startup logs, deployment output, and CI traces
-    notes: >
-      Ingest keys allow sending telemetry to the associated account but usually
-      do not grant query or account-management API access.
+    '
+- id: ingest-license-key
+  name: Ingest License Key
+  description: 'New Relic ingest and license keys are used by agents and telemetry
+    senders to report data to New Relic. New Relic documents license and ingest keys
+    as API key types for telemetry ingestion.
 
-  - id: browser-license-key
-    name: Browser Monitoring Key
-    description: >
-      New Relic browser monitoring uses browser-specific keys in client-side
-      JavaScript configuration. New Relic documents browser keys among API key
-      types used by New Relic telemetry products.
-    type: api_key
-    nature: [generated_on_install]
-    sensitivity: context_dependent
-    looks_like:
-      - example: 'NRJS-XXXXXXXXXXXXXXXX'
-        pattern: 'NRJS-[A-Za-z0-9_\-]{10,}'
-        detail: New Relic browser monitoring key prefix
-    location:
-      - type: config_file
-        detail: browser agent config, frontend build settings, .env files, and application config
-      - type: source_code
-        detail: browser bundles, HTML templates, examples, and committed frontend config
-      - type: logs
-        detail: frontend build output and browser agent diagnostics
-    notes: >
-      Browser monitoring keys are deployed to client applications and should be
-      triaged differently from user API keys or license keys.
+    '
+  type: api_key
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - example: 0123456789abcdef0123456789abcdef01234567
+    pattern: '[A-Fa-f0-9]{40}'
+    detail: New Relic license/ingest keys are commonly represented as 40-character
+      hexadecimal strings
+  - example: NRII-abcdefghijklmnopqrstuvwxyz123456
+    pattern: NRII-[a-z0-9\-]{32}
+    detail: New Relic insert key shape from public scanner rules
+  location:
+  - type: environment
+    path: NEW_RELIC_LICENSE_KEY, NEW_RELIC_INSERT_KEY, NEW_RELIC_INGEST_KEY
+  - type: config_file
+    detail: newrelic.yml, agent configs, Helm values, Docker Compose files, and deployment
+      manifests
+    path: newrelic.yml, newrelic-infra.yml, newrelic.js, newrelic.ini
+  - type: secret_store
+    detail: Kubernetes Secrets, CI/CD variables, cloud secret managers, and platform
+      app config
+  - type: source_code
+    detail: agent setup scripts, examples, and accidentally committed telemetry config
+  - type: logs
+    detail: agent startup logs, deployment output, and CI traces
+  notes: 'Ingest keys allow sending telemetry to the associated account but usually
+    do not grant query or account-management API access.
 
+    '
+- id: browser-license-key
+  name: Browser Monitoring Key
+  description: 'New Relic browser monitoring uses browser-specific keys in client-side
+    JavaScript configuration. New Relic documents browser keys among API key types
+    used by New Relic telemetry products.
+
+    '
+  type: api_key
+  nature:
+  - generated_on_install
+  sensitivity: context_dependent
+  looks_like:
+  - example: NRJS-0123456789abcdefabc
+    pattern: NRJS-[a-f0-9]{19}
+    detail: New Relic browser API token shape from public scanner rules
+  location:
+  - type: config_file
+    detail: 'browser agent config, frontend build settings, .env files, and application
+      config; Removed generic/common scanner surface path(s) from product template:
+      .env'
+    path: newrelic.js, browser-agent.js, newrelic-browser.json, app.config.js
+  - type: source_code
+    detail: browser bundles, HTML templates, examples, and committed frontend config
+  - type: logs
+    detail: frontend build output and browser agent diagnostics
+  notes: 'Browser monitoring keys are deployed to client applications and should be
+    triaged differently from user API keys or license keys.
+
+    '
 references:
-  - type: docs
-    url: https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/
+- type: docs
+  url: https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/

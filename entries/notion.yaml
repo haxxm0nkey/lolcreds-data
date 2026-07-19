@@ -3,133 +3,148 @@ name: Notion
 category: saas
 vendor: Notion Labs
 author: haxxm0nkey
-
 credentials:
+- id: personal-access-token
+  name: Personal Access Token
+  description: 'Notion personal access tokens authenticate API requests as the user
+    who created the token. Notion documents PATs as bearer tokens and shows them stored
+    in NOTION_API_KEY with an ntn_ example prefix.
 
-  - id: personal-access-token
-    name: Personal Access Token
-    description: >
-      Notion personal access tokens authenticate API requests as the user who
-      created the token. Notion documents PATs as bearer tokens and shows them
-      stored in NOTION_API_KEY with an ntn_ example prefix.
-    type: token
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - example: 'ntn_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
-        pattern: 'ntn_[A-Za-z0-9_\-]{20,}'
-        detail: Notion API token prefix shown in Notion API-key handling docs
-    location:
-      - type: environment
-        path: NOTION_API_KEY, NOTION_TOKEN
-      - type: http_header
-        path: Authorization
-        detail: Bearer token used for Notion API requests
-      - type: config_file
-        detail: .env files, Notion SDK config, deployment manifests, and local examples
-      - type: secret_store
-        detail: cloud secret managers, hosted app settings, and CI/CD variables
-      - type: source_code
-        detail: scripts, examples, notebooks, and committed integration code
-      - type: logs
-        detail: HTTP client debug output, CI traces, and stack traces that include headers
-    notes: >
-      A PAT acts as the creator and can access the same Notion content that the
-      creator can access, subject to workspace policy and token permissions.
+    '
+  type: token
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - example: ntn_01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcde
+    pattern: ntn_[0-9]{11}[A-Za-z0-9]{32}[A-Za-z0-9]{3}
+    detail: Notion API token shape from public scanner rules and Notion docs ntn_
+      examples
+  location:
+  - type: environment
+    path: NOTION_API_KEY, NOTION_TOKEN
+  - type: http_header
+    path: Authorization
+    detail: Bearer token used for Notion API requests
+  - type: config_file
+    detail: '.env files, Notion SDK config, deployment manifests, and local examples;
+      Removed generic/common scanner surface path(s) from product template: .env'
+    path: notion.json, notion.config.js, notion.config.ts, config.yaml
+  - type: secret_store
+    detail: cloud secret managers, hosted app settings, and CI/CD variables
+  - type: source_code
+    detail: scripts, examples, notebooks, and committed integration code
+  - type: logs
+    detail: HTTP client debug output, CI traces, and stack traces that include headers
+  notes: 'A PAT acts as the creator and can access the same Notion content that the
+    creator can access, subject to workspace policy and token permissions.
 
-  - id: internal-connection-token
-    name: Internal Connection Installation Access Token
-    description: >
-      Notion internal connections use a static installation access token to
-      authenticate REST API requests. Notion documents that the connection sends
-      the same token in every API request.
-    type: token
-    nature: [generated_on_install]
-    sensitivity: secret
-    looks_like:
-      - example: 'ntn_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
-        pattern: 'ntn_[A-Za-z0-9_\-]{20,}'
-        detail: Notion API token prefix shown in Notion API-key handling docs
-    location:
-      - type: environment
-        path: NOTION_API_KEY, NOTION_INTEGRATION_TOKEN, NOTION_TOKEN
-      - type: http_header
-        path: Authorization
-        detail: Bearer token used for Notion API requests
-      - type: config_file
-        detail: .env files, SDK configuration, Docker Compose files, and deployment manifests
-      - type: secret_store
-        detail: production secret stores, CI/CD variables, and platform app settings
-      - type: source_code
-        detail: Notion integrations, examples, tests, and committed local config
-      - type: logs
-        detail: API request logging, failed request traces, and CI output
-    notes: >
-      Internal connection access belongs to the connection's bot user and
-      persists independently of the workspace member who shared a page with it.
+    '
+- id: internal-connection-token
+  name: Internal Connection Installation Access Token
+  description: 'Notion internal connections use a static installation access token
+    to authenticate REST API requests. Notion documents that the connection sends
+    the same token in every API request.
 
-  - id: oauth-access-refresh-token
-    name: OAuth Access / Refresh Token
-    description: >
-      Notion public connections use OAuth 2.0. Notion documents that the code
-      exchange returns an access_token and refresh_token, and that the connection
-      stores both tokens for future API requests and token refresh.
-    type: token
-    nature: [generated_on_install]
-    sensitivity: secret
-    location:
-      - type: http_response
-        detail: OAuth token exchange responses containing access_token and refresh_token
-      - type: http_header
-        path: Authorization
-        detail: Bearer access token used for Notion API requests
-      - type: database
-        detail: public connection installation token stores
-      - type: config_file
-        detail: local OAuth examples, serialized token caches, and integration config
-      - type: secret_store
-        detail: encrypted application secret stores and cloud secret managers
-      - type: logs
-        detail: OAuth callback logs, token exchange logs, and application debug traces
-    notes: >
-      OAuth tokens represent delegated access granted through a public Notion
-      connection. Blast radius depends on installation scope, selected pages,
-      and the connection's capabilities.
+    '
+  type: token
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - example: ntn_01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcde
+    pattern: ntn_[0-9]{11}[A-Za-z0-9]{32}[A-Za-z0-9]{3}
+    detail: Notion API token shape from public scanner rules and Notion docs ntn_
+      examples
+  location:
+  - type: environment
+    path: NOTION_API_KEY, NOTION_INTEGRATION_TOKEN, NOTION_TOKEN
+  - type: http_header
+    path: Authorization
+    detail: Bearer token used for Notion API requests
+  - type: config_file
+    detail: '.env files, SDK configuration, Docker Compose files, and deployment manifests;
+      Removed generic/common scanner surface path(s) from product template: .env'
+    path: notion.json, notion.config.js, notion.config.ts, config.yaml
+  - type: secret_store
+    detail: production secret stores, CI/CD variables, and platform app settings
+  - type: source_code
+    detail: Notion integrations, examples, tests, and committed local config
+  - type: logs
+    detail: API request logging, failed request traces, and CI output
+  notes: 'Internal connection access belongs to the connection''s bot user and persists
+    independently of the workspace member who shared a page with it.
 
-  - id: oauth-client-secret
-    name: OAuth Client Secret
-    description: >
-      Notion public connections have an OAuth client ID and OAuth client secret.
-      Notion documents that the client ID identifies the connection and the
-      client secret proves the connection is who it claims to be during code
-      exchange for an access token.
-    type: secret_value
-    nature: [generated_on_install]
-    sensitivity: secret
-    location:
-      - type: config_file
-        detail: OAuth backend config, .env files, deployment manifests, and SDK examples
-      - type: environment
-        path: NOTION_CLIENT_ID, NOTION_CLIENT_SECRET
-      - type: secret_store
-        detail: cloud secret managers, CI/CD variables, and hosted app settings
-      - type: source_code
-        detail: accidentally committed public-connection examples and deployment scripts
-      - type: logs
-        detail: OAuth token exchange request dumps and failed authorization traces
-    notes: >
-      The client ID is an identifier, but the client secret is confidential.
-      Exposure can let an attacker impersonate the Notion public connection in
-      OAuth token exchange flows.
+    '
+- id: oauth-access-refresh-token
+  name: OAuth Access / Refresh Token
+  description: 'Notion public connections use OAuth 2.0. Notion documents that the
+    code exchange returns an access_token and refresh_token, and that the connection
+    stores both tokens for future API requests and token refresh.
 
+    '
+  type: token
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: http_response
+    detail: OAuth token exchange responses containing access_token and refresh_token
+  - type: http_header
+    path: Authorization
+    detail: Bearer access token used for Notion API requests
+  - type: database
+    detail: public connection installation token stores
+  - type: config_file
+    detail: local OAuth examples, serialized token caches, and integration config
+    path: notion-oauth.json, oauth-token.json, notion.json
+  - type: secret_store
+    detail: encrypted application secret stores and cloud secret managers
+  - type: logs
+    detail: OAuth callback logs, token exchange logs, and application debug traces
+  notes: 'OAuth tokens represent delegated access granted through a public Notion
+    connection. Blast radius depends on installation scope, selected pages, and the
+    connection''s capabilities.
+
+    '
+- id: oauth-client-secret
+  name: OAuth Client Secret
+  description: 'Notion public connections have an OAuth client ID and OAuth client
+    secret. Notion documents that the client ID identifies the connection and the
+    client secret proves the connection is who it claims to be during code exchange
+    for an access token.
+
+    '
+  type: secret_value
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: config_file
+    detail: 'OAuth backend config, .env files, deployment manifests, and SDK examples;
+      Removed generic/common scanner surface path(s) from product template: .env'
+    path: notion-oauth.json, oauth.json, notion.json, app.json
+  - type: environment
+    path: NOTION_CLIENT_SECRET
+  - type: secret_store
+    detail: cloud secret managers, CI/CD variables, and hosted app settings
+  - type: source_code
+    detail: accidentally committed public-connection examples and deployment scripts
+  - type: logs
+    detail: OAuth token exchange request dumps and failed authorization traces
+  notes: 'The client ID is an identifier, but the client secret is confidential. Exposure
+    can let an attacker impersonate the Notion public connection in OAuth token exchange
+    flows.
+
+    '
 references:
-  - type: docs
-    url: https://developers.notion.com/guides/get-started/personal-access-tokens
-  - type: docs
-    url: https://developers.notion.com/guides/get-started/internal-connections
-  - type: docs
-    url: https://developers.notion.com/guides/get-started/public-connections
-  - type: docs
-    url: https://developers.notion.com/guides/get-started/authorization
-  - type: docs
-    url: https://developers.notion.com/guides/get-started/handling-api-keys
+- type: docs
+  url: https://developers.notion.com/guides/get-started/personal-access-tokens
+- type: docs
+  url: https://developers.notion.com/guides/get-started/internal-connections
+- type: docs
+  url: https://developers.notion.com/guides/get-started/public-connections
+- type: docs
+  url: https://developers.notion.com/guides/get-started/authorization
+- type: docs
+  url: https://developers.notion.com/guides/get-started/handling-api-keys

@@ -6,35 +6,36 @@ author: haxxm0nkey
 credentials:
 - id: unauthenticated-default
   name: Unauthenticated Web UI / HTTP API Access
-  description: Prometheus web UI and HTTP API historically do not require built-in authentication
-    unless web configuration, TLS/basic auth, or a reverse proxy is configured. Metrics and
-    query endpoints can be accessible without credentials.
-  type: username_password
+  description: Prometheus web UI and HTTP API historically do not require built-in
+    authentication unless web configuration, TLS/basic auth, or a reverse proxy is
+    configured. Metrics and query endpoints can be accessible without credentials.
+  type: other
   nature:
   - unauthenticated_default
-  sensitivity: secret
+  sensitivity: context_dependent
   default:
     username: null
     password: null
   location:
   - type: public_interface
     path: Prometheus web UI and HTTP API, commonly :9090
-    detail: query, targets, service discovery, status, and admin endpoints when exposed without
-      web auth/reverse proxy auth
+    detail: query, targets, service discovery, status, and admin endpoints when exposed
+      without web auth/reverse proxy auth
   - type: config_file
-    path: web.yml, prometheus startup flags, reverse proxy config
-    detail: web config and reverse proxy settings determine whether browser/API users must
-      authenticate
+    path: web.yml, prometheus.yml
+    detail: 'web config and reverse proxy settings determine whether browser/API users
+      must authenticate. Additional non-path context from previous path: prometheus
+      startup flags, reverse proxy config.'
   - type: logs
     detail: Prometheus startup logs showing web listener and loaded web config
-  notes: This represents no web/API login requirement, not a password. Impact depends on bind
-    address, --web.enable-admin-api, reverse proxy configuration, firewalling, and whether
-    web.yml basic auth/TLS is configured.
+  notes: This represents no web/API login requirement, not a password. Impact depends
+    on bind address, --web.enable-admin-api, reverse proxy configuration, firewalling,
+    and whether web.yml basic auth/TLS is configured.
 - id: scrape-basic-auth-and-bearer-token
   name: Scrape Basic Auth / Bearer Token
-  description: Prometheus scrape configs support basic_auth, authorization credentials, bearer
-    tokens, OAuth2, and service account token files for targets. These values often grant
-    access to metrics endpoints or upstream APIs.
+  description: Prometheus scrape configs support basic_auth, authorization credentials,
+    bearer tokens, OAuth2, and service account token files for targets. These values
+    often grant access to metrics endpoints or upstream APIs.
   type: secret_value
   nature:
   - user_defined
@@ -43,11 +44,13 @@ credentials:
   location:
   - type: http_header
     path: Authorization
-    detail: Basic or Bearer token sent to scrape targets, remote write endpoints, or APIs
+    detail: Basic or Bearer token sent to scrape targets, remote write endpoints,
+      or APIs
   - type: config_file
-    path: prometheus.yml, file_sd configs
-    detail: scrape_configs basic_auth, authorization, bearer_token, bearer_token_file, and
-      oauth2 settings
+    path: prometheus.yml, file_sd.yml, scrape-config.yaml
+    detail: 'scrape_configs basic_auth, authorization, bearer_token, bearer_token_file,
+      and oauth2 settings. Additional non-path context from previous path: file_sd
+      configs.'
   - type: environment
     path: PROMETHEUS_TOKEN, PROMETHEUS_PASSWORD
   - type: secret_store
@@ -58,17 +61,18 @@ credentials:
     detail: Prometheus startup logs, config reload errors, and HTTP client debug traces
 - id: remote-write-secret
   name: Remote Write / Alertmanager Credential
-  description: Prometheus and Alertmanager integrations can contain credentials for remote_write,
-    remote_read, Alertmanager, notification receivers, and long-term storage backends.
+  description: Prometheus and Alertmanager integrations can contain credentials for
+    remote_write, remote_read, Alertmanager, notification receivers, and long-term
+    storage backends.
   type: secret_value
   nature:
   - user_defined
   sensitivity: secret
   location:
   - type: config_file
-    path: prometheus.yml, alertmanager.yml
-    detail: remote_write, remote_read, alertmanager, webhook, SMTP, Slack, PagerDuty, and
-      storage credentials
+    path: prometheus.yml, alertmanager.yml, remote-write.yml
+    detail: remote_write, remote_read, alertmanager, webhook, SMTP, Slack, PagerDuty,
+      and storage credentials
   - type: secret_store
     detail: Kubernetes Secrets, cloud secret managers, and monitoring vaults
   - type: source_code
@@ -77,8 +81,8 @@ credentials:
     detail: remote write errors, notification logs, and config validation output
 - id: web-ui-basic-auth
   name: Prometheus Web UI Basic Auth / TLS Secret
-  description: Prometheus web endpoints can be protected with web config basic auth, TLS private
-    keys, and reverse-proxy credentials.
+  description: Prometheus web endpoints can be protected with web config basic auth,
+    TLS private keys, and reverse-proxy credentials.
   type: username_password
   nature:
   - user_defined
@@ -88,7 +92,7 @@ credentials:
   - type: public_interface
     path: Prometheus web UI, HTTP API, Alertmanager UI/API, and reverse proxies
   - type: config_file
-    path: web.yml
+    path: web.yml, prometheus-web.yml, htpasswd
     detail: basic_auth_users, TLS cert/key paths, and web server auth settings
   - type: secret_store
     detail: Kubernetes Secrets, htpasswd stores, and certificate vaults
@@ -96,8 +100,8 @@ credentials:
     detail: web server access logs and authentication failures
 - id: kubernetes-service-account-token
   name: Kubernetes Service Account Token
-  description: Prometheus in Kubernetes often uses service account bearer tokens to discover
-    and scrape pods, nodes, kubelets, and apiserver metrics.
+  description: Prometheus in Kubernetes often uses service account bearer tokens to
+    discover and scrape pods, nodes, kubelets, and apiserver metrics.
   type: token
   nature:
   - generated_on_install
@@ -109,6 +113,8 @@ credentials:
   - type: config_file
     path: /var/run/secrets/kubernetes.io/serviceaccount/token
     detail: mounted service account token file referenced by Prometheus configs
+    platform:
+    - linux
   - type: secret_store
     detail: Kubernetes service account token secrets and projected volumes
   - type: logs

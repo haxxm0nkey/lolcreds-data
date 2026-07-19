@@ -1,14 +1,15 @@
 id: sap-netweaver-java
 name: SAP NetWeaver Application Server Java
-category: enterprise_app
+category: other
 vendor: SAP
 author: haxxm0nkey
 credentials:
 - id: ume-administrator-password
   name: UME Administrator/User Password
-  description: SAP NetWeaver AS Java authenticates users through the User Management Engine
-    (UME). Administrator and technical users are created during installation or maintained
-    through identity stores such as the Java database, ABAP UME, LDAP, or SAP Identity Management.
+  description: SAP NetWeaver AS Java authenticates users through the User Management
+    Engine (UME). Administrator and technical users are created during installation
+    or maintained through identity stores such as the Java database, ABAP UME, LDAP,
+    or SAP Identity Management.
   type: username_password
   nature:
   - generated_on_install
@@ -16,31 +17,35 @@ credentials:
   sensitivity: secret
   location:
   - type: public_interface
-    path: NetWeaver Administrator, SAP Enterprise Portal, AS Java login pages, and management
-      APIs
+    path: NetWeaver Administrator, SAP Enterprise Portal, AS Java login pages, and
+      management APIs
   - type: database
     detail: UME persistence store for users, groups, password verifier data, and security
       policy state
   - type: config_file
     detail: UME configuration, destination service config, and AS Java deployment/installation
       files
+    path: ume.properties, configtool.properties, securestore.properties, offlinecfgeditor.properties
   - type: secret_store
     detail: SAP Secure Storage, password vaults, and deployment secrets
   - type: logs
-    detail: security audit log, defaultTrace, authentication traces, and installer logs
-  notes: No universal AS Java Administrator password is modeled here; it is set during installation
-    or inherited from the configured user store.
+    detail: security audit log, defaultTrace, authentication traces, and installer
+      logs
+  notes: No universal AS Java Administrator password is modeled here; it is set during
+    installation or inherited from the configured user store.
 - id: jco-rfc-destination-password
   name: JCo / RFC Destination Credential
-  description: AS Java systems store RFC/JCo destination credentials for calls into ABAP systems,
-    including technical users and SNC or password-based destinations.
+  description: AS Java systems store RFC/JCo destination credentials for calls into
+    ABAP systems, including technical users and SNC or password-based destinations.
   type: username_password
   nature:
   - user_defined
   sensitivity: secret
   location:
   - type: config_file
-    detail: SAP NetWeaver Administrator destination configuration and exported system configuration
+    detail: SAP NetWeaver Administrator destination configuration and exported system
+      configuration
+    path: destination.properties, jcoDestination.properties, rfc.properties
   - type: database
     detail: AS Java configuration database and destination service records
   - type: secret_store
@@ -58,30 +63,34 @@ credentials:
   sensitivity: secret
   location:
   - type: config_file
-    detail: secure storage configuration, keystore settings, cluster node configuration, and
-      application properties
+    detail: secure storage configuration, keystore settings, cluster node configuration,
+      and application properties
+    path: securestore.properties, SecureStorage.properties, configtool.properties
   - type: secret_store
     detail: SAP Secure Storage, Java keystores, PSE files, and external vaults
   - type: database
-    detail: AS Java configuration database containing encrypted application and service settings
+    detail: AS Java configuration database containing encrypted application and service
+      settings
   - type: artifact
     detail: system copies, exports, and support archives
 - id: keystore-pse-private-key
   name: PSE / Java Keystore Private Key
-  description: NetWeaver Java uses PSEs and Java keystores for SSL/TLS, SSO, SNC, and trusted
-    communication. Private keys and keystore passwords are high-impact credentials.
+  description: NetWeaver Java uses PSEs and Java keystores for SSL/TLS, SSO, SNC,
+    and trusted communication. Private keys and keystore passwords are high-impact
+    credentials.
   type: key_pair
   nature:
   - generated_on_install
   - user_defined
   sensitivity: secret
   looks_like:
-  - pattern: '-----BEGIN (RSA |EC |ENCRYPTED |)PRIVATE KEY-----'
+  - pattern: '-----BEGIN (RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----'
     detail: private key material exported from SAP PSE/JKS/PKCS#12 or deployment automation
   location:
   - type: config_file
-    detail: SAPSSLS.pse, keystore files, trust/key manager configuration, and SSL service
-      settings
+    detail: SAPSSLS.pse, keystore files, trust/key manager configuration, and SSL
+      service settings
+    path: keystore.jks, truststore.jks, SAPSSLS.pse, SAPSNCS.pse
   - type: secret_store
     detail: SAP Cryptographic Library PSEs, Java keystores, and certificate vaults
   - type: artifact

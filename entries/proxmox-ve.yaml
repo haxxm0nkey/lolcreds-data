@@ -6,9 +6,9 @@ author: haxxm0nkey
 credentials:
 - id: root-pam-password
   name: root@pam Password
-  description: Proxmox VE uses Linux PAM accounts for host authentication; the installer creates/uses
-    the root account and root@pam is the default administrative realm identity for the web
-    UI, API, SSH, and console.
+  description: Proxmox VE uses Linux PAM accounts for host authentication; the installer
+    creates/uses the root account and root@pam is the default administrative realm
+    identity for the web UI, API, SSH, and console.
   type: username_password
   nature:
   - user_defined
@@ -20,17 +20,20 @@ credentials:
   - type: config_file
     path: /etc/shadow
     detail: Linux shadow password hash for root and other PAM users
+    platform:
+    - linux
   - type: secret_store
     detail: password managers, cluster deployment vaults, and installer answer files
   - type: source_code
     detail: lab automation, Terraform/Ansible inventories, and cluster bootstrap scripts
   - type: logs
     detail: installer logs, API client traces, and authentication failure logs
-  notes: There is no universal Proxmox root password; it is set during installation or deployment.
+  notes: There is no universal Proxmox root password; it is set during installation
+    or deployment.
 - id: pve-api-token
   name: Proxmox VE API Token
-  description: Proxmox VE supports API tokens scoped to a user and token ID. Tokens are commonly
-    used by Terraform, Ansible, backup tooling, and monitoring integrations.
+  description: Proxmox VE supports API tokens scoped to a user and token ID. Tokens
+    are commonly used by Terraform, Ansible, backup tooling, and monitoring integrations.
   type: api_key
   nature:
   - generated_on_install
@@ -40,13 +43,16 @@ credentials:
   - pattern: PVEAPIToken=[^!\s]+![^=\s]+=\S+
     detail: Proxmox API token header value containing user, token ID, and secret
   - pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$
-    detail: Proxmox API token secret UUID format commonly returned when a token is generated
+    detail: Proxmox API token secret UUID format commonly returned when a token is
+      generated
   location:
   - type: http_header
     path: Authorization
     detail: PVEAPIToken header used for API token authentication
   - type: config_file
-    detail: Terraform provider config, Ansible inventory, .env files, and CLI configs
+    detail: 'Terraform provider config, Ansible inventory, .env files, and CLI configs;
+      Removed generic/common scanner surface path(s) from product template: .env'
+    path: proxmox.json, proxmox.yaml, terraform.tfvars, provider.tf, inventory.yml
   - type: environment
     path: PM_API_TOKEN_ID, PM_API_TOKEN_SECRET, PROXMOX_VE_API_TOKEN
   - type: secret_store
@@ -57,8 +63,8 @@ credentials:
     detail: API client debug logs and CI output
 - id: ticket-and-csrf-token
   name: Login Ticket and CSRF Prevention Token
-  description: Password login to the Proxmox API returns a PVEAuthCookie ticket and CSRFPreventionToken
-    for authenticated browser/API sessions.
+  description: Password login to the Proxmox API returns a PVEAuthCookie ticket and
+    CSRFPreventionToken for authenticated browser/API sessions.
   type: token
   nature:
   - generated_on_install
@@ -80,36 +86,44 @@ credentials:
     detail: HTTP traces and API client debug output
 - id: cluster-auth-key
   name: Cluster Authentication Key / Certificate Material
-  description: Proxmox clusters maintain authentication keys and certificate material under
-    /etc/pve/priv used by pvedaemon, pveproxy, and cluster nodes. Exposure may permit impersonation
-    or decryption depending on the file.
+  description: Proxmox clusters maintain authentication keys and certificate material
+    under /etc/pve/priv used by pvedaemon, pveproxy, and cluster nodes. Exposure may
+    permit impersonation or decryption depending on the file.
   type: key_pair
   nature:
   - generated_on_install
   sensitivity: secret
   looks_like:
-  - pattern: '-----BEGIN (RSA |OPENSSH |EC |)PRIVATE KEY-----'
+  - pattern: '-----BEGIN (RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----'
     detail: private key material from Proxmox cluster or node key files
   location:
   - type: config_file
-    path: /etc/pve/priv/
-    detail: cluster private keys, auth keys, and certificate material replicated through pmxcfs
+    path: /etc/pve/priv/authkey.key, /etc/pve/priv/pve-root-ca.key, /etc/pve/local/pve-ssl.key
+    detail: cluster private keys, auth keys, and certificate material replicated through
+      pmxcfs
+    platform:
+    - linux
   - type: secret_store
     detail: node backups and cluster recovery vaults
   - type: artifact
     detail: Proxmox backup archives and support bundles
 - id: storage-backup-secrets
   name: Storage, Backup, and Integration Secrets
-  description: Proxmox VE stores credentials for storage backends, Proxmox Backup Server,
-    Ceph/RBD, CIFS, LDAP/AD realms, ACME DNS plugins, and notification targets.
+  description: Proxmox VE stores credentials for storage backends, Proxmox Backup
+    Server, Ceph/RBD, CIFS, LDAP/AD realms, ACME DNS plugins, and notification targets.
   type: secret_value
   nature:
   - user_defined
   sensitivity: secret
   location:
   - type: config_file
-    detail: /etc/pve/storage.cfg, /etc/pve/priv/storage/*, realm.cfg, acme plugin config,
-      and backup job config
+    detail: Proxmox storage, realm, ACME, backup, and integration secrets
+    path: /etc/pve/storage.cfg, /etc/pve/priv/storage.cfg, realm.cfg, acme.cfg
+    platform:
+    - linux
+  - type: config_file
+    detail: Proxmox storage, realm, ACME, backup, and integration secrets
+    path: /etc/pve/storage.cfg, /etc/pve/priv/storage.cfg, realm.cfg, acme.cfg
   - type: secret_store
     detail: cluster secret files under /etc/pve/priv and external vaults
   - type: source_code

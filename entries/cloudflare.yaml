@@ -3,282 +3,311 @@ name: Cloudflare
 category: cloud
 vendor: Cloudflare
 author: haxxm0nkey
-
 credentials:
+- id: api-token
+  name: API Token
+  description: 'Cloudflare API tokens authenticate scoped requests to the Cloudflare
+    API. Cloudflare documents Bearer authorization and states that new API tokens
+    use the cfut_ prefixed scannable format for credential scanning.
 
-  - id: api-token
-    name: API Token
-    description: >
-      Cloudflare API tokens authenticate scoped requests to the Cloudflare
-      API. Cloudflare documents Bearer authorization and states that new API
-      tokens use the cfut_ prefixed scannable format for credential scanning.
-    type: token
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - example: 'cfut_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
-        pattern: 'cfut_[A-Za-z0-9_\-]{20,}'
-        detail: Cloudflare's new prefixed API token format
-    location:
-      - type: environment
-        path: CLOUDFLARE_API_TOKEN, CF_API_TOKEN
-      - type: http_header
-        path: Authorization
-        detail: Bearer token used by Cloudflare API v4 requests
-      - type: source_code
-        detail: automation scripts, Terraform providers, Wrangler config, committed .env files
-      - type: config_file
-        detail: .env, CI configuration, deployment manifests, local shell profiles
-      - type: secret_store
-        detail: CI/CD variables, cloud secret managers, hosted app settings
-      - type: logs
-        detail: curl traces, HTTP client debug logs, and API gateway logs containing Authorization headers
-    notes: >
-      Prefer scoped API tokens over Global API keys. Token permissions and
-      resource scopes determine blast radius; rotate any token found outside
-      the intended secret store or deployment environment.
+    '
+  type: token
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - example: cfut_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    pattern: cfut_[A-Za-z0-9_\-]{20,}
+    detail: Cloudflare's new prefixed API token format
+  location:
+  - type: environment
+    path: CLOUDFLARE_API_TOKEN, CF_API_TOKEN
+    detail: Scoped Cloudflare API token env vars
+  - type: http_header
+    path: Authorization
+    detail: Bearer token used by Cloudflare API v4 requests
+  - type: source_code
+    detail: automation scripts, Terraform providers, Wrangler config, committed .env
+      files
+  - type: config_file
+    detail: Cloudflare Workers/Wrangler project config and local development vars
+      that may contain API tokens or secret values
+    path: wrangler.toml, wrangler.json, .dev.vars
+  - type: secret_store
+    detail: CI/CD variables, cloud secret managers, hosted app settings
+  - type: logs
+    detail: curl traces, HTTP client debug logs, and API gateway logs containing Authorization
+      headers
+  notes: 'Prefer scoped API tokens over Global API keys. Token permissions and resource
+    scopes determine blast radius; rotate any token found outside the intended secret
+    store or deployment environment.
 
-  - id: global-api-key
-    name: Global API Key (legacy)
-    description: >
-      Cloudflare Global API Key is the legacy account-wide API credential
-      used with the account email address. Cloudflare recommends API tokens
-      where possible and documents that new and rolled Global API Keys use the
-      cfk_ prefixed scannable format.
-    type: api_key
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - example: 'cfk_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
-        pattern: 'cfk_[A-Za-z0-9_\-]{20,}'
-        detail: Cloudflare's prefixed Global API Key format
-    location:
-      - type: environment
-        path: CLOUDFLARE_API_KEY, CF_API_KEY, CLOUDFLARE_EMAIL, CF_EMAIL
-        detail: legacy clients commonly require both key and account email
-      - type: http_header
-        path: X-Auth-Key, X-Auth-Email
-        detail: legacy Cloudflare API authentication headers
-      - type: source_code
-        detail: legacy automation scripts, Terraform provider configuration, DNS update clients
-      - type: config_file
-        detail: .env, DNS updater config, CI configuration, shell profiles
-      - type: secret_store
-        detail: CI/CD variables, cloud secret managers, hosted app settings
-      - type: logs
-        detail: HTTP client debug logs exposing X-Auth-Key or X-Auth-Email headers
-    notes: >
-      Global API Key has broad access across a user's Cloudflare resources and
-      requires the account email address for API use. Treat any leak as a
-      high-impact account credential exposure and replace it with scoped API
-      tokens where possible.
+    '
+- id: global-api-key
+  name: Global API Key (legacy)
+  description: 'Cloudflare Global API Key is the legacy account-wide API credential
+    used with the account email address. Cloudflare recommends API tokens where possible
+    and documents that new and rolled Global API Keys use the cfk_ prefixed scannable
+    format.
 
-  - id: account-login-password
-    name: Account Login Password
-    description: >
-      Cloudflare dashboard users authenticate with an email address and
-      password unless the account is governed by SSO. Account members and Super
-      Administrators are managed through Cloudflare account and organization
-      membership flows.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    location:
-      - type: public_interface
-        path: https://dash.cloudflare.com/login
-        detail: Cloudflare dashboard login
-      - type: secret_store
-        detail: password managers, enterprise SSO vaults, and identity-provider credential stores
-      - type: logs
-        detail: browser, proxy, or identity-provider logs that capture login submissions or reset flows
-    notes: >
-      No universal Cloudflare dashboard default password is documented. MFA,
-      SSO, role scopes, and membership policies affect the blast radius of a
-      leaked password, but the password remains the primary account login
-      secret when local Cloudflare authentication is used.
+    '
+  type: api_key
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - example: cfk_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    pattern: cfk_[A-Za-z0-9_\-]{20,}
+    detail: Cloudflare's prefixed Global API Key format
+  location:
+  - type: environment
+    path: CLOUDFLARE_API_KEY, CF_API_KEY
+    detail: Legacy Global API Key env vars; account email is context, not secret material
+  - type: http_header
+    path: X-Auth-Key, X-Auth-Email
+    detail: legacy Cloudflare API authentication headers
+  - type: source_code
+    detail: legacy automation scripts, Terraform provider configuration, DNS update
+      clients
+  - type: config_file
+    detail: Cloudflare DNS/API client configs that store the legacy global key
+    path: cloudflare.ini, cloudflare.cfg, ddclient.conf, lego.env, acme-dns-cloudflare.env
+  - type: secret_store
+    detail: CI/CD variables, cloud secret managers, hosted app settings
+  - type: logs
+    detail: HTTP client debug logs exposing X-Auth-Key or X-Auth-Email headers
+  notes: 'Global API Key has broad access across a user''s Cloudflare resources and
+    requires the account email address for API use. Treat any leak as a high-impact
+    account credential exposure and replace it with scoped API tokens where possible.
 
-  - id: account-recovery-codes
-    name: Account Recovery Codes
-    description: >
-      Cloudflare two-factor authentication setup generates backup recovery
-      codes that can be saved and later used to regain account access if the
-      user loses access to their authenticator or reset channel.
-    type: secret_value
-    nature: [generated_on_install]
-    sensitivity: secret
-    location:
-      - type: secret_store
-        detail: password managers, enterprise vaults, printed recovery-code storage
-      - type: artifact
-        detail: downloaded, printed, copied, or screenshot recovery-code exports
-      - type: source_code
-        detail: accidentally committed notes, onboarding docs, or incident runbooks
-    notes: >
-      Recovery codes are account-access secrets rather than API credentials.
-      They should be rotated/regenerated if found in shared files, tickets,
-      repositories, or screenshots.
+    '
+- id: account-login-password
+  name: Account Login Password
+  description: 'Cloudflare dashboard users authenticate with an email address and
+    password unless the account is governed by SSO. Account members and Super Administrators
+    are managed through Cloudflare account and organization membership flows.
 
-  - id: r2-s3-access-key
-    name: R2 S3 Access Key / Secret Access Key
-    description: >
-      Cloudflare R2 S3-compatible API tokens produce an Access Key ID and
-      Secret Access Key pair. Cloudflare states that the Secret Access Key is
-      displayed only once after token creation and must be recorded by the
-      operator.
-    type: api_key
-    nature: [generated_on_install]
-    sensitivity: secret
-    location:
-      - type: environment
-        path: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY
-      - type: config_file
-        detail: S3 client profiles, rclone config, backup tool config, .env files
-      - type: source_code
-        detail: object-storage clients, backup scripts, data pipelines, committed examples
-      - type: secret_store
-        detail: CI/CD variables, cloud secret managers, backup platform secrets
-      - type: logs
-        detail: S3 client debug logs and failed-auth traces
-    notes: >
-      R2 keys are commonly used through S3-compatible tooling, so they may
-      appear under generic AWS_* names rather than Cloudflare-specific names.
-      The endpoint identifies Cloudflare R2 usage: https://<ACCOUNT_ID>.r2.cloudflarestorage.com.
+    '
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: https://dash.cloudflare.com/login
+    detail: Cloudflare dashboard login
+  - type: secret_store
+    detail: password managers, enterprise SSO vaults, and identity-provider credential
+      stores
+  - type: logs
+    detail: browser, proxy, or identity-provider logs that capture login submissions
+      or reset flows
+  notes: 'No universal Cloudflare dashboard default password is documented. MFA, SSO,
+    role scopes, and membership policies affect the blast radius of a leaked password,
+    but the password remains the primary account login secret when local Cloudflare
+    authentication is used.
 
-  - id: access-service-token
-    name: Cloudflare Access Service Token
-    description: >
-      Cloudflare Access service tokens are machine-to-machine credentials made
-      of a client_id and client_secret. Cloudflare Access accepts them in
-      CF-Access-Client-Id and CF-Access-Client-Secret headers and returns an
-      application-scoped authorization cookie when valid.
-    type: token
-    nature: [generated_on_install]
-    sensitivity: secret
-    looks_like:
-      - example: 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.access'
-        pattern: '[a-f0-9]{32}\.access'
-        detail: service-token client_id format shown by Cloudflare Access examples
-      - example: 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
-        pattern: '[a-f0-9]{64}'
-        detail: service-token client_secret value shown by Cloudflare Access examples
-    location:
-      - type: http_header
-        path: CF-Access-Client-Id, CF-Access-Client-Secret
-      - type: environment
-        path: CF_ACCESS_CLIENT_ID, CF_ACCESS_CLIENT_SECRET
-      - type: source_code
-        detail: service-to-service clients, uptime probes, CI jobs, deployment scripts
-      - type: config_file
-        detail: .env, Kubernetes manifests, reverse-proxy config, monitoring config
-      - type: secret_store
-        detail: CI/CD variables, cloud secret managers, Kubernetes Secrets
-      - type: logs
-        detail: HTTP client debug logs and reverse-proxy logs containing Access headers
-    notes: >
-      Client ID alone is not sufficient; the client secret is the sensitive
-      half. The pair grants non-interactive access to protected applications
-      according to the Access policy that trusts the service token.
+    '
+- id: account-recovery-codes
+  name: Account Recovery Codes
+  description: 'Cloudflare two-factor authentication setup generates backup recovery
+    codes that can be saved and later used to regain account access if the user loses
+    access to their authenticator or reset channel.
 
-  - id: cloudflare-tunnel-token
-    name: Cloudflare Tunnel Token
-    description: >
-      Remotely managed Cloudflare Tunnels use a generated tunnel token passed
-      to cloudflared so the connector can enroll and run the tunnel without a
-      browser login on the host.
-    type: token
-    nature: [generated_on_install]
-    sensitivity: secret
-    location:
-      - type: environment
-        path: TUNNEL_TOKEN, CLOUDFLARE_TUNNEL_TOKEN
-      - type: config_file
-        detail: cloudflared service units, Docker Compose files, Kubernetes manifests, systemd drop-ins
-      - type: image
-        detail: container images or VM images built with cloudflared run commands or token env vars
-      - type: artifact
-        detail: deployment bundles, bootstrap scripts, CI logs, copied tunnel run commands
-      - type: secret_store
-        detail: Kubernetes Secrets, CI/CD variables, cloud secret managers
-      - type: logs
-        detail: process listings, service manager logs, shell histories, and cloudflared debug output
-    notes: >
-      A leaked tunnel token can let another connector join or impersonate the
-      tunnel depending on tunnel configuration and token validity. Treat copied
-      cloudflared run commands as credential-bearing artifacts.
+    '
+  type: secret_value
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: secret_store
+    detail: password managers, enterprise vaults, printed recovery-code storage
+  - type: artifact
+    detail: downloaded, printed, copied, or screenshot recovery-code exports
+  - type: source_code
+    detail: accidentally committed notes, onboarding docs, or incident runbooks
+  notes: 'Recovery codes are account-access secrets rather than API credentials. They
+    should be rotated/regenerated if found in shared files, tickets, repositories,
+    or screenshots.
 
-  - id: origin-ca-private-key
-    name: Origin CA Private Key
-    description: >
-      Cloudflare Origin CA certificates are installed on origin servers to
-      authenticate the origin to Cloudflare. The private key generated with
-      the certificate is the secret half and must be protected like any TLS
-      private key.
-    type: key_pair
-    nature: [generated_on_install]
-    sensitivity: secret
-    looks_like:
-      - pattern: '-----BEGIN (RSA |EC |)PRIVATE KEY-----'
-        detail: PEM private-key header; full private-key examples are multi-line and not useful as specimens
-    location:
-      - type: config_file
-        detail: origin web server TLS key files, reverse-proxy config, Kubernetes TLS Secrets
-      - type: secret_store
-        detail: certificate managers, Kubernetes Secrets, cloud secret managers
-      - type: source_code
-        detail: accidentally committed origin certificate bundles or deployment examples
-      - type: artifact
-        detail: server backups, certificate export archives, configuration bundles
-    notes: >
-      The public Origin CA certificate is not secret; the private key is. A
-      leaked key can allow impersonation of the configured origin certificate
-      where the corresponding certificate is trusted by Cloudflare.
+    '
+- id: r2-s3-access-key
+  name: R2 S3 Access Key / Secret Access Key
+  description: 'Cloudflare R2 S3-compatible API tokens produce an Access Key ID and
+    Secret Access Key pair. Cloudflare states that the Secret Access Key is displayed
+    only once after token creation and must be recorded by the operator.
 
-  - id: workers-secret-binding
-    name: Workers Secret Binding
-    description: >
-      Cloudflare Workers secrets store sensitive values such as API keys,
-      tokens, and passwords as encrypted environment-variable-like bindings.
-      Cloudflare documents that secrets are not visible in Wrangler or the
-      dashboard after definition, while the value is passed to the Worker at
-      runtime.
-    type: secret_value
-    nature: [user_defined]
-    sensitivity: secret
-    location:
-      - type: secret_store
-        detail: Cloudflare Workers secret bindings managed by Wrangler or the dashboard
-      - type: environment
-        detail: available to Worker code as environment bindings at runtime
-      - type: source_code
-        detail: wrangler commands, local dev vars, tests, or examples that accidentally embed secret values
-      - type: config_file
-        detail: Wrangler configuration declaring required secret names; local .dev.vars and .env files may contain development copies
-      - type: logs
-        detail: Worker logs or local development output that prints secret binding values
-    notes: >
-      Workers secrets are a storage location for arbitrary credentials, not a
-      single Cloudflare-generated format. The secret name belongs in location
-      or context; the leaked value should be classified by the underlying
-      credential type when recognizable.
+    '
+  type: api_key
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: config_file
+    detail: R2/S3-compatible client or Wrangler config; generic AWS env vars belong
+      to canonical AWS scanning unless Cloudflare R2 context is present
+    path: rclone.conf, wrangler.toml, wrangler.json
+  - type: source_code
+    detail: object-storage clients, backup scripts, data pipelines, committed examples
+  - type: secret_store
+    detail: CI/CD variables, cloud secret managers, backup platform secrets
+  - type: logs
+    detail: S3 client debug logs and failed-auth traces
+  notes: 'R2 keys are commonly used through S3-compatible tooling, so they may appear
+    under generic AWS_* names rather than Cloudflare-specific names. The endpoint
+    identifies Cloudflare R2 usage: https://<ACCOUNT_ID>.r2.cloudflarestorage.com.
 
+    '
+- id: access-service-token
+  name: Cloudflare Access Service Token
+  description: 'Cloudflare Access service tokens are machine-to-machine credentials
+    made of a client_id and client_secret. Cloudflare Access accepts them in CF-Access-Client-Id
+    and CF-Access-Client-Secret headers and returns an application-scoped authorization
+    cookie when valid.
+
+    '
+  type: token
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - example: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.access
+    pattern: '[a-f0-9]{32}\.access'
+    detail: service-token client_id format shown by Cloudflare Access examples
+  - example: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    pattern: '[a-f0-9]{64}'
+    detail: service-token client_secret value shown by Cloudflare Access examples
+  location:
+  - type: http_header
+    path: CF-Access-Client-Id, CF-Access-Client-Secret
+  - type: environment
+    path: CF_ACCESS_CLIENT_ID, CF_ACCESS_CLIENT_SECRET
+  - type: source_code
+    detail: service-to-service clients, uptime probes, CI jobs, deployment scripts
+  - type: config_file
+    detail: Cloudflare Access service-token client config and local secret files
+    path: cloudflared.yml, config.yml, access-service-token.json
+  - type: secret_store
+    detail: CI/CD variables, cloud secret managers, Kubernetes Secrets
+  - type: logs
+    detail: HTTP client debug logs and reverse-proxy logs containing Access headers
+  notes: 'Client ID alone is not sufficient; the client secret is the sensitive half.
+    The pair grants non-interactive access to protected applications according to
+    the Access policy that trusts the service token.
+
+    '
+- id: cloudflare-tunnel-token
+  name: Cloudflare Tunnel Token
+  description: 'Remotely managed Cloudflare Tunnels use a generated tunnel token passed
+    to cloudflared so the connector can enroll and run the tunnel without a browser
+    login on the host.
+
+    '
+  type: token
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: environment
+    path: TUNNEL_TOKEN, CLOUDFLARE_TUNNEL_TOKEN
+  - type: config_file
+    detail: cloudflared service/config/deployment files containing tunnel run tokens
+      or tunnel credentials
+    path: cloudflared.yml, config.yml, tunnel.json, credentials.json, docker-compose.yml,
+      deployment.yaml, systemd-cloudflared.service
+  - type: image
+    detail: container images or VM images built with cloudflared run commands or token
+      env vars
+  - type: artifact
+    detail: deployment bundles, bootstrap scripts, CI logs, copied tunnel run commands
+  - type: secret_store
+    detail: Kubernetes Secrets, CI/CD variables, cloud secret managers
+  - type: logs
+    detail: process listings, service manager logs, shell histories, and cloudflared
+      debug output
+  notes: 'A leaked tunnel token can let another connector join or impersonate the
+    tunnel depending on tunnel configuration and token validity. Treat copied cloudflared
+    run commands as credential-bearing artifacts.
+
+    '
+- id: origin-ca-private-key
+  name: Origin CA Private Key
+  description: 'Cloudflare Origin CA certificates are installed on origin servers
+    to authenticate the origin to Cloudflare. The private key generated with the certificate
+    is the secret half and must be protected like any TLS private key.
+
+    '
+  type: key_pair
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - pattern: '-----BEGIN (RSA |EC |OPENSSH |ENCRYPTED )?PRIVATE KEY-----'
+    detail: PEM private-key header; full private-key examples are multi-line and not
+      useful as specimens
+  location:
+  - type: config_file
+    detail: Origin TLS private-key filenames used with Cloudflare Origin CA certificates
+    path: origin.key, cloudflare-origin.key, privkey.pem
+  - type: secret_store
+    detail: certificate managers, Kubernetes Secrets, cloud secret managers
+  - type: source_code
+    detail: accidentally committed origin certificate bundles or deployment examples
+  - type: artifact
+    detail: server backups, certificate export archives, configuration bundles
+  notes: 'The public Origin CA certificate is not secret; the private key is. A leaked
+    key can allow impersonation of the configured origin certificate where the corresponding
+    certificate is trusted by Cloudflare.
+
+    '
+- id: workers-secret-binding
+  name: Workers Secret Binding
+  description: 'Cloudflare Workers secrets store sensitive values such as API keys,
+    tokens, and passwords as encrypted environment-variable-like bindings. Cloudflare
+    documents that secrets are not visible in Wrangler or the dashboard after definition,
+    while the value is passed to the Worker at runtime.
+
+    '
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: secret_store
+    detail: Cloudflare Workers secret bindings managed by Wrangler or the dashboard
+  - type: source_code
+    detail: wrangler commands, local dev vars, tests, or examples that accidentally
+      embed secret values
+  - type: config_file
+    detail: Wrangler config declares secret names; local dev vars may contain development
+      copies
+    path: wrangler.toml, wrangler.json, .dev.vars
+  - type: logs
+    detail: Worker logs or local development output that prints secret binding values
+  notes: 'Workers secrets are a storage location for arbitrary credentials, not a
+    single Cloudflare-generated format. The secret name belongs in location or context;
+    the leaked value should be classified by the underlying credential type when recognizable.
+    Environment variable storage noted but omitted from CredsHound location data because
+    no exact variable name is documented: available to Worker code as environment
+    bindings at runtime'
 references:
-  - type: docs
-    url: https://developers.cloudflare.com/fundamentals/api/get-started/create-token/
-  - type: docs
-    url: https://developers.cloudflare.com/fundamentals/api/how-to/make-api-calls/
-  - type: docs
-    url: https://developers.cloudflare.com/fundamentals/api/get-started/keys/
-  - type: docs
-    url: https://developers.cloudflare.com/fundamentals/setup/account/account-security/
-  - type: docs
-    url: https://developers.cloudflare.com/fundamentals/setup/account/account-security/2fa/
-  - type: docs
-    url: https://developers.cloudflare.com/r2/api/s3/tokens/
-  - type: docs
-    url: https://developers.cloudflare.com/cloudflare-one/identity/service-tokens/
-  - type: docs
-    url: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/get-started/create-remote-tunnel/
-  - type: docs
-    url: https://developers.cloudflare.com/ssl/origin-configuration/origin-ca/
-  - type: docs
-    url: https://developers.cloudflare.com/workers/configuration/secrets/
+- type: docs
+  url: https://developers.cloudflare.com/fundamentals/api/get-started/create-token/
+- type: docs
+  url: https://developers.cloudflare.com/fundamentals/api/how-to/make-api-calls/
+- type: docs
+  url: https://developers.cloudflare.com/fundamentals/api/get-started/keys/
+- type: docs
+  url: https://developers.cloudflare.com/fundamentals/setup/account/account-security/
+- type: docs
+  url: https://developers.cloudflare.com/fundamentals/setup/account/account-security/2fa/
+- type: docs
+  url: https://developers.cloudflare.com/r2/api/s3/tokens/
+- type: docs
+  url: https://developers.cloudflare.com/cloudflare-one/identity/service-tokens/
+- type: docs
+  url: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/get-started/create-remote-tunnel/
+- type: docs
+  url: https://developers.cloudflare.com/ssl/origin-configuration/origin-ca/
+- type: docs
+  url: https://developers.cloudflare.com/workers/configuration/secrets/

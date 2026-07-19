@@ -3,124 +3,145 @@ name: Discord
 category: saas
 vendor: Discord
 author: haxxm0nkey
-
 credentials:
+- id: bot-token
+  name: Bot Token
+  description: 'Discord bot users authenticate to the Discord API and Gateway with
+    a bot token from the application''s Bot settings page. Discord documents the Authorization
+    header format as Authorization: Bot <token>.
 
-  - id: bot-token
-    name: Bot Token
-    description: >
-      Discord bot users authenticate to the Discord API and Gateway with a bot
-      token from the application's Bot settings page. Discord documents the
-      Authorization header format as Authorization: Bot <token>.
-    type: token
-    nature: [generated_on_install]
-    sensitivity: secret
-    looks_like:
-      - example: 'MTk4NjXXXXXXXXXXXXXXXX.XXXXXX.XXXXXXXXXXXXXXXXXXXXXXXXXXX'
-        pattern: '[A-Za-z0-9_\-]{20,}\.[A-Za-z0-9_\-]{6,}\.[A-Za-z0-9_\-]{20,}'
-        detail: Discord bot token shape commonly used in bot Authorization headers
-    location:
-      - type: environment
-        path: DISCORD_TOKEN, DISCORD_BOT_TOKEN, BOT_TOKEN
-      - type: http_header
-        path: Authorization
-        detail: 'Bot token used as Authorization: Bot <token>'
-      - type: config_file
-        detail: .env files, bot config, Docker Compose files, deployment manifests
-      - type: secret_store
-        detail: CI/CD variables, Kubernetes Secrets, cloud secret managers, hosted bot settings
-      - type: source_code
-        detail: bot source code, examples, tests, notebooks, committed configs
-      - type: logs
-        detail: REST debug logs, Gateway connection logs, CI output, stack traces
-    notes: >
-      Bot token blast radius depends on bot permissions, guild membership, and
-      privileged intents. Rotate leaked tokens from the Developer Portal.
+    '
+  type: token
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - example: MTk4NjAwMDAwMDAwMDAwMDAw.XXXXXX.XXXXXXXXXXXXXXXXXXXXXXXXXXX
+    pattern: '[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{6,}\.[A-Za-z0-9_-]{20,}'
+    detail: Discord bot token three-part shape used in Bot authorization headers
+  location:
+  - type: environment
+    path: DISCORD_TOKEN, DISCORD_BOT_TOKEN
+    detail: Common Discord bot-token env vars; generic BOT_TOKEN belongs to common
+      scanner context
+  - type: http_header
+    path: Authorization
+    detail: 'Bot token used as Authorization: Bot <token>'
+  - type: config_file
+    detail: Discord bot/deployment configuration files
+    path: discord.json, bot.json, config.json, docker-compose.yml, deployment.yaml
+  - type: secret_store
+    detail: CI/CD variables, Kubernetes Secrets, cloud secret managers, hosted bot
+      settings
+  - type: source_code
+    detail: bot source code, examples, tests, notebooks, committed configs
+  - type: logs
+    detail: REST debug logs, Gateway connection logs, CI output, stack traces
+  notes: 'Bot token blast radius depends on bot permissions, guild membership, and
+    privileged intents. Rotate leaked tokens from the Developer Portal.
 
-  - id: oauth-client-secret
-    name: OAuth2 Client Secret
-    description: >
-      Discord OAuth2 applications use a client_id and client_secret for flows
-      such as authorization code and client credentials. Discord documents that
-      developers retrieve both values from the application settings.
-    type: secret_value
-    nature: [generated_on_install]
-    sensitivity: secret
-    location:
-      - type: environment
-        path: DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET
-      - type: config_file
-        detail: OAuth app config, .env files, deployment manifests
-      - type: secret_store
-        detail: CI/CD variables, cloud secret managers, hosted app settings
-      - type: source_code
-        detail: OAuth callback handlers, examples, committed config
-      - type: logs
-        detail: OAuth exchange logs, error traces, request dumps
-    notes: >
-      The client secret authenticates the application to Discord's OAuth2
-      token endpoint. Client ID alone is an identifier, but it commonly leaks
-      alongside the secret.
+    '
+- id: oauth-client-secret
+  name: OAuth2 Client Secret
+  description: 'Discord OAuth2 applications use a client_id and client_secret for
+    flows such as authorization code and client credentials. Discord documents that
+    developers retrieve both values from the application settings.
 
-  - id: oauth-access-refresh-token
-    name: OAuth2 Access / Refresh Token
-    description: >
-      Discord OAuth2 flows return access tokens and, for supported flows,
-      refresh tokens. Access tokens authenticate with Authorization: Bearer and
-      refresh tokens can obtain new access tokens until revoked or expired.
-    type: token
-    nature: [generated_on_install]
-    sensitivity: secret
-    location:
-      - type: http_header
-        path: Authorization
-        detail: Bearer access token used for OAuth2-authenticated API calls
-      - type: database
-        detail: application OAuth token tables and user authorization stores
-      - type: config_file
-        detail: local development OAuth token caches and .env files
-      - type: secret_store
-        detail: app secret stores and cloud secret managers
-      - type: logs
-        detail: OAuth callback logs and token endpoint responses
-      - type: http_response
-        detail: OAuth2 token endpoint responses containing access_token and refresh_token
-    notes: >
-      OAuth tokens represent delegated user authorization, not a bot user.
-      Scopes determine what the application can do.
+    '
+  type: secret_value
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: environment
+    path: DISCORD_CLIENT_SECRET
+    detail: Discord OAuth2 client secret env var; client ID is context, not secret
+      material
+  - type: config_file
+    detail: Discord OAuth application config files
+    path: discord-oauth.json, oauth.json, config.json
+  - type: secret_store
+    detail: CI/CD variables, cloud secret managers, hosted app settings
+  - type: source_code
+    detail: OAuth callback handlers, examples, committed config
+  - type: logs
+    detail: OAuth exchange logs, error traces, request dumps
+  notes: 'The client secret authenticates the application to Discord''s OAuth2 token
+    endpoint. Client ID alone is an identifier, but it commonly leaks alongside the
+    secret.
 
-  - id: webhook-url-token
-    name: Webhook URL / Token
-    description: >
-      Discord webhooks include a webhook id and secure token. Discord documents
-      that webhooks do not require a bot user or authentication to execute, and
-      webhook objects may include the token and execution URL.
-    type: token
-    nature: [generated_on_install]
-    sensitivity: secret
-    looks_like:
-      - example: 'https://discord.com/api/webhooks/123456789012345678/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
-        pattern: 'https://discord(?:app)?\.com/api/webhooks/[0-9]{17,20}/[A-Za-z0-9_\-]{30,}'
-        detail: Discord webhook execution URL containing the webhook token
-    location:
-      - type: config_file
-        detail: .env files, notification configs, CI/CD webhook settings
-      - type: secret_store
-        detail: CI/CD variables, cloud secret managers, hosted app settings
-      - type: source_code
-        detail: bot code, monitoring rules, deployment scripts, committed examples
-      - type: logs
-        detail: webhook POST traces, CI logs, application debug output
-      - type: http_response
-        detail: OAuth2 webhook.incoming responses and webhook API responses containing url or token
-    notes: >
-      A Discord webhook URL is sufficient to post messages to the target
-      channel. Delete and recreate exposed webhooks.
+    '
+  looks_like:
+  - example: 0123456789abcdef0123456789abcdef
+    pattern: '[a-z0-9=_-]{32}'
+    detail: Discord client secret shape from public scanner rules; use with Discord
+      client_secret context
+- id: oauth-access-refresh-token
+  name: OAuth2 Access / Refresh Token
+  description: 'Discord OAuth2 flows return access tokens and, for supported flows,
+    refresh tokens. Access tokens authenticate with Authorization: Bearer and refresh
+    tokens can obtain new access tokens until revoked or expired.
 
+    '
+  type: token
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Bearer access token used for OAuth2-authenticated API calls
+  - type: database
+    detail: application OAuth token tables and user authorization stores
+  - type: config_file
+    detail: Local OAuth token cache/config files
+    path: discord-oauth-token.json, oauth-token.json
+  - type: secret_store
+    detail: app secret stores and cloud secret managers
+  - type: logs
+    detail: OAuth callback logs and token endpoint responses
+  - type: http_response
+    detail: OAuth2 token endpoint responses containing access_token and refresh_token
+  notes: 'OAuth tokens represent delegated user authorization, not a bot user. Scopes
+    determine what the application can do.
+
+    '
+- id: webhook-url-token
+  name: Webhook URL / Token
+  description: 'Discord webhooks include a webhook id and secure token. Discord documents
+    that webhooks do not require a bot user or authentication to execute, and webhook
+    objects may include the token and execution URL.
+
+    '
+  type: token
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - example: https://discord.com/api/webhooks/123456789012345678/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    pattern: https://discord(?:app)?\.com/api/webhooks/[0-9]{17,20}/[A-Za-z0-9_\-]{30,}
+    detail: Discord webhook execution URL containing the webhook token
+  location:
+  - type: config_file
+    detail: Discord webhook/notification integration config files
+    path: discord-webhook.json, webhooks.json, config.json, docker-compose.yml, deployment.yaml
+  - type: secret_store
+    detail: CI/CD variables, cloud secret managers, hosted app settings
+  - type: source_code
+    detail: bot code, monitoring rules, deployment scripts, committed examples
+  - type: logs
+    detail: webhook POST traces, CI logs, application debug output
+  - type: http_response
+    detail: OAuth2 webhook.incoming responses and webhook API responses containing
+      url or token
+  notes: 'A Discord webhook URL is sufficient to post messages to the target channel.
+    Delete and recreate exposed webhooks.
+
+    '
 references:
-  - type: docs
-    url: https://discord.com/developers/docs/reference
-  - type: docs
-    url: https://discord.com/developers/docs/topics/oauth2
-  - type: docs
-    url: https://discord.com/developers/docs/resources/webhook
+- type: docs
+  url: https://discord.com/developers/docs/reference
+- type: docs
+  url: https://discord.com/developers/docs/topics/oauth2
+- type: docs
+  url: https://discord.com/developers/docs/resources/webhook

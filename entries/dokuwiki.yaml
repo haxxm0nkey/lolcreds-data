@@ -1,6 +1,6 @@
 id: dokuwiki
 name: DokuWiki
-category: cms
+category: other
 vendor: DokuWiki
 author: haxxm0nkey
 credentials:
@@ -14,7 +14,8 @@ credentials:
   sensitivity: secret
   looks_like:
   - pattern: ^[^:#\s]+:[^:]+:[^:]*:[^:]*:.*$
-    detail: DokuWiki users.auth.php line with login, password hash, name, email, and groups
+    detail: DokuWiki users.auth.php line with login, password hash, name, email, and
+      groups
   location:
   - type: config_file
     path: conf/users.auth.php
@@ -22,34 +23,41 @@ credentials:
   - type: public_interface
     path: DokuWiki login and XML-RPC/API access
   - type: artifact
-    detail: wiki backups and configuration archives
+    detail: DokuWiki config/user database in site backups and exports
+    path: conf/users.auth.php, data/meta/_dokuwiki.changes, dokuwiki-backup.tar.gz
 - id: superuser-and-auth-config
   name: Superuser / Auth Plugin Credential
-  description: DokuWiki configuration can define superuser identities and external auth plugin
-    settings such as LDAP bind DN/password, database credentials, or SSO shared secrets.
+  description: DokuWiki configuration can define superuser identities and external
+    auth plugin settings such as LDAP bind DN/password, database credentials, or SSO
+    shared secrets.
   type: secret_value
   nature:
   - user_defined
   sensitivity: secret
   looks_like:
   - pattern: \$conf\[\'superuser\'\]\s*=\s*[\'\"][^\'\"]+[\'\"]
-    detail: DokuWiki superuser setting; identity is not a password but marks privileged accounts
+    detail: DokuWiki superuser setting; identity is not a password but marks privileged
+      accounts
   - pattern: \$conf\[[\'\"][^\'\"]*(pass|password|secret)[^\'\"]*[\'\"]\]\s*=\s*[\'\"][^\'\"]+[\'\"]
     detail: DokuWiki config setting carrying a password or secret
   location:
   - type: config_file
-    path: conf/local.php, conf/plugins.local.php
-    detail: superuser, auth plugin, LDAP, database, SMTP, and integration settings
+    path: conf/local.php, conf/plugins.local.php, conf/dokuwiki.php
+    detail: DokuWiki superuser, auth plugin, LDAP, database, SMTP, and integration
+      settings
   - type: secret_store
     detail: deployment vaults and password managers
   - type: source_code
     detail: configuration management repos and Docker Compose files
   - type: logs
     detail: auth plugin debug logs and web server traces
+  - type: database
+    detail: External auth plugin backends such as LDAP/RDBMS can store user/password
+      verifier state
 - id: rememberme-session-cookie
   name: Remember-Me / Session Cookie
-  description: DokuWiki browser sessions and remember-me cookies can act as bearer credentials
-    for a logged-in user while valid.
+  description: DokuWiki browser sessions and remember-me cookies can act as bearer
+    credentials for a logged-in user while valid.
   type: token
   nature:
   - generated_on_install

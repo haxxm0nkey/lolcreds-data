@@ -3,40 +3,45 @@ name: xAI
 category: ai_api
 vendor: xAI
 author: haxxm0nkey
-
 credentials:
+- id: api-key
+  name: API Key
+  description: 'xAI API keys authenticate requests to api.x.ai. xAI''s docs show Authorization:
+    Bearer headers for REST requests and SDK examples that read the key from XAI_API_KEY.
 
-  - id: api-key
-    name: API Key
-    description: >
-      xAI API keys authenticate requests to api.x.ai. xAI's docs show
-      Authorization: Bearer headers for REST requests and SDK examples that
-      read the key from XAI_API_KEY.
-    type: api_key
-    nature: [user_defined]
-    sensitivity: secret
-    location:
-      - type: environment
-        path: XAI_API_KEY
-      - type: http_header
-        path: Authorization
-        detail: Bearer token used by xAI API calls
-      - type: source_code
-        detail: apps, OpenAI-compatible clients, notebooks, committed .env files
-      - type: config_file
-        detail: .env, deployment manifests, server config, shell profiles
-      - type: secret_store
-        detail: CI/CD variables, cloud secret managers, hosted app settings
-      - type: logs
-        detail: HTTP client debug logs and gateway request logs
-    notes: >
-      xAI keys are opaque bearer credentials with no reliable public prefix in
-      the referenced docs. xAI exposes OpenAI-compatible usage patterns, so
-      leaked keys may appear in generic OpenAI SDK configuration with a custom
-      base URL as well as in provider-specific XAI_API_KEY variables.
+    '
+  type: api_key
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: environment
+    path: XAI_API_KEY
+  - type: http_header
+    path: Authorization
+    detail: Bearer token used by xAI API calls
+  - type: source_code
+    detail: apps, OpenAI-compatible clients, notebooks, committed .env files
+  - type: config_file
+    detail: '.env, deployment manifests, server config, shell profiles; Removed generic/common
+      scanner surface path(s) from product template: .env'
+    path: xai.json, xai.yaml, litellm.yaml, config.yaml
+  - type: secret_store
+    detail: CI/CD variables, cloud secret managers, hosted app settings
+  - type: logs
+    detail: HTTP client debug logs and gateway request logs
+  notes: 'xAI keys are opaque bearer credentials with no reliable public prefix in
+    the referenced docs. xAI exposes OpenAI-compatible usage patterns, so leaked keys
+    may appear in generic OpenAI SDK configuration with a custom base URL as well
+    as in provider-specific XAI_API_KEY variables.
 
+    '
+  looks_like:
+  - example: xai-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghi
+    pattern: xai-[A-Za-z0-9_\-]{70,120}
+    detail: xAI API key shape from public scanner rules
 references:
-  - type: docs
-    url: https://docs.x.ai/docs/overview
-  - type: docs
-    url: https://docs.x.ai/docs/api-reference
+- type: docs
+  url: https://docs.x.ai/docs/overview
+- type: docs
+  url: https://docs.x.ai/docs/api-reference

@@ -6,8 +6,8 @@ author: haxxm0nkey
 credentials:
 - id: default-admin-root
   name: Default admin/root Credentials
-  description: F5 BIG-IP systems have documented default local credentials for initial management
-    access that must be changed during setup and hardening.
+  description: F5 BIG-IP systems have documented default local credentials for initial
+    management access that must be changed during setup and hardening.
   type: username_password
   nature:
   - static_default
@@ -20,15 +20,18 @@ credentials:
   - type: public_interface
     path: BIG-IP Configuration utility, SSH, TMOS shell, iControl REST, and console
   - type: config_file
-    detail: BIG-IP user configuration, UCS archives, and onboarding declarations
+    detail: BIG-IP user configuration, SCF files, UCS archive contents, and onboarding
+      declarations
+    path: bigip_user.conf, bigip.conf, config.scf, user_alert.conf
   - type: artifact
     detail: UCS/QKView/support bundles and device backups
-  notes: F5 documentation also discusses root/default on affected versions/platforms; the
-    default block records the web/admin default admin/admin.
+    path: backup.ucs, qkview.tar.gz, config.scf
+  notes: F5 documentation also discusses root/default on affected versions/platforms;
+    the default block records the web/admin default admin/admin.
 - id: local-user-password
   name: Local BIG-IP User Password
-  description: BIG-IP local users authenticate to the GUI, SSH, tmsh, and iControl REST according
-    to assigned roles and partitions.
+  description: BIG-IP local users authenticate to the GUI, SSH, tmsh, and iControl
+    REST according to assigned roles and partitions.
   type: username_password
   nature:
   - user_defined
@@ -39,6 +42,7 @@ credentials:
   location:
   - type: config_file
     detail: bigip_user.conf, bigip.conf, SCF files, DO declarations, and UCS archives
+    path: bigip_user.conf, bigip.conf
   - type: public_interface
     path: GUI, SSH, tmsh, iControl REST, and console
   - type: secret_store
@@ -47,8 +51,8 @@ credentials:
     detail: audit logs, restjavad logs, ssh logs, and auth failures
 - id: icontrol-rest-token
   name: iControl REST Token
-  description: BIG-IP iControl REST clients can obtain authentication tokens for API automation.
-    Tokens act as bearer credentials until expiration or revocation.
+  description: BIG-IP iControl REST clients can obtain authentication tokens for API
+    automation. Tokens act as bearer credentials until expiration or revocation.
   type: token
   nature:
   - generated_on_install
@@ -61,45 +65,53 @@ credentials:
     path: Authorization
     detail: Basic credentials or bearer-style auth used to obtain/use REST tokens
   - type: config_file
-    detail: automation scripts, Terraform/Ansible provider configs, and .env files
+    detail: Automation scripts, Terraform/Ansible provider configs, and iControl REST
+      client config
+    path: f5.json, bigip.json, terraform.tfvars, provider.tf, inventory.yml
   - type: environment
-    path: F5_TOKEN, F5_PASSWORD, BIGIP_TOKEN
+    path: F5_TOKEN, BIGIP_TOKEN
+    detail: Automation-provided iControl REST token env vars; password env vars belong
+      to admin credential context
   - type: secret_store
     detail: CI/CD variables and vault entries
   - type: logs
     detail: REST debug logs and HTTP traces
 - id: device-trust-and-ssl-keys
   name: Device Trust / SSL Private Keys
-  description: BIG-IP stores device trust certificates, SSL profile private keys, appliance
-    certs, and related passphrases used for traffic termination and cluster trust.
+  description: BIG-IP stores device trust certificates, SSL profile private keys,
+    appliance certs, and related passphrases used for traffic termination and cluster
+    trust.
   type: key_pair
   nature:
   - generated_on_install
   - user_defined
   sensitivity: secret
   looks_like:
-  - pattern: '-----BEGIN (RSA |EC |ENCRYPTED |)PRIVATE KEY-----'
+  - pattern: '-----BEGIN (RSA |EC |OPENSSH |ENCRYPTED )?PRIVATE KEY-----'
     detail: private key material from BIG-IP SSL/device trust key files
   location:
   - type: config_file
-    path: /config/ssl/ssl.key/, /config/ssl/ssl.crt/
+    path: /config/ssl/ssl.key/default.key, /config/ssl/ssl.key/server.key, /config/ssl/ssl.key/ca.key,
+      /config/big3d/client.key
     detail: BIG-IP SSL keys, device certs, and trust material
+    platform:
+    - linux
   - type: secret_store
     detail: UCS archives, certificate vaults, and HSM integrations
   - type: artifact
     detail: UCS backups, SCF files, and support bundles
 - id: snmp-ldap-radius-secrets
   name: SNMP / LDAP / RADIUS / TACACS+ Secrets
-  description: BIG-IP stores SNMP communities, AAA bind passwords, RADIUS/TACACS+ shared secrets,
-    and monitor credentials for management and traffic features.
+  description: BIG-IP stores SNMP communities, AAA bind passwords, RADIUS/TACACS+
+    shared secrets, and monitor credentials for management and traffic features.
   type: secret_value
   nature:
   - user_defined
   sensitivity: secret
   location:
   - type: config_file
-    detail: bigip.conf, bigip_base.conf, auth source config, monitor definitions, and UCS
-      archives
+    detail: BIG-IP config, base config, SCF files, and UCS contents
+    path: bigip.conf, bigip_base.conf, config.scf
   - type: secret_store
     detail: automation vaults and password managers
   - type: source_code

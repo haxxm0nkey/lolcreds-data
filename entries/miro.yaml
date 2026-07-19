@@ -3,101 +3,113 @@ name: Miro
 category: saas
 vendor: Miro
 author: haxxm0nkey
-
 credentials:
+- id: oauth-access-token
+  name: OAuth Access Token
+  description: 'Miro apps use OAuth 2.0 access tokens to call the Miro REST API on
+    behalf of a user. Miro documents the access token in token endpoint responses
+    and requires API requests to send it in the Authorization header as Bearer {ACCESS_TOKEN}.
 
-  - id: oauth-access-token
-    name: OAuth Access Token
-    description: >
-      Miro apps use OAuth 2.0 access tokens to call the Miro REST API on behalf
-      of a user. Miro documents the access token in token endpoint responses and
-      requires API requests to send it in the Authorization header as Bearer
-      {ACCESS_TOKEN}.
-    type: token
-    nature: [generated_on_install]
-    sensitivity: secret
-    looks_like:
-      - pattern: 'eyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+'
-        detail: >
-          Miro OAuth examples show JWT-like access_token values; identify the
-          credential by OAuth token response or Bearer header context because
-          Miro does not document a fixed Miro-specific prefix
-    location:
-      - type: http_header
-        path: Authorization
-        detail: Bearer token used for Miro REST API requests
-      - type: http_response
-        detail: OAuth token endpoint responses containing access_token
-      - type: database
-        detail: application token stores linked to Miro users and teams
-      - type: config_file
-        detail: local OAuth examples, .env files, and app runtime configuration
-      - type: secret_store
-        detail: production app secret stores, CI/CD variables, and cloud secret managers
-      - type: logs
-        detail: OAuth callback logs, REST client debug traces, and token exchange errors
-    notes: >
-      Miro access tokens are short lived; the documented default validity is
-      60 minutes. A leaked token has the scopes and user/team reach granted to
-      the app installation.
+    '
+  type: token
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - pattern: eyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+
+    detail: 'Miro OAuth examples show JWT-like access_token values; identify the credential
+      by OAuth token response or Bearer header context because Miro does not document
+      a fixed Miro-specific prefix
 
-  - id: oauth-refresh-token
-    name: OAuth Refresh Token
-    description: >
-      Miro OAuth token responses include refresh tokens. Miro documents that the
-      refresh token remains valid after the access token expires and is used with
-      the app client secret to request a new access token.
-    type: token
-    nature: [generated_on_install]
-    sensitivity: secret
-    looks_like:
-      - pattern: 'eyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+'
-        detail: >
-          Miro OAuth examples show JWT-like refresh_token values; identify the
-          credential by token endpoint storage context because no fixed
-          Miro-specific prefix is documented
-    location:
-      - type: http_response
-        detail: OAuth token endpoint responses containing refresh_token
-      - type: database
-        detail: application token stores used to renew Miro access tokens
-      - type: config_file
-        detail: local OAuth samples, development .env files, and serialized token caches
-      - type: secret_store
-        detail: application secret stores and encrypted configuration backends
-      - type: logs
-        detail: OAuth exchange logs and application debug output
-    notes: >
-      Miro documents a 60-day refresh-token validity by default. Treat leaked
-      refresh tokens as durable delegated access until revoked or expired.
+      '
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Bearer token used for Miro REST API requests
+  - type: http_response
+    detail: OAuth token endpoint responses containing access_token
+  - type: database
+    detail: application token stores linked to Miro users and teams
+  - type: config_file
+    detail: 'local OAuth examples, .env files, and app runtime configuration; Removed
+      generic/common scanner surface path(s) from product template: .env'
+    path: miro-oauth.json, oauth-token.json, miro.json
+  - type: secret_store
+    detail: production app secret stores, CI/CD variables, and cloud secret managers
+  - type: logs
+    detail: OAuth callback logs, REST client debug traces, and token exchange errors
+  notes: 'Miro access tokens are short lived; the documented default validity is 60
+    minutes. A leaked token has the scopes and user/team reach granted to the app
+    installation.
 
-  - id: oauth-client-secret
-    name: OAuth Client Secret
-    description: >
-      Each Miro developer app has a client ID and client secret. Miro documents
-      that both values are needed when exchanging authorization codes for tokens
-      and when requesting refresh tokens.
-    type: secret_value
-    nature: [generated_on_install]
-    sensitivity: secret
-    location:
-      - type: config_file
-        detail: OAuth server configuration, .env files, deployment manifests, and SDK examples
-      - type: environment
-        path: MIRO_CLIENT_SECRET, MIRO_CLIENT_ID
-      - type: secret_store
-        detail: cloud secret managers, hosted app settings, and CI/CD variables
-      - type: source_code
-        detail: accidentally committed OAuth examples, test fixtures, and deployment scripts
-      - type: logs
-        detail: token exchange request dumps and failed OAuth troubleshooting output
-    notes: >
-      The client ID identifies the app, while the client secret authenticates
-      the app during server-side OAuth token exchange. Client secret exposure can
-      let an attacker impersonate the app in OAuth flows.
+    '
+- id: oauth-refresh-token
+  name: OAuth Refresh Token
+  description: 'Miro OAuth token responses include refresh tokens. Miro documents
+    that the refresh token remains valid after the access token expires and is used
+    with the app client secret to request a new access token.
 
+    '
+  type: token
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - pattern: eyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+
+    detail: 'Miro OAuth examples show JWT-like refresh_token values; identify the
+      credential by token endpoint storage context because no fixed Miro-specific
+      prefix is documented
+
+      '
+  location:
+  - type: http_response
+    detail: OAuth token endpoint responses containing refresh_token
+  - type: database
+    detail: application token stores used to renew Miro access tokens
+  - type: config_file
+    detail: 'local OAuth samples, development .env files, and serialized token caches;
+      Removed generic/common scanner surface path(s) from product template: .env'
+    path: miro-oauth.json, oauth-token.json, miro.json
+  - type: secret_store
+    detail: application secret stores and encrypted configuration backends
+  - type: logs
+    detail: OAuth exchange logs and application debug output
+  notes: 'Miro documents a 60-day refresh-token validity by default. Treat leaked
+    refresh tokens as durable delegated access until revoked or expired.
+
+    '
+- id: oauth-client-secret
+  name: OAuth Client Secret
+  description: 'Each Miro developer app has a client ID and client secret. Miro documents
+    that both values are needed when exchanging authorization codes for tokens and
+    when requesting refresh tokens.
+
+    '
+  type: secret_value
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: config_file
+    detail: 'OAuth server configuration, .env files, deployment manifests, and SDK
+      examples; Removed generic/common scanner surface path(s) from product template:
+      .env'
+    path: miro-oauth.json, oauth.json, miro.json, app.json
+  - type: environment
+    path: MIRO_CLIENT_SECRET
+  - type: secret_store
+    detail: cloud secret managers, hosted app settings, and CI/CD variables
+  - type: source_code
+    detail: accidentally committed OAuth examples, test fixtures, and deployment scripts
+  - type: logs
+    detail: token exchange request dumps and failed OAuth troubleshooting output
+  notes: 'The client ID identifies the app, while the client secret authenticates
+    the app during server-side OAuth token exchange. Client secret exposure can let
+    an attacker impersonate the app in OAuth flows.
+
+    '
 references:
-  - type: docs
-    url: https://developers.miro.com/docs/getting-started-with-oauth
-  - type: docs
-    url: https://developers.miro.com/docs/troubleshooting-oauth20
+- type: docs
+  url: https://developers.miro.com/docs/getting-started-with-oauth
+- type: docs
+  url: https://developers.miro.com/docs/troubleshooting-oauth20

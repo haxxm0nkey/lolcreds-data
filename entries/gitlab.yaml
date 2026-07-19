@@ -1,356 +1,166 @@
 id: gitlab
 name: GitLab
 category: ci_cd
-vendor: GitLab Inc.
+vendor: GitLab
 author: haxxm0nkey
-
 credentials:
-
-  - id: initial-root-password
-    name: Initial Root Password
-    description: >
-      Omnibus and Docker GitLab generate a random root password on first
-      boot and write it to /etc/gitlab/initial_root_password. The file is
-      auto-deleted 24 hours after install.
-    type: password
-    nature: [generated_on_install]
-    sensitivity: secret
-    looks_like:
-      - pattern: '^Password:\s+\S+$'
-        detail: >
-          line inside the initial_root_password file; the value itself is
-          per-install and has no fixed shape
-    location:
-      - type: config_file
-        path: /etc/gitlab/initial_root_password
-      - type: logs
-        detail: container / journald output on first boot in some deployments
-    notes: >
-      Auto-deletion at 24 h is a mitigation, not a guarantee — it removes
-      the file, not any access already captured, and not the account itself
-      if never secured. The initial_root_password value can also be
-      pre-set via gitlab_rails['initial_root_password'] in /etc/gitlab/gitlab.rb,
-      which means the same value can leak from a plaintext gitlab.rb backup.
-
-  - id: gitlab-rb-secrets
-    name: gitlab.rb Configuration Secrets
-    description: >
-      The Omnibus main config file /etc/gitlab/gitlab.rb stores multiple
-      secrets in plaintext: initial_root_password, database password
-      (gitlab_rails['db_password']), initial_shared_runners_registration_token,
-      Redis password, SMTP credentials, LDAP bind password, and more. The
-      vendor explicitly documents that this file "should have file
-      permissions 0600 because it contains plain-text passwords."
-    type: secret_value
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: "gitlab_rails\\['(db_password|initial_root_password|initial_shared_runners_registration_token)'\\]\\s*=\\s*'[^']+'"
-        detail: >
-          plaintext assignment in gitlab.rb; the value inside the quotes
-          is the credential (Ruby DSL assignment; shape of the value is
-          arbitrary)
-      - pattern: "postgresql\\['sql_user_password'\\]\\s*=\\s*'[a-f0-9]{32}'"
-        detail: MD5-hashed Postgres password (still directly usable with the DB)
-    location:
-      - type: config_file
-        path: /etc/gitlab/gitlab.rb
-        detail: main Omnibus configuration; 0600 by design, world-readable in backups
-      - type: build_artifact
-        detail: gitlab-ctl backup-etc archives, config-management output, snapshots
-    notes: >
-      This is the single highest-value file on a GitLab host — one read
-      hands you the DB password, the Rails-seeded root credential, and
-      any pre-set runner registration tokens. Frequently exposed via
-      misconfigured backups, config-management repos, and container images
-      built with the file baked in.
-
-  - id: gitlab-secrets-json
-    name: Rails Encryption Secrets (gitlab-secrets.json)
-    description: >
-      /etc/gitlab/gitlab-secrets.json holds the Rails secret_key_base,
-      db_key_base, and OTP/OpenID signing keys. These keys decrypt every
-      encrypted value in the GitLab database — including stored CI/CD
-      variables, integrations, and personal access tokens.
-    type: secret_value
-    nature: [generated_on_install]
-    sensitivity: secret
-    looks_like:
-      - pattern: '"(secret_key_base|db_key_base|otp_key_base)":\s*"[a-f0-9]{64,}"'
-        detail: >
-          JSON key/value pair; 64+ char hex value is the credential
-          (config-file secret pattern — the key name identifies it)
-    location:
-      - type: config_file
-        path: /etc/gitlab/gitlab-secrets.json
-      - type: build_artifact
-        detail: gitlab-ctl backup-etc archives include this file
-    notes: >
-      Losing this file is worse than losing an admin session — it lets
-      an attacker decrypt every stored secret offline, including secrets
-      belonging to users who never logged in through the attacker's access.
-      Must be backed up separately from the DB backup, and consequently is
-      often stored insecurely by operators who don't understand its role.
-
-  - id: default-db-user
-    name: Bundled PostgreSQL User
-    description: >
-      The Omnibus package's bundled PostgreSQL is created with the
-      username 'gitlab' by default. Password is set via
-      postgresql['sql_user_password'] (MD5-encoded) and consumed by
-      gitlab_rails['db_password'] (plaintext).
-    type: username_password
-    nature: [static_default]
-    sensitivity: context_dependent
-    default:
-      username: gitlab
-      password: null
-      affected_versions: "Omnibus (all)"
-    location:
-      - type: config_file
-        path: /etc/gitlab/gitlab.rb
-        detail: postgresql['sql_user_password'] and gitlab_rails['db_password']
-      - type: database
-        detail: bundled Postgres, TCP 5432 (localhost by default)
-    notes: >
-      The bundled Postgres binds to localhost with peer/trust auth by
-      default, so the username being "gitlab" isn't exploitable on its own —
-      but the moment listen_address is changed for HA or external access,
-      the known username plus a leaked gitlab.rb (see gitlab-rb-secrets)
-      gives direct DB access. The DB holds every stored token in
-      encrypted form; combined with gitlab-secrets.json it's a full
-      offline compromise.
-
-  - id: personal-access-token
-    name: Personal / Project / Group Access Token
-    description: >
-      GitLab's family of user-scoped tokens all share the glpat- prefix:
-      personal access tokens, impersonation tokens, project access tokens,
-      and group access tokens.
-    type: token
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - example: 'glpat-XXXXXXXXXXXXXXXXXXXX'
-        pattern: 'glpat-[A-Za-z0-9_\-]{20,}'
-    location:
-      - type: source_code
-        detail: git remote URLs, CI config, committed .env files
-      - type: environment
-        path: GITLAB_TOKEN, CI_JOB_TOKEN, PRIVATE_TOKEN
-    notes: >
-      Scope depends on how the token was minted; api scope is effectively
-      full account access. The glpat- prefix was introduced specifically
-      to make these detectable by secret scanners. Users routinely paste
-      these into git remote URLs
-      (https://oauth2:glpat-...@gitlab.example.com/…), which Git then
-      writes to .git/config in plaintext.
-
-  - id: oauth-application-secret
-    name: OAuth Application Secret
-    description: >
-      Client secret for an OAuth 2.0 application registered in GitLab,
-      used when GitLab acts as an OAuth provider for other services.
-    type: token
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - example: 'gloas-XXXXXXXXXXXXXXXXXXXX'
-        pattern: 'gloas-[A-Za-z0-9_\-]{20,}'
-    location:
-      - type: source_code
-        detail: OAuth client configuration in downstream applications
-      - type: config_file
-        detail: application config files that integrate with GitLab SSO
-    notes: >
-      A leaked OAuth application secret lets an attacker impersonate the
-      downstream application to GitLab, potentially receiving user tokens
-      via a spoofed authorization flow.
-
-  - id: deploy-token
-    name: Deploy Token
-    description: >
-      Project-scoped credential (username + token) for cloning, pushing,
-      and pulling packages and container registry images. Not tied to a
-      user account and cannot be used with the GitLab API.
-    type: token
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - example: 'gldt-XXXXXXXXXXXXXXXXXXXX'
-        pattern: 'gldt-[A-Za-z0-9_\-]{20,}'
-        detail: prefix added in GitLab 16.7; older deploy tokens have no distinctive prefix
-    location:
-      - type: source_code
-        detail: docker login / helm registry login flows in CI files, kustomize configs
-      - type: environment
-    notes: >
-      Because deploy tokens have no user context, revocation and
-      auditability are poor. A writable deploy token supports pushing
-      malicious container images — a supply-chain concern for downstream
-      consumers of the registry.
-
-  - id: deploy-key
-    name: Deploy Key
-    description: >
-      SSH key granting read-only or read-write access to a single
-      repository, without a user account. The private key is what
-      actually gets leaked.
-    type: key_pair
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: '-----BEGIN (OPENSSH|RSA|EC|DSA) PRIVATE KEY-----'
-        detail: >
-          identified by the header line; a full PEM example is multi-line
-          and unhelpful as a specimen
-    location:
-      - type: config_file
-        path: '~/.ssh/id_*, deploy.key in CI runner homedirs and Kubernetes Secrets'
-      - type: secret_store
-    notes: >
-      Scope is exactly one repo - smaller blast radius than a PAT, but
-      writable deploy keys still enable per-repo supply-chain tampering.
-      No 2FA, no user context.
-
-  - id: runner-authentication-token
-    name: Runner Authentication Token
-    description: >
-      Long-lived token stored on each GitLab Runner in config.toml,
-      used to authenticate to GitLab and pick up jobs. Replaces the
-      legacy runner registration token as of GitLab 16.0.
-    type: token
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - example: 'glrt-XXXXXXXXXXXXXXXXXXXX'
-        pattern: 'glrt-[A-Za-z0-9_\-]{20,}'
-      - example: 'glrtr-XXXXXXXXXXXXXXXXXXXX'
-        pattern: 'glrtr-[A-Za-z0-9_\-]{20,}'
-        detail: variant prefix when created via the legacy registration workflow
-    location:
-      - type: config_file
-        path: /etc/gitlab-runner/config.toml
-        detail: 'token = "glrt-..." in each [[runners]] block'
-      - type: secret_store
-        detail: often referenced by Kubernetes Secrets when using the Runner Helm chart / operator
-    notes: >
-      GitLab's own docs: "Malicious access to a runner's file system might
-      expose the config.toml file and the runner authentication token. The
-      attacker could use the runner authentication token to clone the
-      runner." A cloned runner picks up real jobs and sees their secrets
-      as they run. Common exposure: config.toml baked into container images
-      or checked into infrastructure repos.
-
-  - id: runner-registration-token
-    name: Runner Registration Token (legacy)
-    description: >
-      Legacy instance/group/project token used to register new runners.
-      Deprecated in favor of runner authentication tokens (GitLab 16.0+)
-      but still functional on many self-managed instances.
-    type: token
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: '[A-Za-z0-9_\-]{20,}'
-        detail: >
-          no distinctive prefix on legacy registration tokens; identified
-          by context (found in gitlab.rb or CI onboarding scripts)
-    location:
-      - type: config_file
-        path: /etc/gitlab/gitlab.rb
-        detail: "gitlab_rails['initial_shared_runners_registration_token']"
-      - type: source_code
-        detail: CI/CD onboarding scripts, Helm values files
-    notes: >
-      A leaked registration token lets an attacker register their own
-      runner to the instance/group/project, which then picks up real
-      jobs and reads their CI variables. The initial_shared_runners_registration_token
-      set in gitlab.rb is the highest-value variant — it's the instance-wide
-      token, baked into a config file most operators forget grants runner
-      registration to anyone who reads it.
-
-  - id: cicd-job-token
-    name: CI/CD Job Token
-    description: >
-      Short-lived token injected into every CI/CD job as CI_JOB_TOKEN.
-      Valid only for the duration of the job; grants a limited set of
-      API endpoints authenticated as the user who triggered the job.
-    type: token
-    nature: [generated_on_install]
-    sensitivity: secret
-    looks_like:
-      - example: 'glcbt-XXXXXXXXXXXXXXXXXXXX'
-        pattern: 'glcbt-[A-Za-z0-9_\-]{20,}'
-        detail: prefix added in GitLab 16.9 (feature gated in 16.8)
-    location:
-      - type: environment
-        path: CI_JOB_TOKEN
-      - type: logs
-        detail: echo'd into job logs by misconfigured pipelines; visible in artifacts
-    notes: >
-      The token is short-lived but on shell/Docker Machine runners with
-      MaxBuilds != 1 it can be captured by a subsequent job on the same
-      host. Frequently accidentally echo'd in debug output despite
-      GitLab's masking — masking is a display filter, not a control on
-      what leaves the runner.
-
-  - id: cluster-agent-token
-    name: GitLab Agent for Kubernetes Token
-    description: >
-      Token that authenticates a GitLab Agent for Kubernetes back to the
-      GitLab server. Grants the cluster agent the ability to receive
-      configuration, run CI jobs on the cluster, and expose the cluster
-      to GitLab-side features.
-    type: token
-    nature: [generated_on_install]
-    sensitivity: secret
-    looks_like:
-      - example: 'glagent-XXXXXXXXXXXXXXXXXXXX'
-        pattern: 'glagent-[A-Za-z0-9_\-]{20,}'
-    location:
-      - type: secret_store
-        detail: 'Kubernetes Secret used by the agent Helm chart (typically named gitlab-agent-token)'
-      - type: environment
-    notes: >
-      The token authenticates one side of a bidirectional control channel
-      between GitLab and the cluster. A leaked agent token is essentially
-      persistent cluster access from anyone who can reach the GitLab
-      instance.
-
-  - id: feed-token
-    name: Feed Token
-    description: >
-      Long-lived user token embedded in RSS/calendar feed URLs. Does not
-      expire. Grants read-only access to the user's activity feed —
-      including confidential issues — as if they were the user.
-    type: token
-    nature: [generated_on_install]
-    sensitivity: secret
-    looks_like:
-      - example: 'glft-XXXXXXXXXXXXXXXXXXXX'
-        pattern: 'glft-[A-Za-z0-9_\-]{20,}'
-    location:
-      - type: source_code
-        detail: RSS/calendar URLs pasted into feed readers, wikis, bookmarks
-      - type: http_response
-        detail: shared feed URLs in browser history and proxy logs
-    notes: >
-      Users routinely paste their feed URL (containing the token) into
-      shared calendar tools, wikis, and cross-team Slack messages,
-      treating it as "just a link." Anyone with the token sees every
-      issue the user can see. Reset immediately if exposed.
-
+- id: user-or-admin-password
+  name: GitLab User / Administrator Password
+  description: GitLab users, administrators, service accounts, or break-glass accounts
+    may authenticate to product consoles, CLIs, APIs, SSO flows, or associated integrations
+    with user-defined passwords or federated login flows.
+  type: username_password
+  nature:
+  - user_defined
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: GitLab web console, admin portal, CLI login, API login, or SSO/OAuth authorization
+      endpoint
+  - type: secret_store
+    detail: password managers, enterprise IdP stores, break-glass admin vaults, CI/CD
+      variables, and managed credential stores
+  - type: config_file
+    detail: SSO connector configs, local CLI profiles, application settings, scripts,
+      and integration definitions
+  - type: logs
+    detail: audit logs, sign-in logs, admin events, access logs, CLI debug output,
+      and support traces
+  notes: Catalogs ordinary operational credential locations; this is not a claim of
+    a static vendor default password.
+- id: product-api-token-or-key
+  name: GitLab Product API Token / Key
+  description: 'GitLab exposes product API credentials represented in Betterleaks
+    detector coverage (gitlab-cicd-job-token, gitlab-deploy-token, gitlab-feature-flag-client-token,
+    gitlab-feed-token, gitlab-incoming-mail-token, gitlab-kubernetes-agent-token,
+    gitlab-oauth-app-secret, gitlab-pat, gitlab-pat-routable, gitlab-pat-routable-versioned,
+    gitlab-ptt, gitlab-rrt, gitlab-runner-authentication-token, gitlab-runner-authentication-token-routable,
+    gitlab-scim-token, gitlab-session-cookie). These credentials commonly authorize
+    account, workspace, project, or integration-level API operations. '
+  type: token
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Bearer, Basic, API-key, or product-specific authorization header used
+      by SDKs and API clients
+  - type: http_response
+    detail: token, key, OAuth, webhook, or credential creation responses where the
+      product displays the secret value once
+  - type: config_file
+    detail: GitLab CLI/SDK config, CI config, and runner config files
+    path: ~/.python-gitlab.cfg, .gitlab-ci.yml, config.toml, glab-cli/config.yml
+  - type: environment
+    path: GITLAB_TOKEN, GITLAB_ACCESS_TOKEN, GITLAB_API_TOKEN, GL_TOKEN, GITLAB_PRIVATE_TOKEN
+  - type: secret_store
+    detail: CI/CD variables, cloud secret managers, platform secret stores, password
+      vaults, and integration vaults
+  - type: source_code
+    detail: application code, automation scripts, notebooks, tests, examples, infrastructure-as-code,
+      and committed config files
+  - type: logs
+    detail: API debug logs, CLI traces, webhook/integration logs, CI output, exception
+      traces, and support bundles
+  notes: 'Betterleaks detector rule IDs covered by this product entry: gitlab-cicd-job-token,
+    gitlab-deploy-token, gitlab-feature-flag-client-token, gitlab-feed-token, gitlab-incoming-mail-token,
+    gitlab-kubernetes-agent-token, gitlab-oauth-app-secret, gitlab-pat, gitlab-pat-routable,
+    gitlab-pat-routable-versioned, gitlab-ptt, gitlab-rrt, gitlab-runner-authentication-token,
+    gitlab-runner-authentication-token-routable, gitlab-scim-token, gitlab-session-cookie.
+    This block is product-focused; generic token/JWT/private-key handling stays in
+    the consuming product context.'
+  looks_like:
+  - example: glpat-0123456789abcdef0123
+    pattern: glpat-[A-Za-z0-9_\-]{20,}
+    detail: GitLab personal/project/group/impersonation token prefix
+  - example: gldt-0123456789abcdef0123
+    pattern: gldt-[A-Za-z0-9_\-]{20,}
+    detail: GitLab deploy token prefix
+  - example: glrt-0123456789abcdef0123
+    pattern: glrtr?-[A-Za-z0-9_\-]{20,}
+    detail: GitLab runner authentication token prefix
+  - example: glcbt-0123456789abcdef0123
+    pattern: glcbt-[A-Za-z0-9_\-]{20,}
+    detail: GitLab CI/CD job token prefix
+  - example: glptt-0123456789abcdef0123
+    pattern: glptt-[A-Za-z0-9_\-]{20,}
+    detail: GitLab pipeline trigger token prefix
+  - example: glft-0123456789abcdef0123
+    pattern: glft-[A-Za-z0-9_\-]{20,}
+    detail: GitLab feed token prefix
+  - example: glimt-0123456789abcdef0123
+    pattern: glimt-[A-Za-z0-9_\-]{20,}
+    detail: GitLab incoming mail token prefix
+- id: oauth-application-credential
+  name: GitLab OAuth / Application Credential
+  description: GitLab OAuth apps, marketplace apps, service principals, integrations,
+    or installed applications can use client IDs, client secrets, access tokens, refresh
+    tokens, and app installation credentials.
+  type: secret_value
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Bearer access token or Basic client authentication
+  - type: http_response
+    detail: OAuth token responses containing access_token, refresh_token, id_token,
+      token_type, scope, and expiry fields
+  - type: config_file
+    detail: 'OAuth app configs, SDK settings, integration manifests, .env files, callback
+      handlers, and service configs; Removed generic/common scanner surface path(s)
+      from product template: .env'
+    path: gitlab-oauth.json, oauth.json, config.yml
+  - type: environment
+    path: GITLAB_CLIENT_SECRET, GITLAB_ACCESS_TOKEN, GITLAB_REFRESH_TOKEN
+    detail: OAuth client secret and token env vars; client ID is context, not secret
+      material
+  - type: secret_store
+    detail: OAuth client secret stores, CI/CD variables, cloud secret managers, enterprise
+      vaults, and app-installation secret stores
+  - type: source_code
+    detail: OAuth callback code, app manifests, automation scripts, test fixtures,
+      and examples
+  - type: logs
+    detail: OAuth exchange logs, callback logs, API traces, and failed auth errors
+  looks_like:
+  - example: gloas-0123456789abcdef0123
+    pattern: gloas-[A-Za-z0-9_\-]{20,}
+    detail: GitLab OAuth application secret prefix from GitLab token docs
+- id: ci-cd-runner-and-deploy-secret
+  name: GitLab CI/CD Runner, Deploy, or Automation Secret
+  description: GitLab can store runner registration tokens, deploy keys, repository
+    tokens, package publishing credentials, webhook secrets, and automation variables
+    used by builds and deployments.
+  type: secret_value
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: config_file
+    detail: Pipeline YAML, runner configs, deploy-token/package configs, and deployment
+      manifests
+    path: .gitlab-ci.yml, config.toml, deploy-token.json, package-credentials.json
+  - type: environment
+    path: GITLAB_TOKEN, GITLAB_API_TOKEN, GITLAB_DEPLOY_TOKEN, GITLAB_PASSWORD
+  - type: secret_store
+    detail: CI/CD secret variables, project/org secret stores, package registry secrets,
+      cloud secret managers, and vaults
+  - type: source_code
+    detail: pipeline definitions, build scripts, Dockerfiles, release scripts, and
+      committed examples
+  - type: artifact
+    detail: build artifacts, runner workdirs, caches, release bundles, and support
+      bundles
+  - type: logs
+    detail: pipeline logs, runner logs, deployment logs, package publish output, and
+      CLI debug traces
 references:
-  - type: docs
-    url: https://docs.gitlab.com/security/tokens/
-  - type: docs
-    url: https://docs.gitlab.com/omnibus/settings/database/
-  - type: docs
-    url: https://docs.gitlab.com/omnibus/settings/configuration/
-  - type: docs
-    url: https://docs.gitlab.com/ee/install/docker.html
-  - type: docs
-    url: https://docs.gitlab.com/ci/runners/new_creation_workflow/
-  - type: docs
-    url: https://docs.gitlab.com/runner/register/
+- type: docs
+  url: https://raw.githubusercontent.com/betterleaks/betterleaks/main/config/betterleaks.toml

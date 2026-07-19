@@ -3,41 +3,47 @@ name: Cohere
 category: ai_api
 vendor: Cohere
 author: haxxm0nkey
-
 credentials:
+- id: api-key
+  name: API Key
+  description: 'Cohere API keys authenticate requests to Cohere model APIs. Cohere''s
+    API reference states that requests must pass an Authorization header in the shape
+    BEARER [API_KEY].
 
-  - id: api-key
-    name: API Key
-    description: >
-      Cohere API keys authenticate requests to Cohere model APIs. Cohere's
-      API reference states that requests must pass an Authorization header in
-      the shape BEARER [API_KEY].
-    type: api_key
-    nature: [user_defined]
-    sensitivity: secret
-    location:
-      - type: environment
-        path: CO_API_KEY
-      - type: environment
-        path: COHERE_API_KEY
-      - type: http_header
-        path: Authorization
-        detail: BEARER API key header used by Cohere API calls
-      - type: source_code
-        detail: apps, search/rerank pipelines, notebooks, committed .env files
-      - type: config_file
-        detail: .env, deployment manifests, app settings, shell profiles
-      - type: secret_store
-        detail: CI/CD variables, hosted application settings, cloud secret managers
-      - type: logs
-        detail: HTTP client logs, gateway logs, and request dumps with Authorization headers
-    notes: >
-      Cohere keys are opaque bearer credentials with no reliable public prefix
-      in the referenced docs. Embedding and rerank workloads often put them in
-      data-processing notebooks and batch jobs, not only in web services.
+    '
+  type: api_key
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: environment
+    path: CO_API_KEY, COHERE_API_KEY
+    detail: Official/SDK Cohere API key environment variables
+  - type: http_header
+    path: Authorization
+    detail: BEARER API key header used by Cohere API calls
+  - type: source_code
+    detail: apps, search/rerank pipelines, notebooks, committed .env files
+  - type: secret_store
+    detail: CI/CD variables, hosted application settings, cloud secret managers
+  - type: logs
+    detail: HTTP client logs, gateway logs, and request dumps with Authorization headers
+  - type: config_file
+    path: cohere.yaml, cohere.json, notebook.ipynb
+    detail: Product-local Cohere app/notebook configuration files; generic .env belongs
+      to common scanner surfaces
+  notes: 'Cohere keys are opaque bearer credentials with no reliable public prefix
+    in the referenced docs. Embedding and rerank workloads often put them in data-processing
+    notebooks and batch jobs, not only in web services.
 
+    '
+  looks_like:
+  - example: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    pattern: '[A-Za-z0-9]{40}'
+    detail: Cohere API token shape from public scanner rules; use with Cohere env/header/source
+      context to avoid generic 40-char false positives
 references:
-  - type: docs
-    url: https://docs.cohere.com/reference/about
-  - type: docs
-    url: https://docs.cohere.com/docs/the-cohere-platform
+- type: docs
+  url: https://docs.cohere.com/reference/about
+- type: docs
+  url: https://docs.cohere.com/docs/the-cohere-platform

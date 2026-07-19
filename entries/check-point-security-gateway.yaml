@@ -6,9 +6,9 @@ author: haxxm0nkey
 credentials:
 - id: gaia-admin-password
   name: Gaia Administrator Password
-  description: Check Point Gaia appliances and gateways use local administrator accounts for
-    WebUI, SSH/CLI, and management access. Initial/admin passwords are set during installation,
-    first-time wizard, or appliance onboarding.
+  description: Check Point Gaia appliances and gateways use local administrator accounts
+    for WebUI, SSH/CLI, and management access. Initial/admin passwords are set during
+    installation, first-time wizard, or appliance onboarding.
   type: username_password
   nature:
   - generated_on_install
@@ -18,18 +18,21 @@ credentials:
   - type: public_interface
     path: Gaia Portal/WebUI, SSH, console, clish, expert mode, and management APIs
   - type: config_file
-    detail: Gaia configuration database, configuration backups, and first-time configuration
-      artifacts
+    detail: Gaia active and initial configuration database files/backups containing
+      local admin/expert configuration context
+    path: /config/active, /config/db/initial
+    platform:
+    - linux
   - type: secret_store
     detail: password vaults, deployment tools, and appliance management stores
   - type: logs
     detail: audit logs, /var/log/messages, WebUI logs, and authentication traces
-  notes: No universal Gaia administrator password is modeled; appliances prompt for or generate
-    initial credentials depending on deployment path.
+  notes: No universal Gaia administrator password is modeled; appliances prompt for
+    or generate initial credentials depending on deployment path.
 - id: expert-password
   name: Expert Mode Password
-  description: Gaia systems can protect expert mode with a separate expert password, enabling
-    access to the underlying shell for low-level administration.
+  description: Gaia systems can protect expert mode with a separate expert password,
+    enabling access to the underlying shell for low-level administration.
   type: password
   nature:
   - user_defined
@@ -39,15 +42,19 @@ credentials:
   - type: public_interface
     path: expert mode from clish/SSH/console
   - type: config_file
-    detail: Gaia local configuration and password hash storage
+    detail: Gaia active and initial configuration database files/backups containing
+      local admin/expert configuration context
+    path: /config/active, /config/db/initial
+    platform:
+    - linux
   - type: secret_store
     detail: admin password vaults and break-glass stores
   - type: logs
     detail: shell access, audit, and authentication logs
 - id: sic-one-time-password
   name: SIC One-Time Password / Trust Secret
-  description: Security gateways establish Secure Internal Communication (SIC) trust with
-    management servers using an activation key/one-time password and certificates.
+  description: Security gateways establish Secure Internal Communication (SIC) trust
+    with management servers using an activation key/one-time password and certificates.
   type: secret_value
   nature:
   - generated_on_install
@@ -55,8 +62,8 @@ credentials:
   sensitivity: secret
   location:
   - type: config_file
-    detail: first-time wizard files, cpconfig/SIC configuration, management database, and
-      gateway objects
+    detail: Exported setup/SIC and management database context for gateway trust establishment
+    path: cpconfig.txt, first-time-wizard.txt, objects.C
   - type: secret_store
     detail: management server stores, deployment vaults, and certificate stores
   - type: logs
@@ -64,20 +71,22 @@ credentials:
 - id: vpn-snmp-ldap-radius-secrets
   name: VPN, SNMP, LDAP, RADIUS, and API Secrets
   description: Check Point deployments contain VPN pre-shared keys, SNMP communities/users,
-    LDAP bind passwords, RADIUS/TACACS+ shared secrets, API keys, and certificate private
-    keys.
+    LDAP bind passwords, RADIUS/TACACS+ shared secrets, API keys, and certificate
+    private keys.
   type: secret_value
   nature:
   - user_defined
   - generated_on_install
   sensitivity: secret
   looks_like:
-  - pattern: '-----BEGIN (RSA |EC |ENCRYPTED |)PRIVATE KEY-----'
-    detail: private key material for VPN, HTTPS inspection, management, or SIC-related certificates
+  - pattern: '-----BEGIN (RSA |EC |OPENSSH |ENCRYPTED )?PRIVATE KEY-----'
+    detail: private key material for VPN, HTTPS inspection, management, or SIC-related
+      certificates
   location:
   - type: config_file
-    detail: Gaia config, management database objects, VPN communities, auth servers, SNMP
-      settings, and certificate stores
+    detail: Management database exports, mgmt_cli payloads, clish show-configuration
+      output, and cpinfo support artifacts
+    path: objects.C, mgmt_cli.json, clish-config.txt, cpinfo.txt
   - type: secret_store
     detail: SmartConsole/management server credential stores, HSMs, and vaults
   - type: source_code

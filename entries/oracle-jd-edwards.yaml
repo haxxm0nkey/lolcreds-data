@@ -1,14 +1,14 @@
 id: oracle-jd-edwards
 name: Oracle JD Edwards EnterpriseOne
-category: enterprise_app
+category: other
 vendor: Oracle
 author: haxxm0nkey
 credentials:
 - id: jde-demo-user
   name: JDE Demo / Administrative User
-  description: JD Edwards EnterpriseOne installations and demo environments commonly include
-    delivered administrative users such as JDE that must be changed or disabled during security
-    hardening.
+  description: JD Edwards EnterpriseOne installations and demo environments commonly
+    include delivered administrative users such as JDE that must be changed or disabled
+    during security hardening.
   type: username_password
   nature:
   - static_default
@@ -24,14 +24,15 @@ credentials:
     detail: EnterpriseOne security tables and user profile records
   - type: config_file
     detail: installation workbench outputs, jde.ini, jas.ini, and provisioning notes
+    path: jde.ini, jas.ini
   - type: logs
     detail: security server, web client, AIS, and Server Manager logs
-  notes: JDE/JDE is modeled as a delivered/demo credential pattern; hardened production environments
-    should not retain it.
+  notes: JDE/JDE is modeled as a delivered/demo credential pattern; hardened production
+    environments should not retain it.
 - id: enterpriseone-user-password
   name: EnterpriseOne User Password
-  description: JD Edwards users and service accounts authenticate through EnterpriseOne security
-    for web, fat client, batch, AIS, and orchestrations.
+  description: JD Edwards users and service accounts authenticate through EnterpriseOne
+    security for web, fat client, batch, AIS, and orchestrations.
   type: username_password
   nature:
   - user_defined
@@ -45,14 +46,15 @@ credentials:
     path: EnterpriseOne web/fat client, AIS REST, Orchestrator, and Server Manager
   - type: config_file
     detail: jde.ini, jas.ini, server manager config, and datasource settings
+    path: jde.ini, jas.ini, jdbj.ini
   - type: secret_store
     detail: password vaults and deployment stores
   - type: logs
     detail: JAS, security server, batch, and AIS logs
 - id: database-and-datasource-secret
   name: Database / Data Source Credential
-  description: EnterpriseOne data sources and middleware components store database, LDAP,
-    mail, and integration credentials used by kernels, batch jobs, and AIS/orchestrations.
+  description: EnterpriseOne data sources and middleware components store database,
+    LDAP, mail, and integration credentials used by kernels, batch jobs, and AIS/orchestrations.
   type: secret_value
   nature:
   - user_defined
@@ -60,10 +62,12 @@ credentials:
   sensitivity: secret
   location:
   - type: config_file
-    detail: jde.ini, jas.ini, jdbj.ini, tnsnames, JDBC datasource config, and Server Manager
-      plans
+    detail: jde.ini, jas.ini, jdbj.ini, tnsnames, JDBC datasource config, and Server
+      Manager plans
+    path: jde.ini, jas.ini, jdbj.ini, jdelog.properties, datasource.properties
   - type: database
-    detail: EnterpriseOne datasource, OCM, security, and orchestration configuration records
+    detail: EnterpriseOne datasource, OCM, security, and orchestration configuration
+      records
   - type: secret_store
     detail: Oracle wallets, password vaults, and platform credential stores
   - type: source_code
@@ -80,11 +84,14 @@ credentials:
   - user_defined
   sensitivity: secret
   looks_like:
-  - pattern: '-----BEGIN (RSA |EC |ENCRYPTED |)PRIVATE KEY-----'
-    detail: private key material for JD Edwards web/AIS TLS or client certificate authentication
+  - pattern: '-----BEGIN (RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----'
+    detail: private key material for JD Edwards web/AIS TLS or client certificate
+      authentication
   location:
   - type: config_file
-    detail: WebLogic domain config, Java keystores, SSL files, and Server Manager settings
+    detail: WebLogic domain config, Java keystores, SSL files, and Server Manager
+      settings
+    path: jas.ini, jdbj.ini, keystore.jks, truststore.jks, jdekeystore.jks
   - type: secret_store
     detail: keystores, certificate vaults, and deployment secrets
   - type: artifact

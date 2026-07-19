@@ -19,17 +19,23 @@ credentials:
     password: null
   location:
   - type: public_interface
-    path: ClickHouse native TCP, HTTP interface, clickhouse-client, JDBC/ODBC, and web integrations
+    path: ClickHouse native TCP, HTTP interface, clickhouse-client, JDBC/ODBC, and
+      web integrations
   - type: config_file
-    path: users.xml, users.d/*.xml
-    detail: user password, password_sha256_hex, networks, profiles, and quotas
+    path: users.xml, config.xml
+    detail: ClickHouse user configuration; user include directories are instance-specific
+      and kept in notes
   - type: secret_store
     detail: Kubernetes Secrets, ClickHouse Keeper/ZooKeeper stores, and password vaults
   - type: logs
     detail: query_log, text_log, server logs, and authentication failures
-  notes: 'Treat this as a default/no-password configuration risk: the default user name exists
-    and the password is absent, so `default.password` is null rather than an empty-string
-    credential. Hardened production deployments should set a password or external authentication.'
+  - type: environment
+    path: CLICKHOUSE_USER, CLICKHOUSE_PASSWORD
+    detail: Official container bootstrap user/password variables for ClickHouse deployments
+  notes: 'Treat this as a default/no-password configuration risk: the default user
+    name exists and the password is absent, so `default.password` is null rather than
+    an empty-string credential. Hardened production deployments should set a password
+    or external authentication.'
 - id: user-password-hash
   name: ClickHouse User Password / Hash
   description: ClickHouse users can be configured with plaintext passwords, SHA256/double-SHA1
@@ -46,8 +52,9 @@ credentials:
     detail: ClickHouse SQL user creation syntax containing an authentication secret
   location:
   - type: config_file
-    path: users.xml, users.d/*.xml, config.xml
-    detail: local users, LDAP/Kerberos auth, interserver credentials, and profiles
+    path: users.xml, config.xml
+    detail: ClickHouse local users, LDAP/Kerberos auth, interserver credentials, and
+      profiles
   - type: database
     detail: SQL access-control storage and system tables for users/roles where enabled
   - type: public_interface
@@ -56,6 +63,10 @@ credentials:
     detail: Kubernetes Secrets, cloud secret managers, and password vaults
   - type: source_code
     detail: deployment manifests, application configs, and test fixtures
+  - type: environment
+    path: CLICKHOUSE_USER, CLICKHOUSE_PASSWORD
+    detail: Official container bootstrap user/password variables when setting non-default
+      credentials
 - id: interserver-replication-secret
   name: Interserver / Replication / Keeper Secret
   description: ClickHouse clusters use interserver HTTP credentials, distributed DDL/Keeper/ZooKeeper
@@ -67,33 +78,61 @@ credentials:
   sensitivity: secret
   location:
   - type: config_file
-    path: config.xml, conf.d/*.xml
-    detail: interserver_http_credentials, remote_servers secrets, Keeper/ZooKeeper auth, and
-      cluster config
+    path: config.xml, keeper_config.xml
+    detail: ClickHouse interserver HTTP credentials, remote_servers secrets, Keeper/ZooKeeper
+      auth, and cluster config
   - type: secret_store
     detail: Kubernetes Secrets, Keeper/ZooKeeper ACL stores, and deployment vaults
   - type: logs
     detail: replication, distributed DDL, Keeper, and interserver logs
 - id: tls-private-key
   name: TLS Private Key
-  description: ClickHouse can use TLS certificates/private keys for native, HTTPS, interserver,
-    and Keeper communication.
+  description: ClickHouse can use TLS certificates/private keys for native, HTTPS,
+    interserver, and Keeper communication.
   type: key_pair
   nature:
   - generated_on_install
   - user_defined
   sensitivity: secret
   looks_like:
-  - pattern: '-----BEGIN (RSA |EC |ENCRYPTED |)PRIVATE KEY-----'
+  - pattern: '-----BEGIN (RSA |EC |OPENSSH |ENCRYPTED )?PRIVATE KEY-----'
     detail: private key material for ClickHouse TLS server/client or interserver authentication
   location:
   - type: config_file
-    path: config.xml, certs/
-    detail: openSSL server/client key files and TLS settings
+    path: config.xml
+    detail: 'openSSL server/client key files and TLS settings. Additional non-path
+      context from previous path: certs/.'
   - type: secret_store
     detail: Kubernetes Secrets, certificate stores, and vaults
   - type: artifact
     detail: cluster backups and diagnostics bundles
+- id: cloud-api-key
+  name: ClickHouse Cloud API Key / Secret Key
+  description: ClickHouse Cloud API access uses a key id and secret key pair for cloud
+    API operations. Public scanner rules identify a ClickHouse Cloud secret-key value
+    prefix.
+  type: api_key
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - example: 4b1dXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    pattern: "\b4b1d[A-Za-z0-9]{38}\b"
+    detail: ClickHouse Cloud API secret key shape from public scanner rules
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Basic authentication using key id and secret key for ClickHouse Cloud
+      API
+  - type: secret_store
+    detail: CI/CD variables, cloud secret managers, and automation vaults
+  - type: source_code
+    detail: Terraform/API automation and deployment scripts
+  - type: logs
+    detail: HTTP traces and cloud API client debug output
+  notes: Keep key-id context with the secret for validation; key id alone is not the
+    secret.
 references:
 - type: docs
   url: https://clickhouse.com/docs/operations/settings/settings-users

@@ -1,0 +1,152 @@
+id: algolia
+name: Algolia
+category: database
+vendor: Algolia
+author: haxxm0nkey
+
+credentials:
+- id: user-password
+  name: Algolia User / Administrator Password
+  description: >
+    Algolia users and administrators authenticate to the Algolia dashboard,
+    account administration, SSO, and API-key management surfaces with
+    user-defined or federated credentials.
+  type: username_password
+  nature: [user_defined]
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: /users/sign_in, /account, /apps, /api-keys
+    detail: Algolia dashboard, application, and API key management contexts
+  - type: secret_store
+    detail: Password managers, enterprise identity providers, break-glass account vaults, and managed credential stores
+  - type: logs
+    detail: Sign-in logs, audit events, browser exports, dashboard actions, and support traces
+  notes: >
+    Catalogs ordinary user/admin credential locations; no static Algolia default
+    password is modeled.
+
+- id: api-key
+  name: Algolia API Key
+  description: >
+    Algolia API keys authorize Search, Admin, Crawler, and dashboard operations.
+    Official CLI/source behavior uses ALGOLIA_API_KEY, with ALGOLIA_ADMIN_API_KEY
+    retained as a deprecated legacy/admin key variable. The CLI can also store
+    legacy profile keys in ~/.config/algolia/config.toml and newer credentials in
+    the OS keychain with state metadata in state.toml.
+  type: api_key
+  nature: [generated_on_install, user_defined]
+  sensitivity: secret
+  looks_like:
+  - example: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    pattern: '\b[a-f0-9]{32}\b'
+    detail: Algolia API keys are commonly 32 hex-like characters; use only with Algolia-specific context
+  - pattern: '(?i)(?:algolia)(?:[ \t\w.-]{0,20})[\s''"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60''"\s=]{0,5}([a-z0-9]{32})(?:\\?[''"\x60]|[\s;]|\\[nr]|$)'
+    detail: Contextual Algolia API-key assignment compatible with Betterleaks/Gitleaks algolia-api-key rule
+  location:
+  - type: environment
+    path: ALGOLIA_API_KEY, ALGOLIA_ADMIN_API_KEY
+    detail: Official CLI/source supports ALGOLIA_API_KEY; ALGOLIA_ADMIN_API_KEY is deprecated but still recognized by the CLI
+  - type: http_header
+    path: X-Algolia-API-Key
+    detail: Algolia API key header used by Algolia clients and REST APIs
+  - type: public_interface
+    path: /account/api-keys, /apps, /dashboard
+    detail: Algolia dashboard and API-key management contexts
+  - type: config_file
+    platform: [linux]
+    path: ~/.config/algolia/config.toml
+    detail: Algolia CLI legacy profile config that can contain api_key, admin_api_key, and crawler_api_key fields
+  - type: config_file
+    platform: [windows]
+    path: '%USERPROFILE%\.config\algolia\config.toml'
+    detail: Windows home-relative equivalent of the Algolia CLI config path used by the CLI source logic
+  - type: config_file
+    path: .env, algolia.config.js, algolia.config.ts, algolia.json, search.config.js, config.js, config.ts
+    detail: Project-local Algolia SDK/application configuration files where ALGOLIA_API_KEY may appear
+  - type: secret_store
+    detail: OS keychain, CI/CD variables, cloud secret managers, platform secret stores, password vaults, and integration vaults
+  - type: source_code
+    detail: Application code, indexing scripts, crawler configs, tests, notebooks, examples, and infrastructure-as-code
+  - type: logs
+    detail: API debug logs, indexing jobs, crawler logs, CI output, exception traces, and support bundles
+  notes: >
+    ALGOLIA_APPLICATION_ID is required context but not secret material, so it is
+    not listed as a credential-value environment location. The CLI's state.toml
+    mainly tracks selected applications and key UUIDs; actual new-model secrets
+    are stored in the OS keychain.
+
+- id: search-only-api-key
+  name: Search-Only API Key
+  description: >
+    Algolia search-only API keys are commonly embedded in browser/mobile clients.
+    They are less sensitive than admin keys but still authorize scoped search
+    operations and can expose indexes, filters, and usage patterns.
+  type: api_key
+  nature: [generated_on_install, user_defined]
+  sensitivity: secret
+  looks_like:
+  - example: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+    pattern: '\b[a-f0-9]{32}\b'
+    detail: Use only with Algolia client/config context to avoid matching arbitrary hex strings
+  location:
+  - type: http_header
+    path: X-Algolia-API-Key
+    detail: Algolia search API key header in client requests
+  - type: http_response
+    detail: Built frontend bundles, SSR responses, and generated config payloads may expose search-only keys
+  - type: config_file
+    path: .env, algolia.config.js, algolia.config.ts, search.config.js, next.config.js, vite.config.js
+    detail: Frontend and server-rendered application configuration files that may contain search-only keys
+  - type: source_code
+    detail: Browser/mobile applications, frontend bundles, search widgets, indexing examples, tests, and docs
+  - type: logs
+    detail: Frontend build logs, API traces, crawler logs, and support bundles
+  notes: >
+    Search-only keys are often intentionally client-exposed; triage should consider
+    ACLs, indexes, restrictions, and whether an admin key was exposed instead.
+
+- id: crawler-api-key
+  name: Crawler API Key
+  description: >
+    Algolia CLI and crawler workflows can store a crawler API key alongside the
+    application API key. Current CLI source stores secrets in the OS keychain and
+    legacy profiles in config.toml.
+  type: api_key
+  nature: [generated_on_install, user_defined]
+  sensitivity: secret
+  looks_like:
+  - pattern: '(?i)(crawler[_-]?api[_-]?key|algolia(?:[ \t\w.-]{0,20})crawler)[\s''"]{0,3}(?:=|:|=>|,)[\x60''"\s=]{0,5}([a-z0-9]{32})(?:\\?[''"\x60]|[\s;]|\\[nr]|$)'
+    detail: Contextual crawler API-key assignment in Algolia CLI/profile or crawler configuration
+  location:
+  - type: config_file
+    platform: [linux]
+    path: ~/.config/algolia/config.toml
+    detail: Legacy Algolia CLI profile file can contain crawler_api_key
+  - type: config_file
+    platform: [windows]
+    path: '%USERPROFILE%\.config\algolia\config.toml'
+    detail: Windows home-relative equivalent of the Algolia CLI legacy profile file
+  - type: config_file
+    path: .env, algolia.config.js, crawler.config.js, crawler.json, config.js, config.ts
+    detail: Project-local crawler and indexing configuration files
+  - type: secret_store
+    detail: OS keychain, CI/CD variables, cloud secret managers, and indexing pipeline secret stores
+  - type: source_code
+    detail: Crawler configs, indexing jobs, scripts, tests, and automation repositories
+  - type: logs
+    detail: Crawler logs, indexing traces, CI output, and support bundles
+
+references:
+- type: source
+  url: https://github.com/algolia/cli/blob/main/pkg/config/config.go
+- type: source
+  url: https://github.com/algolia/cli/blob/main/pkg/config/profile.go
+- type: docs
+  url: https://github.com/algolia/cli/blob/main/CONTRIBUTING.md
+- type: docs
+  url: https://www.algolia.com/doc/guides/security/api-keys/
+- type: docs
+  url: https://raw.githubusercontent.com/betterleaks/betterleaks/main/config/betterleaks.toml
+- type: docs
+  url: https://raw.githubusercontent.com/gitleaks/gitleaks/master/config/gitleaks.toml

@@ -6,8 +6,8 @@ author: haxxm0nkey
 credentials:
 - id: console-user-password
   name: Console / Enterprise Manager User Password
-  description: Veeam Backup & Replication uses Windows/domain/local users and roles for console,
-    Enterprise Manager, REST API, and backup infrastructure administration.
+  description: Veeam Backup & Replication uses Windows/domain/local users and roles
+    for console, Enterprise Manager, REST API, and backup infrastructure administration.
   type: username_password
   nature:
   - user_defined
@@ -21,15 +21,18 @@ credentials:
       records
   - type: config_file
     detail: PowerShell scripts, service account configs, and deployment automation
+    path: Veeam.Backup.DBConfig.exe.config, Veeam.Backup.Service.exe.config, Veeam.Backup.Config,
+      veeam.json
   - type: secret_store
-    detail: Windows Credential Manager, Veeam credential manager, password vaults, and DPAPI-protected
-      stores
+    detail: Windows Credential Manager, Veeam credential manager, password vaults,
+      and DPAPI-protected stores
   - type: logs
     detail: Veeam logs, REST traces, Enterprise Manager logs, and job session logs
 - id: stored-managed-credential
   name: Stored Managed Credential
   description: Veeam stores credentials for vCenter/ESXi, Hyper-V, Windows/Linux servers,
-    proxies, repositories, cloud providers, databases, NAS, and application-aware processing.
+    proxies, repositories, cloud providers, databases, NAS, and application-aware
+    processing.
   type: secret_value
   nature:
   - user_defined
@@ -37,17 +40,23 @@ credentials:
   sensitivity: secret
   location:
   - type: database
-    detail: Veeam configuration database encrypted credentials and backup infrastructure records
+    detail: Veeam configuration database encrypted credentials and backup infrastructure
+      records
   - type: secret_store
-    detail: Veeam credential manager, Windows DPAPI, enterprise vaults, and cloud secret stores
+    detail: Veeam credential manager, Windows DPAPI, enterprise vaults, and cloud
+      secret stores
   - type: config_file
-    detail: job configs, PowerShell exports, unattended install files, and repository configs
+    detail: job configs, PowerShell exports, unattended install files, and repository
+      configs
+    path: Veeam.Backup.DBConfig.exe.config, Veeam.Backup.Service.exe.config, credentials.xml,
+      veeam-credentials.json
   - type: logs
     detail: job logs, guest processing logs, repository logs, and plugin traces
 - id: encryption-password-key
   name: Backup Encryption Password / Key
-  description: Veeam backup encryption uses passwords/keys that are required to restore encrypted
-    backups. Enterprise Manager may escrow or recover keys depending on configuration.
+  description: Veeam backup encryption uses passwords/keys that are required to restore
+    encrypted backups. Enterprise Manager may escrow or recover keys depending on
+    configuration.
   type: password
   nature:
   - user_defined
@@ -57,16 +66,18 @@ credentials:
   - type: database
     detail: Veeam configuration database encryption key metadata and password records
   - type: secret_store
-    detail: Veeam key management, Enterprise Manager key escrow, KMS/HSM integrations, and
-      recovery vaults
+    detail: Veeam key management, Enterprise Manager key escrow, KMS/HSM integrations,
+      and recovery vaults
   - type: artifact
     detail: encrypted backup files, configuration backups, and recovery media
   - type: logs
     detail: backup, restore, and key management logs
+  - type: config_file
+    path: veeam-backup.xml, encryption.json, backup-job.xml, Veeam.Backup.Config
 - id: api-token-session
   name: REST API Token / Session
-  description: Veeam Enterprise Manager and newer Veeam APIs issue bearer tokens or sessions
-    for automation clients.
+  description: Veeam Enterprise Manager and newer Veeam APIs issue bearer tokens or
+    sessions for automation clients.
   type: token
   nature:
   - generated_on_install
@@ -79,7 +90,9 @@ credentials:
     path: Cookie
     detail: web/API session cookie
   - type: config_file
-    detail: API scripts, PowerShell automation, .env files, and monitoring configs
+    detail: 'API scripts, PowerShell automation, .env files, and monitoring configs;
+      Removed generic/common scanner surface path(s) from product template: .env'
+    path: veeam.json, veeam-rest.json, veeam-session.json
   - type: environment
     path: VEEAM_TOKEN, VEEAM_USERNAME, VEEAM_PASSWORD
   - type: secret_store

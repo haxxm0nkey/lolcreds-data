@@ -3,42 +3,44 @@ name: Moonshot AI / Kimi API
 category: ai_api
 vendor: Moonshot AI
 author: haxxm0nkey
-
 credentials:
+- id: api-key
+  name: API Key
+  description: 'Moonshot AI Kimi API keys authenticate OpenAI-compatible requests
+    to api.moonshot.cn. Moonshot documents creating API Keys, storing them in MOONSHOT_API_KEY,
+    and sending them as Bearer tokens.
 
-  - id: api-key
-    name: API Key
-    description: >
-      Moonshot AI Kimi API keys authenticate OpenAI-compatible requests to
-      api.moonshot.cn. Moonshot documents creating API Keys, storing them in
-      MOONSHOT_API_KEY, and sending them as Bearer tokens.
-    type: api_key
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - example: 'sk-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
-        pattern: 'sk-[A-Za-z0-9_\-]{20,}'
-        detail: Moonshot/Kimi API key form commonly used with OpenAI-compatible clients
-    location:
-      - type: environment
-        path: MOONSHOT_API_KEY
-      - type: http_header
-        path: Authorization
-        detail: Bearer token used by Moonshot / Kimi OpenAI-compatible API calls
-      - type: source_code
-        detail: Kimi examples, OpenAI-compatible clients, coding-agent config, notebooks
-      - type: config_file
-        detail: .env, shell profiles, deployment manifests, LLM gateway config
-      - type: secret_store
-        detail: CI/CD variables, hosted app settings, cloud secret managers
-      - type: logs
-        detail: HTTP client logs and proxy logs containing Authorization headers
-    notes: >
-      Kimi's API is OpenAI-compatible, so Moonshot keys commonly appear in
-      generic OpenAI SDK configuration with a custom base URL.
+    '
+  type: api_key
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - example: sk-ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv
+    pattern: sk-[A-Za-z0-9_\-]{48}
+    detail: Moonshot/Kimi API key shape from public scanner rules
+  location:
+  - type: environment
+    path: MOONSHOT_API_KEY
+  - type: http_header
+    path: Authorization
+    detail: Bearer token used by Moonshot / Kimi OpenAI-compatible API calls
+  - type: source_code
+    detail: Kimi examples, OpenAI-compatible clients, coding-agent config, notebooks
+  - type: config_file
+    detail: '.env, shell profiles, deployment manifests, LLM gateway config; Removed
+      generic/common scanner surface path(s) from product template: .env'
+    path: moonshot.json, kimi.json, litellm.yaml, config.yaml
+  - type: secret_store
+    detail: CI/CD variables, hosted app settings, cloud secret managers
+  - type: logs
+    detail: HTTP client logs and proxy logs containing Authorization headers
+  notes: 'Kimi''s API is OpenAI-compatible, so Moonshot keys commonly appear in generic
+    OpenAI SDK configuration with a custom base URL.
 
+    '
 references:
-  - type: docs
-    url: https://platform.moonshot.cn/docs/intro
-  - type: docs
-    url: https://platform.moonshot.cn/docs/api-reference
+- type: docs
+  url: https://platform.moonshot.cn/docs/intro
+- type: docs
+  url: https://platform.moonshot.cn/docs/api-reference

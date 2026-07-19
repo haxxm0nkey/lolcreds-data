@@ -5,88 +5,185 @@ vendor: Red Hat
 author: haxxm0nkey
 
 credentials:
+- id: oauth2-token
+  name: OAuth2 / Personal Access Token
+  description: >
+    Ansible Tower, AWX, and Automation Controller support OAuth2 token
+    authentication for API access. Tokens are used by awx CLI, collection
+    modules, API clients, and automation integrations instead of passwords.
+  type: token
+  nature: [generated_on_install]
+  sensitivity: secret
+  location:
+  - type: environment
+    path: CONTROLLER_OAUTH_TOKEN, TOWER_OAUTH_TOKEN, AAP_TOKEN
+    detail: Official AWX collection/controller API environment fallbacks for OAuth token authentication
+  - type: http_header
+    path: Authorization
+    detail: Bearer token used for Automation Controller API requests
+  - type: config_file
+    platform: [linux]
+    path: /etc/tower/tower_cli.cfg, ~/.tower_cli.cfg
+    detail: Tower/AWX CLI and collection config files that can contain oauth_token
+  - type: config_file
+    platform: [windows]
+    path: '%USERPROFILE%\.tower_cli.cfg'
+    detail: Windows home-relative Tower/AWX CLI config file
+  - type: config_file
+    path: .tower_cli.cfg, tower_cli.cfg
+    detail: Local/project Tower CLI config files supported by tower-cli/AWX collection tooling
+  - type: database
+    detail: Controller database tables storing OAuth applications and tokens
+  - type: secret_store
+    detail: CI/CD variables, credential stores, Kubernetes Secrets, Ansible Vault, and cloud secret managers
+  - type: source_code
+    detail: Playbooks, inventory plugins, tests, committed API clients, and automation repositories
+  - type: logs
+    detail: API client traces, AWX collection debug output, and CI output
+  notes: >
+    Token privileges follow the owning user, OAuth application, scopes, and RBAC
+    configuration. No stable public token prefix was confirmed, so no token-value
+    regex is added.
 
-  - id: oauth2-token
-    name: OAuth2 / Personal Access Token
-    description: >
-      Ansible Tower and Automation Controller support OAuth2 token
-      authentication for API access. Tokens are used by CLI, API clients, and
-      automation integrations instead of passwords.
-    type: token
-    nature: [generated_on_install]
-    sensitivity: secret
-    location:
-      - type: http_header
-        path: Authorization
-        detail: Bearer token used for Automation Controller API requests
-      - type: database
-        detail: controller database tables storing OAuth applications and tokens
-      - type: environment
-        path: TOWER_OAUTH_TOKEN, CONTROLLER_OAUTH_TOKEN, AWX_TOKEN
-      - type: config_file
-        detail: awx CLI config, automation scripts, .env files, and CI manifests
-      - type: secret_store
-        detail: CI/CD variables, credential stores, Kubernetes Secrets, and cloud secret managers
-      - type: source_code
-        detail: playbooks, tests, and committed API clients
-      - type: logs
-        detail: API client traces and CI output
-    notes: >
-      Token privileges follow the owning user, OAuth application, scopes, and
-      RBAC configuration.
+- id: admin-user-password
+  name: Administrator/User Password
+  description: >
+    Automation Controller users authenticate to the web UI and API through local,
+    LDAP, SAML, or other configured authentication backends. Local admin
+    credentials are created during installation or provisioning and can be supplied
+    to CLI/collection tooling through environment variables or tower_cli.cfg files.
+  type: username_password
+  nature: [generated_on_install, user_defined]
+  sensitivity: secret
+  looks_like:
+  - pattern: '(?im)^\s*(password|admin_password)\s*=\s*[^\s#]{6,255}\s*$'
+    detail: Password assignment in tower_cli.cfg-style controller config files; use with Ansible Tower/AWX config-file context
+  location:
+  - type: environment
+    path: CONTROLLER_PASSWORD, TOWER_PASSWORD, AAP_PASSWORD
+    detail: Official AWX/Automation Controller CLI and collection password environment fallbacks
+  - type: public_interface
+    path: /, /api/, /api/v2/, /login/
+    detail: Automation Controller UI and API login contexts
+  - type: config_file
+    platform: [linux]
+    path: /etc/tower/tower_cli.cfg, ~/.tower_cli.cfg
+    detail: Tower/AWX CLI and collection config files that can contain username/password
+  - type: config_file
+    platform: [windows]
+    path: '%USERPROFILE%\.tower_cli.cfg'
+    detail: Windows home-relative Tower/AWX CLI config file
+  - type: config_file
+    path: .tower_cli.cfg, tower_cli.cfg, inventory
+    detail: Local CLI config and installer inventory files that may contain admin credentials
+  - type: database
+    detail: Controller database user tables and password verifier state for local accounts
+  - type: secret_store
+    detail: Installer inventory secrets, Kubernetes Secrets, Ansible Vault, password managers, and external credential stores
+  - type: source_code
+    detail: Installer inventories, playbooks, tests, committed variables, and automation repos
+  - type: logs
+    detail: Installer logs, setup output, awx CLI traces, collection debug logs, and authentication traces
+  notes: >
+    There is no universal Tower administrator password; it is generated or set
+    during deployment. CONTROLLER_HOST/TOWER_HOST/AAP_HOST are endpoint context,
+    not credential values, and are intentionally omitted from environment locations.
 
-  - id: admin-user-password
-    name: Administrator/User Password
-    description: >
-      Automation Controller users authenticate to the web UI and API through
-      local, LDAP, SAML, or other configured authentication backends. Local admin
-      credentials are created during installation or provisioning.
-    type: username_password
-    nature: [generated_on_install, user_defined]
-    sensitivity: secret
-    location:
-      - type: database
-        detail: controller database user tables and password verifier state for local accounts
-      - type: public_interface
-        path: Automation Controller UI and API
-      - type: environment
-        path: ADMIN_PASSWORD, TOWER_ADMIN_PASSWORD, CONTROLLER_ADMIN_PASSWORD
-      - type: secret_store
-        detail: installer inventory secrets, Kubernetes Secrets, Ansible Vault, and password managers
-      - type: source_code
-        detail: installer inventories, playbooks, tests, and committed variables
-      - type: logs
-        detail: installer logs, setup output, and authentication traces
-    notes: >
-      There is no universal Tower administrator password; it is generated or set
-      during deployment.
+- id: stored-credential-secret
+  name: Stored Automation Credential
+  description: >
+    Automation Controller stores machine, SCM, cloud, vault, and custom
+    credentials for use by jobs. Red Hat documentation covers secret handling for
+    encrypted credential values in the controller.
+  type: secret_value
+  nature: [user_defined]
+  sensitivity: secret
+  location:
+  - type: database
+    detail: Controller database storing encrypted credential fields
+  - type: config_file
+    platform: [linux]
+    path: /etc/tower/settings.py, /etc/tower/conf.d/postgres.py, /etc/tower/conf.d/custom.py, /etc/tower/conf.d/channels.py, /etc/tower/conf.d/database.py, /etc/tower/conf.d/websocket_secret.py, /etc/tower/conf.d/local_settings.py
+    detail: Controller settings and exact conf.d files seen in AWX source/support tooling that may contain database, channel, websocket, or local secrets
+  - type: secret_store
+    detail: Ansible Vault, Kubernetes Secrets, external credential plugins, cloud secret managers, and controller encrypted credential storage
+  - type: source_code
+    detail: Exported surveys, test fixtures, accidentally committed inventories, playbooks, and collection configs
+  - type: logs
+    detail: Job output, callback logs, event stdout, and debugging traces if no_log is missing
+  notes: >
+    Stored credentials may be SSH private keys, sudo passwords, cloud keys, SCM
+    tokens, vault passwords, and arbitrary integration secrets. Product-specific
+    storage is modeled here; generic private-key and common cloud-token patterns
+    belong to their canonical templates or built-ins.
 
-  - id: stored-credential-secret
-    name: Stored Automation Credential
-    description: >
-      Automation Controller stores machine, SCM, cloud, vault, and custom
-      credentials for use by jobs. Red Hat documentation covers secret handling
-      for sensitive values in the controller.
-    type: secret_value
-    nature: [user_defined]
-    sensitivity: secret
-    location:
-      - type: database
-        detail: controller database storing encrypted credential fields
-      - type: secret_store
-        detail: Ansible Vault, Kubernetes Secrets, external credential plugins, and cloud secret managers
-      - type: config_file
-        detail: installer inventory, controller settings, and credential plugin configuration
-      - type: source_code
-        detail: exported surveys, test fixtures, and accidentally committed inventories
-      - type: logs
-        detail: job output, callback logs, and debugging traces if no_log is missing
-    notes: >
-      Stored credentials may be SSH private keys, sudo passwords, cloud keys,
-      SCM tokens, vault passwords, and arbitrary integration secrets.
+- id: controller-secret-key
+  name: Controller SECRET_KEY
+  description: >
+    AWX/Automation Controller uses a SECRET_KEY to protect encrypted fields and
+    other sensitive application state. AWX source reads /etc/tower/SECRET_KEY and
+    supports TOWER_SECRET_KEY for the secret-key regeneration command.
+  type: secret_value
+  nature: [generated_on_install]
+  sensitivity: secret
+  looks_like:
+  - pattern: '(?im)^\s*SECRET_KEY\s*=\s*[''"]?[A-Za-z0-9+/=_:-]{20,255}[''"]?\s*$'
+    detail: Controller/AWX SECRET_KEY assignment in settings or support/config files
+  location:
+  - type: environment
+    path: TOWER_SECRET_KEY
+    detail: AWX secret-key regeneration command can use this env var as an existing key input
+  - type: config_file
+    platform: [linux]
+    path: /etc/tower/SECRET_KEY, /etc/tower/settings.py, /etc/tower/conf.d/custom.py, /etc/tower/conf.d/local_settings.py
+    detail: Controller SECRET_KEY file and settings files from AWX source/support tooling
+  - type: secret_store
+    detail: Kubernetes Secrets, deployment secrets, Ansible Vault, backup vaults, and controller secret stores
+  - type: artifact
+    detail: Controller backups, support bundles, sosreports, and installation archives
+  - type: logs
+    detail: Secret-key regeneration logs, setup logs, backup/restore output, and troubleshooting traces
+  notes: >
+    AWX_SETTINGS_FILE and AWX_SETTINGS_DIR are path/context variables, not secret
+    values, so they are not listed as credential environment locations.
+
+- id: tls-private-key
+  name: Controller TLS Private Key
+  description: >
+    Automation Controller deployments use TLS keys and certificates for web/API
+    endpoints and ingress. AWX support tooling references exact legacy key files
+    under /etc/tower.
+  type: key_pair
+  nature: [generated_on_install, user_defined]
+  sensitivity: secret
+  looks_like:
+  - pattern: '-----BEGIN (RSA |EC |OPENSSH |ENCRYPTED )?PRIVATE KEY-----'
+    detail: TLS/private-key material in Controller/AWX deployment artifacts or exact key files
+  location:
+  - type: config_file
+    platform: [linux]
+    path: /etc/tower/tower.key, /etc/tower/awx.key
+    detail: Exact private-key files referenced by AWX sosreport tooling
+  - type: secret_store
+    detail: Kubernetes TLS Secrets, certificate managers, vaults, and deployment secret stores
+  - type: artifact
+    detail: Controller backups, support bundles, sosreports, and deployment archives
+  - type: logs
+    detail: TLS, ingress, and setup troubleshooting logs
+  notes: >
+    Generic private-key paths are not repeated here; only AWX/Tower-owned exact
+    key files are included.
 
 references:
-  - type: docs
-    url: https://docs.ansible.com/automation-controller/latest/html/administration/oauth2_token_auth.html
-  - type: docs
-    url: https://docs.ansible.com/automation-controller/latest/html/administration/secret_handling.html
+- type: docs
+  url: https://docs.ansible.com/automation-controller/latest/html/administration/oauth2_token_auth.html
+- type: docs
+  url: https://docs.ansible.com/automation-controller/latest/html/administration/secret_handling.html
+- type: source
+  url: https://github.com/ansible/awx/blob/devel/awx_collection/plugins/module_utils/controller_api.py
+- type: source
+  url: https://github.com/ansible/awx/blob/devel/awx/settings/defaults.py
+- type: source
+  url: https://github.com/ansible/awx/blob/devel/tools/sosreport/controller.py
+- type: source
+  url: https://github.com/ansible/tower-cli/blob/master/tower_cli/conf.py

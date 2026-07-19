@@ -3,92 +3,105 @@ name: Nagios
 category: monitoring
 vendor: Nagios Enterprises
 author: haxxm0nkey
-
 credentials:
+- id: cgi-basic-auth-user
+  name: CGI Web User Password
+  description: 'Nagios Core CGIs rely on web server authentication. Nagios documents
+    authenticated users as users who authenticate to the web server with a username
+    and password and then receive Nagios CGI authorization according to contacts and
+    configuration.
 
-  - id: cgi-basic-auth-user
-    name: CGI Web User Password
-    description: >
-      Nagios Core CGIs rely on web server authentication. Nagios documents
-      authenticated users as users who authenticate to the web server with a
-      username and password and then receive Nagios CGI authorization according
-      to contacts and configuration.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: '^[^:\r\n]+:\$apr1\$[^:\r\n]+$'
-        detail: Apache htpasswd MD5 entry commonly used for Nagios CGI Basic authentication
-      - pattern: '^[^:\r\n]+:\$2[aby]\$[^:\r\n]+$'
-        detail: bcrypt htpasswd entry for Nagios web authentication
-    location:
-      - type: config_file
-        path: htpasswd.users, nagios.conf, cgi.cfg
-        detail: web server Basic-auth password file and Nagios CGI authorization config
-      - type: public_interface
-        path: /nagios, /nagios/cgi-bin
-        detail: Nagios web interface and CGI endpoints
-      - type: secret_store
-        detail: web server password stores and configuration management vaults
-      - type: source_code
-        detail: deployment scripts, Ansible roles, Docker Compose files, and committed Nagios configs
-      - type: logs
-        detail: web server access/error logs and authentication troubleshooting output
-    notes: >
-      nagiosadmin is a commonly created administrator username in quickstart
-      guides, but its password is user-defined and not a universal default.
+    '
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: ^[^:\r\n]+:\$apr1\$[^:\r\n]+$
+    detail: Apache htpasswd MD5 entry commonly used for Nagios CGI Basic authentication
+  - pattern: ^[^:\r\n]+:\$2[aby]\$[^:\r\n]+$
+    detail: bcrypt htpasswd entry for Nagios web authentication
+  location:
+  - type: config_file
+    path: nagios.conf, cgi.cfg, htpasswd.users, htpasswd
+    detail: 'web server Basic-auth password file and Nagios CGI authorization config.
+      Additional non-path context from previous path: htpasswd.users.'
+  - type: public_interface
+    path: /nagios, /nagios/cgi-bin
+    detail: Nagios web interface and CGI endpoints
+  - type: secret_store
+    detail: web server password stores and configuration management vaults
+  - type: source_code
+    detail: deployment scripts, Ansible roles, Docker Compose files, and committed
+      Nagios configs
+  - type: logs
+    detail: web server access/error logs and authentication troubleshooting output
+  notes: 'nagiosadmin is a commonly created administrator username in quickstart guides,
+    but its password is user-defined and not a universal default.
 
-  - id: resource-file-secret
-    name: resource.cfg $USERn$ Macro Secret
-    description: >
-      Nagios Core resource files can contain $USERn$ macro definitions. Nagios
-      documents these macros as useful for storing usernames, passwords, and
-      common command-definition items, and notes that CGIs do not read resource
-      files so restrictive permissions can protect them.
-    type: secret_value
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: '^\$USER\d+\$\s*=\s*[^\r\n]+'
-        detail: Nagios resource.cfg USER macro assignment that may hold passwords or API tokens
-    location:
-      - type: config_file
-        path: resource.cfg
-        detail: Nagios resource file containing $USERn$ macro definitions
-      - type: secret_store
-        detail: configuration management vaults and deployment secrets that render resource.cfg
-      - type: source_code
-        detail: committed monitoring configs, plugin command definitions, and infrastructure repositories
-      - type: logs
-        detail: plugin debug output and command-line traces if macros are expanded into commands
-    notes: >
-      Resource macros often contain credentials for monitored systems or
-      notification services rather than Nagios login credentials.
+    '
+- id: resource-file-secret
+  name: resource.cfg $USERn$ Macro Secret
+  description: 'Nagios Core resource files can contain $USERn$ macro definitions.
+    Nagios documents these macros as useful for storing usernames, passwords, and
+    common command-definition items, and notes that CGIs do not read resource files
+    so restrictive permissions can protect them.
 
-  - id: plugin-command-credential
-    name: Plugin Command Credential
-    description: >
-      Nagios checks and notification commands frequently embed credentials for
-      monitored services, agents, or APIs. Nagios command definitions can expand
-      resource macros or arguments into plugin command lines.
-    type: secret_value
-    nature: [user_defined]
-    sensitivity: secret
-    location:
-      - type: config_file
-        detail: commands.cfg, services.cfg, resource.cfg, NRPE configs, and custom plugin config
-      - type: source_code
-        detail: monitoring repositories, custom plugins, shell scripts, and committed command definitions
-      - type: secret_store
-        detail: vault entries and configuration management secrets used to render Nagios configs
-      - type: logs
-        detail: debug logs, process listings, and plugin output containing command arguments
-    notes: >
-      These credentials can be database passwords, SNMP communities, API tokens,
-      or service-account passwords used by monitoring plugins.
+    '
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: ^\$USER\d+\$\s*=\s*[^\r\n]+
+    detail: Nagios resource.cfg USER macro assignment that may hold passwords or API
+      tokens
+  location:
+  - type: config_file
+    path: resource.cfg, private/resource.cfg
+    detail: Nagios resource file containing $USERn$ macro definitions
+  - type: secret_store
+    detail: configuration management vaults and deployment secrets that render resource.cfg
+  - type: source_code
+    detail: committed monitoring configs, plugin command definitions, and infrastructure
+      repositories
+  - type: logs
+    detail: plugin debug output and command-line traces if macros are expanded into
+      commands
+  notes: 'Resource macros often contain credentials for monitored systems or notification
+    services rather than Nagios login credentials.
 
+    '
+- id: plugin-command-credential
+  name: Plugin Command Credential
+  description: 'Nagios checks and notification commands frequently embed credentials
+    for monitored services, agents, or APIs. Nagios command definitions can expand
+    resource macros or arguments into plugin command lines.
+
+    '
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: config_file
+    detail: commands.cfg, services.cfg, resource.cfg, NRPE configs, and custom plugin
+      config
+    path: commands.cfg, services.cfg, resource.cfg, nrpe.cfg, nsca.cfg
+  - type: source_code
+    detail: monitoring repositories, custom plugins, shell scripts, and committed
+      command definitions
+  - type: secret_store
+    detail: vault entries and configuration management secrets used to render Nagios
+      configs
+  - type: logs
+    detail: debug logs, process listings, and plugin output containing command arguments
+  notes: 'These credentials can be database passwords, SNMP communities, API tokens,
+    or service-account passwords used by monitoring plugins.
+
+    '
 references:
-  - type: docs
-    url: https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/4/en/cgiauth.html
-  - type: docs
-    url: https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/4/en/configmain.html
+- type: docs
+  url: https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/4/en/cgiauth.html
+- type: docs
+  url: https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/4/en/configmain.html

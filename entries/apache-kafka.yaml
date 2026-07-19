@@ -1,98 +1,95 @@
 id: apache-kafka
 name: Apache Kafka
-category: middleware
+category: other
 vendor: Apache Software Foundation
 author: haxxm0nkey
 
 credentials:
+- id: sasl-plain-scram-password
+  name: SASL PLAIN / SCRAM Password
+  description: >
+    Kafka supports SASL authentication mechanisms including PLAIN and SCRAM.
+    Broker and client JAAS configuration often contains usernames and passwords
+    for inter-broker, producer, consumer, and admin authentication.
+  type: username_password
+  nature: [user_defined]
+  sensitivity: secret
+  looks_like:
+  - pattern: 'org\.apache\.kafka\.common\.security\.(?:plain|scram)\.[A-Za-z]+LoginModule\s+required[^;]*(?:username|password)=[''"][^''"\r\n]+[''"]'
+    detail: Kafka JAAS login module containing username or password options
+  - pattern: 'sasl\.jaas\.config\s*=\s*[^\r\n]*(?:username|password)=[''"][^''"\r\n]+[''"]'
+    detail: Kafka properties sasl.jaas.config value containing SASL credentials
+  location:
+  - type: config_file
+    path: server.properties, client.properties, producer.properties, consumer.properties, adminclient.properties, jaas.conf, kafka_server_jaas.conf, connect-distributed.properties
+    detail: Kafka broker, client, and Connect SASL/JAAS configuration files
+  - type: secret_store
+    detail: Kubernetes Secrets, cloud secret managers, CI/CD variables, and Kafka platform secrets
+  - type: source_code
+    detail: Deployment manifests, Helm values, integration tests, client configs, and application repositories
+  - type: logs
+    detail: Broker startup logs, client debug output, and CI traces
+  - type: public_interface
+    path: tcp/9092
+    detail: Kafka broker listener context
+  notes: >
+    KAFKA_OPTS usually points to a JAAS file rather than containing a credential
+    value directly, so it is not listed as a credential environment location.
 
-  - id: sasl-plain-scram-password
-    name: SASL PLAIN / SCRAM Password
-    description: >
-      Kafka supports SASL authentication mechanisms including PLAIN and SCRAM.
-      Broker and client JAAS configuration often contains usernames and
-      passwords for inter-broker, producer, consumer, and admin authentication.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: 'org\.apache\.kafka\.common\.security\.(?:plain|scram)\.[A-Za-z]+LoginModule\s+required[^;]*(?:username|password)=\"[^\"\r\n]+\"'
-        detail: Kafka JAAS login module containing username or password options
-    location:
-      - type: config_file
-        path: server.properties, client.properties, jaas.conf, kafka_server_jaas.conf
-        detail: Kafka broker and client SASL/JAAS configuration
-      - type: environment
-        path: KAFKA_OPTS, KAFKA_SASL_USERNAME, KAFKA_SASL_PASSWORD, SASL_JAAS_CONFIG
-      - type: secret_store
-        detail: Kubernetes Secrets, cloud secret managers, CI/CD variables, and Kafka platform secrets
-      - type: source_code
-        detail: deployment manifests, Helm values, integration tests, and committed client configs
-      - type: logs
-        detail: broker startup logs, client debug output, and CI traces
-      - type: public_interface
-        path: Kafka broker listeners
-    notes: >
-      Kafka user/password semantics depend on the SASL mechanism and backing
-      identity store. SCRAM credentials may be stored in Kafka metadata.
+- id: ssl-keystore-password
+  name: SSL Keystore / Truststore Password
+  description: >
+    Kafka TLS configuration uses keystore and truststore locations and passwords
+    for brokers and clients. These protect private keys and trust material.
+  type: password
+  nature: [user_defined]
+  sensitivity: secret
+  looks_like:
+  - pattern: 'ssl\.(?:key|trust)store\.password\s*=\s*[^\r\n]+'
+    detail: Kafka server.properties or client.properties SSL store password
+  - pattern: 'ssl\.key\.password\s*=\s*[^\r\n]+'
+    detail: Kafka private key password setting
+  location:
+  - type: config_file
+    path: server.properties, client.properties, producer.properties, consumer.properties, connect-distributed.properties
+    detail: Kafka broker, client, and Kafka Connect TLS configuration
+  - type: secret_store
+    detail: Java keystores, Kubernetes Secrets, cloud secret managers, and deployment vaults
+  - type: source_code
+    detail: Committed client configs, Helm values, and container build contexts
+  - type: image
+    detail: Broker or client images containing keystores and config files
+  - type: logs
+    detail: Startup logs and SSL troubleshooting output
 
-  - id: ssl-keystore-password
-    name: SSL Keystore / Truststore Password
-    description: >
-      Kafka TLS configuration uses keystore and truststore locations and
-      passwords for brokers and clients. These protect private keys and trust
-      material used for encrypted and mutual TLS connections.
-    type: password
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: 'ssl\.(?:key|trust)store\.password\s*=\s*[^\r\n]+'
-        detail: Kafka server.properties or client.properties SSL store password
-      - pattern: 'ssl\.key\.password\s*=\s*[^\r\n]+'
-        detail: Kafka private key password setting
-    location:
-      - type: config_file
-        path: server.properties, client.properties, connect-distributed.properties
-        detail: Kafka broker, client, and Kafka Connect TLS configuration
-      - type: secret_store
-        detail: Java keystores, Kubernetes Secrets, cloud secret managers, and deployment vaults
-      - type: source_code
-        detail: committed client configs, Helm values, and container build contexts
-      - type: image
-        detail: broker or client images containing keystores and config files
-      - type: logs
-        detail: startup logs and SSL troubleshooting output
-    notes: >
-      Keystore passwords may unlock broker or client private keys used for TLS
-      authentication.
-
-  - id: connect-connector-secret
-    name: Kafka Connect Connector Secret
-    description: >
-      Kafka Connect connector configurations frequently include passwords,
-      tokens, and API keys for source and sink systems. These connector secrets
-      are separate from Kafka broker authentication but are stored in Kafka
-      Connect configuration and offsets/status workflows.
-    type: secret_value
-    nature: [user_defined]
-    sensitivity: secret
-    location:
-      - type: config_file
-        detail: connector JSON/properties files, connect-distributed.properties, and worker config
-      - type: http_response
-        detail: Kafka Connect REST API responses containing connector configs when secrets are not masked
-      - type: secret_store
-        detail: ConfigProvider backends, Kubernetes Secrets, cloud secret managers, and CI/CD variables
-      - type: source_code
-        detail: connector repositories, tests, and committed connector definitions
-      - type: logs
-        detail: connector task logs and REST API traces
-    notes: >
-      Connector secrets can grant access to databases, cloud stores, queues, and
-      SaaS systems even when Kafka itself is not compromised.
+- id: connect-connector-secret
+  name: Kafka Connect Connector Secret
+  description: >
+    Kafka Connect connector configurations frequently include passwords, tokens,
+    and API keys for source and sink systems.
+  type: secret_value
+  nature: [user_defined]
+  sensitivity: secret
+  looks_like:
+  - pattern: '(?i)(password|secret|token|api[_-]?key)\s*[=:]\s*[^\s,}\]]{6,255}'
+    detail: Connector config secret assignment; use only with Kafka Connect connector config context
+  location:
+  - type: config_file
+    path: connect-distributed.properties, connect-standalone.properties, connector.json, sink.json, source.json
+    detail: Connector JSON/properties files and worker config
+  - type: http_response
+    detail: Kafka Connect REST API responses containing connector configs when secrets are not masked
+  - type: secret_store
+    detail: ConfigProvider backends, Kubernetes Secrets, cloud secret managers, and CI/CD variables
+  - type: source_code
+    detail: Connector repositories, tests, and committed connector definitions
+  - type: logs
+    detail: Connector task logs and REST API traces
 
 references:
-  - type: docs
-    url: https://kafka.apache.org/documentation/#security_sasl_plain
-  - type: docs
-    url: https://kafka.apache.org/documentation/#security_configclients
+- type: docs
+  url: https://kafka.apache.org/documentation/#security_sasl_plain
+- type: docs
+  url: https://kafka.apache.org/documentation/#security_configclients
+- type: docs
+  url: https://kafka.apache.org/documentation/#connectconfigs

@@ -6,9 +6,9 @@ author: haxxm0nkey
 credentials:
 - id: admin-user-password
   name: DSM Administrator/User Password
-  description: Synology DSM uses local and directory users for web, SSH, SMB/NFS/AFP, package,
-    and API access. Newer DSM disables or prompts configuration of the default admin account
-    during setup.
+  description: Synology DSM uses local and directory users for web, SSH, SMB/NFS/AFP,
+    package, and API access. Newer DSM disables or prompts configuration of the default
+    admin account during setup.
   type: username_password
   nature:
   - generated_on_install
@@ -16,9 +16,13 @@ credentials:
   sensitivity: secret
   location:
   - type: public_interface
-    path: DSM web UI, SSH, SMB/AFP/NFS services, WebDAV, package UIs, and Synology APIs
+    path: DSM web UI, SSH, SMB/AFP/NFS services, WebDAV, package UIs, and Synology
+      APIs
   - type: config_file
     detail: /etc/passwd, /etc/shadow, DSM account/config files, and package configs
+    path: /etc/passwd, /etc/shadow, /etc/synouser.conf, /etc/synogroup.conf
+    platform:
+    - linux
   - type: database
     detail: DSM system/account databases and package user stores
   - type: secret_store
@@ -29,8 +33,8 @@ credentials:
     credentials.
 - id: api-session-synotoken
   name: DSM API Session / SynoToken
-  description: DSM web/API sessions use cookies and SynoToken-style CSRF/session tokens for
-    authenticated API calls.
+  description: DSM web/API sessions use cookies and SynoToken-style CSRF/session tokens
+    for authenticated API calls.
   type: token
   nature:
   - generated_on_install
@@ -44,12 +48,14 @@ credentials:
     detail: Synology API/UI token used by authenticated requests
   - type: config_file
     detail: API client caches, automation scripts, and mobile app traces
+    path: synology-session.json, dsm-client.json, synology.json
   - type: logs
     detail: reverse proxy, web access, and API debug logs
 - id: package-cloud-backup-secrets
   name: Package, Cloud, Backup, and Integration Secrets
-  description: DSM packages store secrets for Hyper Backup, Active Backup, Cloud Sync, LDAP/AD,
-    SMTP, DDNS, Docker/Container Manager, surveillance cameras, and package-specific databases.
+  description: DSM packages store secrets for Hyper Backup, Active Backup, Cloud Sync,
+    LDAP/AD, SMTP, DDNS, Docker/Container Manager, surveillance cameras, and package-specific
+    databases.
   type: secret_value
   nature:
   - user_defined
@@ -59,30 +65,37 @@ credentials:
   - type: config_file
     detail: DSM package configuration directories, /usr/syno/etc, Docker Compose projects,
       and service configs
+    path: /usr/syno/etc/synobackup.conf, /usr/syno/etc/account.conf, /etc/synoinfo.conf,
+      synology-backup.json
+    platform:
+    - linux
   - type: database
     detail: DSM/package databases containing account, token, and integration settings
   - type: secret_store
-    detail: DSM internal credential store, Hyper Backup credentials, and external vaults
+    detail: DSM internal credential store, Hyper Backup credentials, and external
+      vaults
   - type: artifact
     detail: configuration backups, Hyper Backup sets, and support dumps
   - type: logs
     detail: package logs and sync/backup debug output
 - id: certificate-private-key
   name: DSM Certificate / SSH Private Key
-  description: Synology appliances store TLS certificate private keys, SSH host/user keys,
-    VPN keys, and package-generated key material.
+  description: Synology appliances store TLS certificate private keys, SSH host/user
+    keys, VPN keys, and package-generated key material.
   type: key_pair
   nature:
   - generated_on_install
   - user_defined
   sensitivity: secret
   looks_like:
-  - pattern: '-----BEGIN (RSA |EC |OPENSSH |ENCRYPTED |)PRIVATE KEY-----'
+  - pattern: '-----BEGIN (RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----'
     detail: private key material from DSM certificates, SSH, or VPN packages
   location:
   - type: config_file
-    detail: DSM certificate directories, SSH key files, VPN package configs, and reverse proxy
-      settings
+    detail: DSM certificate directories, SSH key files, VPN package configs, and reverse
+      proxy settings
+    path: /usr/syno/etc/certificate/system/default/privkey.pem, /usr/syno/etc/certificate/_archive/privkey.pem,
+      server.key, synology.key
   - type: secret_store
     detail: certificate stores, backup vaults, and password managers
   - type: artifact

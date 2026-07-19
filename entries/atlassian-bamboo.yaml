@@ -3,205 +3,222 @@ name: Atlassian Bamboo
 category: ci_cd
 vendor: Atlassian
 author: haxxm0nkey
-
 credentials:
+- id: database-password
+  name: Database Password
+  description: 'Bamboo stores database connection settings for external databases
+    in its home configuration. The database username and password are operator-supplied
+    credentials used by Bamboo to connect to the Bamboo database.
 
-  - id: database-password
-    name: Database Password
-    description: >
-      Bamboo stores database connection settings for external databases in
-      its home configuration. The database username and password are
-      operator-supplied credentials used by Bamboo to connect to the Bamboo
-      database.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: '<property name="hibernate\.connection\.username">[^<]+</property>\s*<property name="hibernate\.connection\.password">[^<]*</property>'
-        detail: >
-          Bamboo database credential pair in XML configuration; values are
-          arbitrary operator-supplied strings
-      - pattern: '<property name="hibernate\.connection\.password">[^<]*</property>'
-        detail: >
-          database password property in Bamboo configuration; the password
-          value has no product-specific textual shape
-    location:
-      - type: config_file
-        path: $BAMBOO_HOME/bamboo.cfg.xml
-        detail: Bamboo home configuration file
-      - type: build_artifact
-        detail: Bamboo home backups, migration bundles, snapshots, support exports
-    notes: >
-      Database access can expose build configuration, deployment project
-      metadata, stored credentials metadata, user-directory state, and plugin
-      configuration. Bamboo home backups should be treated as
-      credential-bearing artifacts.
+    '
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: <property name="hibernate\.connection\.username">[^<]+</property>\s*<property
+      name="hibernate\.connection\.password">[^<]*</property>
+    detail: 'Bamboo database credential pair in XML configuration; values are arbitrary
+      operator-supplied strings
 
-  - id: local-user-admin-password
-    name: Local User / Administrator Password
-    description: >
-      Bamboo local users, including administrators created during setup or by
-      operators, authenticate with passwords stored in the configured user
-      directory. For internal directories, password material is database
-      state rather than a plaintext file.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: 'cwd_user.*credential'
-        detail: >
-          internal-directory password material in Atlassian user tables; the
-          value has no Bamboo-specific textual prefix and is identified by
-          table and column context
-      - pattern: '[^\s:@]+:[^\s:]+'
-        detail: >
-          raw Basic-auth username:password form before Base64 encoding;
-          request context identifies Bamboo
-    location:
-      - type: database
-        detail: internal user directory tables, including cwd_user credential data
-      - type: public_interface
-        path: /userlogin.action
-        detail: Bamboo web login for users and administrators
-      - type: public_interface
-        path: /rest/api/*
-        detail: Bamboo REST API Basic authentication in legacy scripts
-      - type: source_code
-        detail: scripts and integrations that embed Bamboo usernames and passwords
-    notes: >
-      There is no universal shipped Bamboo administrator password. The setup
-      flow or an operator creates administrator credentials, and later users
-      may be local, LDAP-backed, Crowd-backed, SSO-backed, or externally
-      managed.
+      '
+  - pattern: <property name="hibernate\.connection\.password">[^<]*</property>
+    detail: 'database password property in Bamboo configuration; the password value
+      has no product-specific textual shape
 
-  - id: personal-access-token
-    name: Personal Access Token
-    description: >
-      Bamboo personal access tokens replace username and password
-      authentication for scripts and external applications. Atlassian
-      documents them as bearer tokens for REST API calls and for downloading
-      artifacts, logs, and agent installers.
-    type: token
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - example: 'NDc4NDkyNDg3ODE3OstHYSeYC1UgXqRacSqvUbookcZk'
-        pattern: '[A-Za-z0-9+/]{20,}={0,2}'
-        detail: >
-          Bamboo documentation shows an opaque base64-like bearer token and
-          does not document a product-specific prefix
-      - pattern: 'Authorization:\s*Bearer\s+[^\s]+'
-        detail: bearer-token HTTP header used by Bamboo REST clients
-    location:
-      - type: environment
-        path: BAMBOO_TOKEN, BAMBOO_PAT
-      - type: source_code
-        detail: automation scripts, curl commands, release tooling, CI/CD configs
-      - type: logs
-        detail: REST client debug logs when Authorization headers are printed
-      - type: secret_store
-        detail: deployment-platform and CI/CD secret stores
-    notes: >
-      A Bamboo PAT carries the creating user's permissions. Admins can revoke
-      tokens, but cannot create tokens on behalf of users according to
-      Atlassian's PAT documentation.
+      '
+  location:
+  - type: config_file
+    platform:
+    - linux
+    path: $BAMBOO_HOME/bamboo.cfg.xml, /var/atlassian/application-data/bamboo/bamboo.cfg.xml
+    detail: Bamboo home configuration file
+  - type: artifact
+    detail: Bamboo home backups, migration bundles, snapshots, support exports
+  notes: 'Database access can expose build configuration, deployment project metadata,
+    stored credentials metadata, user-directory state, and plugin configuration. Bamboo
+    home backups should be treated as credential-bearing artifacts.
 
-  - id: repository-credential
-    name: Repository / Shared Credential
-    description: >
-      Bamboo plans and linked repositories store credentials used to access
-      source-code repositories and other external systems. These include
-      username/password pairs, access tokens, and shared credentials reused
-      by multiple plans.
-    type: secret_value
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: '(password|passphrase|token|accessKey|secretKey)'
-        detail: >
-          Bamboo repository or shared-credential field name; the actual
-          stored value is arbitrary and is identified by credential context
-    location:
-      - type: database
-        detail: Bamboo plan, repository, and shared-credential records
-      - type: source_code
-        detail: Bamboo Specs repositories and deployment scripts
-      - type: secret_store
-        detail: Bamboo shared credentials and linked repository authentication
-      - type: build_artifact
-        detail: Bamboo exports and database backups
-    notes: >
-      Credentials stored for repository polling and checkout often reach
-      outside Bamboo into Bitbucket, GitHub, GitLab, artifact repositories,
-      container registries, and deployment targets. A leaked Bamboo database
-      or export can therefore expose credentials for many downstream systems.
+    '
+- id: local-user-admin-password
+  name: Local User / Administrator Password
+  description: 'Bamboo local users, including administrators created during setup
+    or by operators, authenticate with passwords stored in the configured user directory.
+    For internal directories, password material is database state rather than a plaintext
+    file.
 
-  - id: ssh-private-key
-    name: SSH Private Key
-    description: >
-      Bamboo can use SSH keys for linked repositories, deployments, and
-      remote systems reached by build tasks. The private key is the secret
-      half of the credential and may be stored in Bamboo or on build agents.
-    type: key_pair
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: '-----BEGIN (OPENSSH|RSA|EC|DSA) PRIVATE KEY-----'
-        detail: >
-          identified by the PEM/OpenSSH private-key header; full private keys
-          are multi-line and not useful as compact specimens
-    location:
-      - type: secret_store
-        detail: Bamboo shared credentials and linked repository credentials
-      - type: config_file
-        path: ~/.ssh/id_*, ~/.ssh/*_bamboo*
-        detail: Bamboo server and remote agent filesystems
-      - type: source_code
-        detail: accidentally committed deployment keys in Bamboo Specs repositories
-      - type: build_artifact
-        detail: job artifacts, logs, or exports that accidentally include key files
-    notes: >
-      The key's blast radius is determined by the systems that trust the
-      public key: source repositories, deployment hosts, artifact stores, or
-      cloud infrastructure used by Bamboo jobs.
+    '
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: cwd_user.*credential
+    detail: 'internal-directory password material in Atlassian user tables; the value
+      has no Bamboo-specific textual prefix and is identified by table and column
+      context
 
-  - id: build-variable-secret
-    name: Build / Deployment Variable Secret
-    description: >
-      Bamboo variables can be referenced by plans, jobs, tasks, and
-      deployments. Operators frequently place passwords, tokens, and API keys
-      in Bamboo variables or password fields for build and deployment use.
-    type: secret_value
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: '\$\{bamboo\.[A-Za-z0-9_.-]+\}'
-        detail: >
-          Bamboo variable reference in task fields or scripts; the expanded
-          value may be a secret even though the reference itself is not
-    location:
-      - type: database
-        detail: Bamboo global, project, plan, and deployment variable storage
-      - type: source_code
-        detail: Bamboo Specs repositories and scripts using ${bamboo.*} variables
-      - type: logs
-        detail: build logs when tasks echo expanded variables
-    notes: >
-      Atlassian documents that variables are used in task fields and that
-      password fields are treated specially. Secret values still leak when
-      copied into scripts, echoed by jobs, written to artifacts, or exported
-      through backups.
+      '
+  - pattern: '[^\s:@]+:[^\s:]+'
+    detail: 'raw Basic-auth username:password form before Base64 encoding; request
+      context identifies Bamboo
 
+      '
+  location:
+  - type: database
+    detail: internal user directory tables, including cwd_user credential data
+  - type: public_interface
+    path: /userlogin.action
+    detail: Bamboo web login for users and administrators
+  - type: public_interface
+    path: /rest/api/*
+    detail: Bamboo REST API Basic authentication in legacy scripts
+  - type: source_code
+    detail: scripts and integrations that embed Bamboo usernames and passwords
+  notes: 'There is no universal shipped Bamboo administrator password. The setup flow
+    or an operator creates administrator credentials, and later users may be local,
+    LDAP-backed, Crowd-backed, SSO-backed, or externally managed.
+
+    '
+- id: personal-access-token
+  name: Personal Access Token
+  description: 'Bamboo personal access tokens replace username and password authentication
+    for scripts and external applications. Atlassian documents them as bearer tokens
+    for REST API calls and for downloading artifacts, logs, and agent installers.
+
+    '
+  type: token
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - example: NDc4NDXXXXXXXXXXXXXXXXXXXXXXkcZk
+    pattern: '[A-Za-z0-9+/]{20,}={0,2}'
+    detail: 'Bamboo documentation shows an opaque base64-like bearer token and does
+      not document a product-specific prefix
+
+      '
+  - pattern: Authorization:\s*Bearer\s+[^\s]+
+    detail: bearer-token HTTP header used by Bamboo REST clients
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Bearer token used by Bamboo REST API clients
+  - type: source_code
+    detail: automation scripts, curl commands, release tooling, CI/CD configs
+  - type: logs
+    detail: REST client debug logs when Authorization headers are printed
+  - type: secret_store
+    detail: deployment-platform and CI/CD secret stores
+  notes: 'A Bamboo PAT carries the creating user''s permissions. Admins can revoke
+    tokens, but cannot create tokens on behalf of users according to Atlassian''s
+    PAT documentation.
+
+    '
+- id: repository-credential
+  name: Repository / Shared Credential
+  description: 'Bamboo plans and linked repositories store credentials used to access
+    source-code repositories and other external systems. These include username/password
+    pairs, access tokens, and shared credentials reused by multiple plans.
+
+    '
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: (password|passphrase|token|accessKey|secretKey)
+    detail: 'Bamboo repository or shared-credential field name; the actual stored
+      value is arbitrary and is identified by credential context
+
+      '
+  location:
+  - type: config_file
+    path: bamboo-specs/bamboo.yaml, bamboo-specs/bamboo.yml, bamboo.yaml, bamboo.yml
+    detail: Bamboo Specs and deployment configuration may reference repository/shared
+      credentials
+  - type: database
+    detail: Bamboo plan, repository, and shared-credential records
+  - type: source_code
+    detail: Bamboo Specs repositories and deployment scripts
+  - type: secret_store
+    detail: Bamboo shared credentials and linked repository authentication
+  - type: artifact
+    detail: Bamboo exports and database backups
+  notes: 'Credentials stored for repository polling and checkout often reach outside
+    Bamboo into Bitbucket, GitHub, GitLab, artifact repositories, container registries,
+    and deployment targets. A leaked Bamboo database or export can therefore expose
+    credentials for many downstream systems.
+
+    '
+- id: ssh-private-key
+  name: SSH Private Key
+  description: 'Bamboo can use SSH keys for linked repositories, deployments, and
+    remote systems reached by build tasks. The private key is the secret half of the
+    credential and may be stored in Bamboo or on build agents.
+
+    '
+  type: key_pair
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: '-----BEGIN (OPENSSH|RSA|EC|DSA) PRIVATE KEY-----'
+    detail: 'identified by the PEM/OpenSSH private-key header; full private keys are
+      multi-line and not useful as compact specimens
+
+      '
+  location:
+  - type: secret_store
+    detail: Bamboo shared credentials and linked repository credentials
+  - type: source_code
+    detail: accidentally committed deployment keys in Bamboo Specs repositories
+  - type: artifact
+    detail: job artifacts, logs, or exports that accidentally include key files
+  notes: 'The key''s blast radius is determined by the systems that trust the public
+    key: source repositories, deployment hosts, artifact stores, or cloud infrastructure
+    used by Bamboo jobs.
+
+    '
+- id: build-variable-secret
+  name: Build / Deployment Variable Secret
+  description: 'Bamboo variables can be referenced by plans, jobs, tasks, and deployments.
+    Operators frequently place passwords, tokens, and API keys in Bamboo variables
+    or password fields for build and deployment use.
+
+    '
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: \$\{bamboo\.[A-Za-z0-9_.-]+\}
+    detail: 'Bamboo variable reference in task fields or scripts; the expanded value
+      may be a secret even though the reference itself is not
+
+      '
+  location:
+  - type: database
+    detail: Bamboo global, project, plan, and deployment variable storage
+  - type: source_code
+    detail: Bamboo Specs repositories and scripts using ${bamboo.*} variables
+  - type: logs
+    detail: build logs when tasks echo expanded variables
+  notes: 'Atlassian documents that variables are used in task fields and that password
+    fields are treated specially. Secret values still leak when copied into scripts,
+    echoed by jobs, written to artifacts, or exported through backups.
+
+    '
 references:
-  - type: docs
-    url: https://confluence.atlassian.com/bamboo/important-directories-and-files-289276939.html
-  - type: docs
-    url: https://confluence.atlassian.com/bamboo/connecting-bamboo-to-an-external-database-289276817.html
-  - type: docs
-    url: https://confluence.atlassian.com/bamboo/personal-access-tokens-976779873.html
-  - type: docs
-    url: https://confluence.atlassian.com/bamboo/shared-credentials-289277189.html
-  - type: docs
-    url: https://confluence.atlassian.com/bamboo/linking-to-source-code-repositories-289276872.html
-  - type: docs
-    url: https://confluence.atlassian.com/bamboo/managing-global-variables-289277087.html
+- type: docs
+  url: https://confluence.atlassian.com/bamboo/important-directories-and-files-289276939.html
+- type: docs
+  url: https://confluence.atlassian.com/bamboo/connecting-bamboo-to-an-external-database-289276817.html
+- type: docs
+  url: https://confluence.atlassian.com/bamboo/personal-access-tokens-976779873.html
+- type: docs
+  url: https://confluence.atlassian.com/bamboo/shared-credentials-289277189.html
+- type: docs
+  url: https://confluence.atlassian.com/bamboo/linking-to-source-code-repositories-289276872.html
+- type: docs
+  url: https://confluence.atlassian.com/bamboo/managing-global-variables-289277087.html

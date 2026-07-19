@@ -1,93 +1,110 @@
 id: bigbluebutton
 name: BigBlueButton
-category: collaboration
+category: other
 vendor: BigBlueButton
 author: haxxm0nkey
-
 credentials:
+- id: api-shared-secret
+  name: API Shared Secret
+  description: 'BigBlueButton API calls include a checksum computed with a secret
+    shared with the server. BigBlueButton documents that third-party applications
+    can make API calls if they have the shared secret and that end users should not
+    have it.
 
-  - id: api-shared-secret
-    name: API Shared Secret
-    description: >
-      BigBlueButton API calls include a checksum computed with a secret shared
-      with the server. BigBlueButton documents that third-party applications can
-      make API calls if they have the shared secret and that end users should not
-      have it.
-    type: secret_value
-    nature: [generated_on_install]
-    sensitivity: secret
-    location:
-      - type: config_file
-        path: /etc/bigbluebutton/bbb-web.properties, /etc/bigbluebutton
-        detail: BigBlueButton API shared secret and override configuration
-      - type: environment
-        path: BBB_SECRET, BIGBLUEBUTTON_SECRET
-      - type: secret_store
-        detail: deployment vaults, Kubernetes Secrets, and cloud secret managers
-      - type: source_code
-        detail: Greenlight config, API integration code, tests, and committed .env files
-      - type: logs
-        detail: bbb-conf output, API client traces, and setup logs
-      - type: http_response
-        detail: administrative tooling output that prints API URL and secret
-    notes: >
-      API shared secret exposure allows server-to-server API calls such as
-      creating, joining, and ending meetings depending on endpoint access.
+    '
+  type: secret_value
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: config_file
+    path: /etc/bigbluebutton/bbb-web.properties
+    detail: BigBlueButton API shared secret setting securitySalt
+    platform:
+    - linux
+  - type: secret_store
+    detail: deployment vaults, Kubernetes Secrets, and cloud secret managers
+  - type: source_code
+    detail: Greenlight config, API integration code, tests, and committed .env files
+  - type: logs
+    detail: bbb-conf output, API client traces, and setup logs
+  - type: http_response
+    detail: administrative tooling output that prints API URL and secret
+  notes: 'API shared secret exposure allows server-to-server API calls such as creating,
+    joining, and ending meetings depending on endpoint access.
 
-  - id: meeting-passwords
-    name: Meeting Attendee / Moderator Passwords
-    description: >
-      BigBlueButton create API can return or accept attendeePW and moderatorPW
-      meeting passwords. The API docs mark these parameters deprecated when role
-      is used, but they remain credential material in older integrations.
-    type: password
-    nature: [generated_on_install, user_defined]
-    sensitivity: secret
-    location:
-      - type: http_response
-        detail: create API XML responses containing attendeePW and moderatorPW
-      - type: config_file
-        detail: LMS/plugin integration config, meeting creation scripts, and .env files
-      - type: database
-        detail: frontend or LMS database records storing meeting credentials
-      - type: source_code
-        detail: API examples, tests, and committed integration scripts
-      - type: logs
-        detail: API request logs and LMS/plugin debug output
-      - type: public_interface
-        path: /bigbluebutton/api
-        detail: BigBlueButton API endpoint accepting meeting password parameters
-    notes: >
-      Moderator passwords can grant moderator capabilities for a meeting in
-      integrations that still use password-based join authorization.
+    '
+  looks_like:
+  - pattern: (?m)^\s*securitySalt\s*=\s*[A-Za-z0-9._/-]{16,255}\s*$
+    detail: BigBlueButton bbb-web.properties API shared secret setting
+- id: meeting-passwords
+  name: Meeting Attendee / Moderator Passwords
+  description: 'BigBlueButton create API can return or accept attendeePW and moderatorPW
+    meeting passwords. The API docs mark these parameters deprecated when role is
+    used, but they remain credential material in older integrations.
 
-  - id: freeswitch-sip-credentials
-    name: FreeSWITCH SIP Provider Credentials
-    description: >
-      BigBlueButton customization docs show FreeSWITCH gateway configuration
-      with username and password values for external SIP providers. These
-      credentials enable telephony integration.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: '<param\s+name\s*=\s*"password"\s+value\s*=\s*"[^"]+"\s*/>'
-        detail: FreeSWITCH gateway password parameter in BigBlueButton telephony config
-    location:
-      - type: config_file
-        detail: FreeSWITCH gateway XML, BigBlueButton override files, and deployment scripts
-      - type: secret_store
-        detail: telephony provider vault entries and deployment secrets
-      - type: source_code
-        detail: committed FreeSWITCH config and custom apply-config.sh scripts
-      - type: logs
-        detail: SIP registration logs and FreeSWITCH troubleshooting output
-    notes: >
-      SIP credentials can allow registration or call routing through the
-      configured telephony provider.
+    '
+  type: password
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: config_file
+    path: greenlight.env, .greenlight, settings.yml
+    detail: Frontend/LMS integration config where meeting passwords may be persisted
+      or templated
+  - type: http_response
+    detail: create API XML responses containing attendeePW and moderatorPW
+  - type: database
+    detail: frontend or LMS database records storing meeting credentials
+  - type: source_code
+    detail: API examples, tests, and committed integration scripts
+  - type: logs
+    detail: API request logs and LMS/plugin debug output
+  - type: public_interface
+    path: /bigbluebutton/api
+    detail: BigBlueButton API endpoint accepting meeting password parameters
+  notes: 'Moderator passwords can grant moderator capabilities for a meeting in integrations
+    that still use password-based join authorization.
 
+    '
+  looks_like:
+  - pattern: (?i)(attendeePW|moderatorPW)\s*[=:]\s*[^\s&]{2,64}
+    detail: BigBlueButton meeting password parameter in API calls or integration config
+- id: freeswitch-sip-credentials
+  name: FreeSWITCH SIP Provider Credentials
+  description: 'BigBlueButton customization docs show FreeSWITCH gateway configuration
+    with username and password values for external SIP providers. These credentials
+    enable telephony integration.
+
+    '
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: <param\s+name\s*=\s*"password"\s+value\s*=\s*"[^"]+"\s*/>
+    detail: FreeSWITCH gateway password parameter in BigBlueButton telephony config
+  location:
+  - type: config_file
+    detail: FreeSWITCH gateway XML and BBB apply-config customization script for SIP
+      provider credentials
+    path: /opt/freeswitch/etc/freeswitch/sip_profiles/external.xml, /etc/bigbluebutton/bbb-conf/apply-config.sh
+    platform:
+    - linux
+  - type: secret_store
+    detail: telephony provider vault entries and deployment secrets
+  - type: source_code
+    detail: committed FreeSWITCH config and custom apply-config.sh scripts
+  - type: logs
+    detail: SIP registration logs and FreeSWITCH troubleshooting output
+  notes: 'SIP credentials can allow registration or call routing through the configured
+    telephony provider.
+
+    '
 references:
-  - type: docs
-    url: https://docs.bigbluebutton.org/development/api/
-  - type: docs
-    url: https://docs.bigbluebutton.org/administration/customize/
+- type: docs
+  url: https://docs.bigbluebutton.org/development/api/
+- type: docs
+  url: https://docs.bigbluebutton.org/administration/customize/

@@ -3,67 +3,80 @@ name: MinIO
 category: cloud
 vendor: MinIO
 author: haxxm0nkey
-
 credentials:
+- id: root-credentials
+  name: Root User / Root Password
+  description: 'MinIO root credentials define the root user with complete access and
+    permissions to the deployment. MinIO documents setting root user and root password
+    through environment variables or configuration settings.
 
-  - id: root-credentials
-    name: Root User / Root Password
-    description: >
-      MinIO root credentials define the root user with complete access and
-      permissions to the deployment. MinIO documents setting root user and root
-      password through environment variables or configuration settings.
-    type: username_password
-    nature: [generated_on_install, user_defined]
-    sensitivity: secret
-    location:
-      - type: environment
-        path: MINIO_ROOT_USER, MINIO_ROOT_PASSWORD, MINIO_ACCESS_KEY, MINIO_SECRET_KEY
-      - type: config_file
-        detail: systemd environment files, Docker Compose files, Helm values, and MinIO server config
-      - type: secret_store
-        detail: Kubernetes Secrets, Docker secrets, cloud secret managers, and vault entries
-      - type: source_code
-        detail: committed deployment manifests, examples, tests, and container configs
-      - type: logs
-        detail: startup logs, shell history, and CI output
-      - type: public_interface
-        path: MinIO S3 API and Console
-    notes: >
-      The root user has full administrative access. Older MINIO_ACCESS_KEY and
-      MINIO_SECRET_KEY names appear in legacy deployments.
+    '
+  type: username_password
+  nature:
+  - generated_on_install
+  - user_defined
+  - static_default
+  sensitivity: secret
+  location:
+  - type: environment
+    path: MINIO_ROOT_USER, MINIO_ROOT_PASSWORD, MINIO_ACCESS_KEY, MINIO_SECRET_KEY
+  - type: config_file
+    detail: systemd environment files, Docker Compose files, Helm values, and MinIO
+      server config
+    path: minio.env, minio.conf, /etc/default/minio, /etc/sysconfig/minio, config.env
+  - type: secret_store
+    detail: Kubernetes Secrets, Docker secrets, cloud secret managers, and vault entries
+  - type: source_code
+    detail: committed deployment manifests, examples, tests, and container configs
+  - type: logs
+    detail: startup logs, shell history, and CI output
+  - type: public_interface
+    path: MinIO S3 API and Console
+  notes: 'The root user has full administrative access. Older MINIO_ACCESS_KEY and
+    MINIO_SECRET_KEY names appear in legacy deployments.
 
-  - id: access-secret-key
-    name: Access Key / Secret Key
-    description: >
-      MinIO users and service accounts authenticate to the S3-compatible API
-      with access keys and secret keys. Identity management docs cover built-in
-      users, service accounts, and external identity providers.
-    type: api_key
-    nature: [generated_on_install]
-    sensitivity: secret
-    looks_like:
-      - pattern: 'AKIA[0-9A-Z]{16}'
-        detail: AWS-style access key pattern sometimes used by S3-compatible clients; MinIO keys can also be arbitrary opaque strings
-    location:
-      - type: environment
-        path: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, MINIO_ACCESS_KEY, MINIO_SECRET_KEY
-      - type: config_file
-        detail: mc client config, application config, .env files, and deployment manifests
-      - type: secret_store
-        detail: Kubernetes Secrets, cloud secret managers, CI/CD variables, and service account secret stores
-      - type: source_code
-        detail: S3 client code, tests, notebooks, and accidentally committed configs
-      - type: logs
-        detail: S3 client debug logs and CI traces
-      - type: http_header
-        path: Authorization
-        detail: AWS Signature authentication headers derived from access and secret keys
-    notes: >
-      Secret key exposure grants the permissions assigned to the MinIO user or
-      service account policies.
+    '
+  default:
+    username: minioadmin
+    password: minioadmin
+- id: access-secret-key
+  name: Access Key / Secret Key
+  description: 'MinIO users and service accounts authenticate to the S3-compatible
+    API with access keys and secret keys. Identity management docs cover built-in
+    users, service accounts, and external identity providers.
 
+    '
+  type: api_key
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - pattern: AKIA[0-9A-Z]{16}
+    detail: AWS-style access key pattern sometimes used by S3-compatible clients;
+      MinIO keys can also be arbitrary opaque strings
+  location:
+  - type: environment
+    path: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, MINIO_ACCESS_KEY, MINIO_SECRET_KEY
+  - type: config_file
+    detail: 'mc client config, application config, .env files, and deployment manifests;
+      Removed generic/common scanner surface path(s) from product template: .env'
+    path: ~/.mc/config.json, credentials.json, minio-client.json, config.json
+  - type: secret_store
+    detail: Kubernetes Secrets, cloud secret managers, CI/CD variables, and service
+      account secret stores
+  - type: source_code
+    detail: S3 client code, tests, notebooks, and accidentally committed configs
+  - type: logs
+    detail: S3 client debug logs and CI traces
+  - type: http_header
+    path: Authorization
+    detail: AWS Signature authentication headers derived from access and secret keys
+  notes: 'Secret key exposure grants the permissions assigned to the MinIO user or
+    service account policies.
+
+    '
 references:
-  - type: docs
-    url: https://min.io/docs/minio/linux/reference/minio-server/settings/root-credentials.html
-  - type: docs
-    url: https://min.io/docs/minio/linux/administration/identity-access-management/minio-user-management.html
+- type: docs
+  url: https://min.io/docs/minio/linux/reference/minio-server/settings/root-credentials.html
+- type: docs
+  url: https://min.io/docs/minio/linux/administration/identity-access-management/minio-user-management.html

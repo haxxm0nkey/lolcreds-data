@@ -6,9 +6,9 @@ author: haxxm0nkey
 credentials:
 - id: local-user-password
   name: Local/User Password
-  description: ServiceNow users authenticate through local passwords, SSO, LDAP, or external
-    identity providers. Local admin/service users and integration users remain important credentials
-    for UI, REST, SOAP, and MID Server operations.
+  description: ServiceNow users authenticate through local passwords, SSO, LDAP, or
+    external identity providers. Local admin/service users and integration users remain
+    important credentials for UI, REST, SOAP, and MID Server operations.
   type: username_password
   nature:
   - user_defined
@@ -25,10 +25,12 @@ credentials:
     detail: integration scripts, MID Server configs, and CI/CD variables
   - type: logs
     detail: system logs, transaction logs, and integration debug logs
+  - type: config_file
+    path: servicenow.json, servicenow.yaml, mid.properties
 - id: personal-access-token-oauth
   name: OAuth / Personal Access Token
-  description: ServiceNow supports OAuth applications, bearer tokens, refresh tokens, and
-    API key-style credentials for integrations.
+  description: ServiceNow supports OAuth applications, bearer tokens, refresh tokens,
+    and API key-style credentials for integrations.
   type: token
   nature:
   - generated_on_install
@@ -41,7 +43,10 @@ credentials:
   - type: database
     detail: OAuth application, token, and refresh token records in the instance
   - type: config_file
-    detail: integration configs, appsettings, scripts, Postman collections, and .env files
+    detail: 'integration configs, appsettings, scripts, Postman collections, and .env
+      files; Removed generic/common scanner surface path(s) from product template:
+      .env'
+    path: servicenow.json, servicenow.yaml, oauth.json, mid.properties
   - type: environment
     path: SERVICENOW_TOKEN, SN_TOKEN, SNOW_TOKEN, SERVICENOW_CLIENT_SECRET
   - type: secret_store
@@ -50,8 +55,8 @@ credentials:
     detail: REST debug logs, integration logs, and MID Server logs
 - id: api-key
   name: API Key
-  description: ServiceNow API key records can authenticate selected integrations or protect
-    scripted APIs depending on plugin and configuration.
+  description: ServiceNow API key records can authenticate selected integrations or
+    protect scripted APIs depending on plugin and configuration.
   type: api_key
   nature:
   - generated_on_install
@@ -65,14 +70,15 @@ credentials:
     detail: API key records and access policy configuration
   - type: config_file
     detail: client scripts, integration settings, and API collections
+    path: servicenow.json, servicenow.yaml, api-key.json
   - type: secret_store
     detail: password vaults and CI/CD secret variables
   - type: logs
     detail: HTTP traces and integration debug logs
 - id: mid-server-and-credential-store
   name: MID Server / Credential Store Secret
-  description: ServiceNow stores discovery/orchestration credentials and MID Server secrets
-    for LDAP, SSH, Windows, SNMP, cloud, and application integrations.
+  description: ServiceNow stores discovery/orchestration credentials and MID Server
+    secrets for LDAP, SSH, Windows, SNMP, cloud, and application integrations.
   type: secret_value
   nature:
   - user_defined
@@ -80,12 +86,14 @@ credentials:
   sensitivity: secret
   location:
   - type: database
-    detail: credential tables, discovery credentials, OAuth profiles, and MID Server configuration
-      records
+    detail: credential tables, discovery credentials, OAuth profiles, and MID Server
+      configuration records
   - type: secret_store
-    detail: ServiceNow credential store, external credential resolvers, and enterprise vaults
+    detail: ServiceNow credential store, external credential resolvers, and enterprise
+      vaults
   - type: config_file
     detail: MID Server config.xml, wrapper config, and integration property files
+    path: config.xml, mid.properties, credentials.xml
   - type: logs
     detail: MID Server agent logs, ECC queue payload traces, and discovery logs
 references:

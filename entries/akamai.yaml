@@ -1,0 +1,129 @@
+id: akamai
+name: Akamai
+category: cloud
+vendor: Akamai
+author: haxxm0nkey
+
+credentials:
+- id: edgegrid-credential
+  name: EdgeGrid API Credential
+  description: >
+    Akamai APIs authenticate with EdgeGrid credentials: client_token,
+    client_secret, access_token, and host values stored in .edgerc or supplied
+    through Akamai environment variables. The token and secret fields are
+    credential material; host and account-switch keys are context.
+  type: api_key
+  nature: [generated_on_install, user_defined]
+  sensitivity: secret
+  looks_like:
+  - example: akab-c113ntt0k3n4qtari252bfxxbsl-yvsdj
+    pattern: 'akab-[A-Za-z0-9-]{20,100}'
+    detail: Akamai EdgeGrid client/access token prefix shown in official .edgerc examples; use with EdgeGrid context
+  - pattern: '(?m)^\s*(client_token|access_token)\s*=\s*akab-[A-Za-z0-9-]{20,100}\s*$'
+    detail: EdgeGrid token fields in .edgerc
+  - pattern: '(?m)^\s*client_secret\s*=\s*[A-Za-z0-9+/]{20,255}={0,2}\s*$'
+    detail: EdgeGrid client_secret field in .edgerc
+  location:
+  - type: config_file
+    platform: [linux]
+    path: ~/.edgerc, /.edgerc
+    detail: Official EdgeGrid resource file locations documented by Akamai for downloaded API client credentials
+  - type: config_file
+    platform: [windows]
+    path: '%USERPROFILE%\.edgerc'
+    detail: Windows home-relative EdgeGrid resource file
+  - type: environment
+    path: AKAMAI_CLIENT_TOKEN, AKAMAI_CLIENT_SECRET, AKAMAI_ACCESS_TOKEN, AKAMAI_PAPI_CLIENT_TOKEN, AKAMAI_PAPI_CLIENT_SECRET, AKAMAI_PAPI_ACCESS_TOKEN
+    detail: Official EdgeGrid credential environment variables; PAPI is Akamai's documented section-prefix example
+  - type: http_header
+    path: Authorization
+    detail: EG1-HMAC-SHA256 EdgeGrid authorization header derived from EdgeGrid credentials
+  - type: secret_store
+    detail: CI/CD variables, password vaults, cloud secret managers, and deployment secret stores
+  - type: source_code
+    detail: Terraform provider configs, deployment repos, purge scripts, SDK initialization code, and tests
+  - type: logs
+    detail: HTTP debug traces, Akamai CLI logs, SDK traces, and CI output
+  notes: >
+    AKAMAI_HOST and AKAMAI_ACCOUNT_KEY are official EdgeGrid context variables but
+    are not credential values, so they are not listed as credential env locations.
+    Arbitrary section-prefixed variables are supported by Akamai libraries but are
+    not represented with wildcards.
+
+- id: account-user-password
+  name: Akamai Control Center User Password
+  description: >
+    Akamai Control Center users authenticate through browser login, SSO, and MFA
+    to manage accounts, properties, security products, and API clients.
+  type: username_password
+  nature: [user_defined]
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: /login, /identity-management, /api-clients
+    detail: Akamai Control Center and Identity and Access Management login/API-client contexts
+  - type: secret_store
+    detail: Enterprise password vaults, IdP credential stores, break-glass account vaults, and admin runbooks
+  - type: logs
+    detail: Akamai account audit logs, IdP sign-in logs, browser exports, and support traces
+  notes: >
+    No static Akamai account default password is modeled.
+
+- id: netstorage-upload-account
+  name: NetStorage Upload Account Key
+  description: >
+    Akamai NetStorage upload accounts use upload account names and keys for HTTP
+    API, SSH, Aspera, rsync, and content upload workflows.
+  type: secret_value
+  nature: [generated_on_install, user_defined]
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: /netstorage, /upload-accounts
+    detail: NetStorage upload account management and content upload contexts
+  - type: secret_store
+    detail: CI/CD variables, password vaults, CMS secret stores, and content pipeline secret stores
+  - type: source_code
+    detail: Deployment scripts, CMS integrations, upload clients, tests, and content pipeline automation
+  - type: logs
+    detail: Upload client debug logs, rsync/SSH traces, CMS logs, and CI output
+  notes: >
+    No exact official NetStorage credential-value environment variable or stable
+    local config filename was confirmed in the checked sources, so scanner-facing
+    env/config locations are omitted for this block.
+
+- id: certificate-private-key
+  name: Certificate / CPS Private Key
+  description: >
+    Akamai properties and Certificate Provisioning System workflows may include
+    TLS private keys, origin client certificate keys, and deployment key material.
+  type: key_pair
+  nature: [generated_on_install, user_defined]
+  sensitivity: secret
+  looks_like:
+  - pattern: '-----BEGIN (RSA |EC |OPENSSH |ENCRYPTED )?PRIVATE KEY-----'
+    detail: Private key material for Akamai CPS, mTLS to origin, or deployment workflows
+  location:
+  - type: secret_store
+    detail: Certificate vaults, HSMs, CI/CD variables, Akamai CPS artifacts, and deployment secret stores
+  - type: artifact
+    detail: Certificate signing/deployment packages, CPS exports, PEM bundles, and backups
+  - type: source_code
+    detail: Infrastructure-as-code, deployment repositories, and origin mTLS configuration
+  - type: logs
+    detail: TLS, deployment, and certificate provisioning troubleshooting logs
+  notes: >
+    Generic private-key filenames are intentionally not duplicated as Akamai
+    scanner paths; generic private key detection belongs in CredsHound built-ins.
+
+references:
+- type: docs
+  url: https://techdocs.akamai.com/developer/docs/set-up-authentication-credentials
+- type: docs
+  url: https://techdocs.akamai.com/developer/docs/authenticate-with-edgegrid
+- type: docs
+  url: https://techdocs.akamai.com/developer/docs/about-clis
+- type: source
+  url: https://github.com/akamai/AkamaiOPEN-edgegrid-golang/blob/master/pkg/edgegrid/config.go
+- type: docs
+  url: https://techdocs.akamai.com/netstorage/docs/upload-account-management

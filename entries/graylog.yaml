@@ -3,121 +3,131 @@ name: Graylog
 category: monitoring
 vendor: Graylog
 author: haxxm0nkey
-
 credentials:
+- id: root-password-hash
+  name: Root User Password Hash
+  description: 'Graylog initial configuration requires root_password_sha2, a SHA-256
+    hash of the password used for the initial root login. Graylog documents that this
+    password cannot be changed through the API or web interface and is modified in
+    server.conf.
 
-  - id: root-password-hash
-    name: Root User Password Hash
-    description: >
-      Graylog initial configuration requires root_password_sha2, a SHA-256 hash
-      of the password used for the initial root login. Graylog documents that
-      this password cannot be changed through the API or web interface and is
-      modified in server.conf.
-    type: password
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: '^root_password_sha2\s*=\s*[A-Fa-f0-9]{64}$'
-        detail: Graylog server.conf root user SHA-256 password hash
-    location:
-      - type: config_file
-        path: server.conf, datanode.conf
-        detail: Graylog root_password_sha2 initial administrator password hash
-      - type: secret_store
-        detail: deployment secrets, cloud secret managers, and configuration management vaults
-      - type: source_code
-        detail: Docker Compose files, Helm values, Ansible roles, and committed server.conf files
-      - type: logs
-        detail: setup logs and preflight validation output
-      - type: public_interface
-        path: Graylog web interface and REST API
-    notes: >
-      root_password_sha2 is a verifier rather than the plaintext password, but
-      it is sufficient to define the root login password hash for Graylog nodes.
+    '
+  type: password
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: ^root_password_sha2\s*=\s*[A-Fa-f0-9]{64}$
+    detail: Graylog server.conf root user SHA-256 password hash
+  location:
+  - type: config_file
+    path: server.conf, datanode.conf
+    detail: Graylog root_password_sha2 initial administrator password hash
+  - type: secret_store
+    detail: deployment secrets, cloud secret managers, and configuration management
+      vaults
+  - type: source_code
+    detail: Docker Compose files, Helm values, Ansible roles, and committed server.conf
+      files
+  - type: logs
+    detail: setup logs and preflight validation output
+  - type: public_interface
+    path: Graylog web interface and REST API
+  notes: 'root_password_sha2 is a verifier rather than the plaintext password, but
+    it is sufficient to define the root login password hash for Graylog nodes.
 
-  - id: password-secret
-    name: password_secret
-    description: >
-      Graylog requires password_secret to secure and pepper stored user
-      passwords, sessions, access tokens, and encrypted values. Graylog documents
-      using at least 64 characters and keeping the same value on all nodes.
-    type: secret_value
-    nature: [generated_on_install]
-    sensitivity: secret
-    looks_like:
-      - pattern: '^password_secret\s*=\s*[^\r\n]{64,}$'
-        detail: Graylog server.conf password_secret value
-    location:
-      - type: config_file
-        path: server.conf, datanode.conf
-        detail: Graylog shared password_secret setting
-      - type: secret_store
-        detail: Kubernetes Secrets, cloud secret managers, vault entries, and deployment automation
-      - type: source_code
-        detail: committed server.conf files, Helm values, Docker Compose files, and examples
-      - type: image
-        detail: VM or container images containing Graylog configuration
-    notes: >
-      Changing password_secret invalidates user sessions and encrypted values,
-      including encrypted access tokens.
+    '
+- id: password-secret
+  name: password_secret
+  description: 'Graylog requires password_secret to secure and pepper stored user
+    passwords, sessions, access tokens, and encrypted values. Graylog documents using
+    at least 64 characters and keeping the same value on all nodes.
 
-  - id: rest-api-token
-    name: REST API Access Token
-    description: >
-      Graylog REST API can be accessed with usernames/passwords or with secure
-      access tokens to avoid sending actual usernames and passwords directly
-      over the command line.
-    type: token
-    nature: [user_defined]
-    sensitivity: secret
-    location:
-      - type: http_header
-        path: Authorization
-        detail: Basic/token authentication context for Graylog REST API clients
-      - type: environment
-        path: GRAYLOG_TOKEN, GRAYLOG_API_TOKEN
-      - type: config_file
-        detail: automation config, .env files, monitoring integrations, and deployment manifests
-      - type: secret_store
-        detail: CI/CD variables, cloud secret managers, and automation vault entries
-      - type: source_code
-        detail: Graylog REST scripts, tests, and committed clients
-      - type: logs
-        detail: API client traces and command-line history
-    notes: >
-      API token privileges correspond to the user and permissions that created
-      or own the token.
+    '
+  type: secret_value
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - pattern: ^password_secret\s*=\s*[^\r\n]{64,}$
+    detail: Graylog server.conf password_secret value
+  location:
+  - type: config_file
+    path: server.conf, datanode.conf
+    detail: Graylog shared password_secret setting
+  - type: secret_store
+    detail: Kubernetes Secrets, cloud secret managers, vault entries, and deployment
+      automation
+  - type: source_code
+    detail: committed server.conf files, Helm values, Docker Compose files, and examples
+  - type: image
+    detail: VM or container images containing Graylog configuration
+  notes: 'Changing password_secret invalidates user sessions and encrypted values,
+    including encrypted access tokens.
 
-  - id: mongodb-uri-credential
-    name: MongoDB Backend Credential
-    description: >
-      Graylog stores cluster configuration metadata in MongoDB and documents
-      mongodb_uri as the MongoDB connection string. Authenticated MongoDB URIs
-      can contain usernames and passwords used by Graylog.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: 'mongodb(?:\+srv)?://[^\s:@]+:[^\s@]+@[^\s/]+'
-        detail: MongoDB URI with username and password used by Graylog mongodb_uri
-    location:
-      - type: config_file
-        path: server.conf
-        detail: Graylog mongodb_uri setting
-      - type: secret_store
-        detail: cloud secret managers, Kubernetes Secrets, and database password vaults
-      - type: source_code
-        detail: Docker Compose files, Helm values, and committed Graylog configs
-      - type: logs
-        detail: startup logs and MongoDB connection troubleshooting output
-    notes: >
-      MongoDB credentials can expose Graylog configuration metadata, encrypted
-      values, access token records, and operational state.
+    '
+- id: rest-api-token
+  name: REST API Access Token
+  description: 'Graylog REST API can be accessed with usernames/passwords or with
+    secure access tokens to avoid sending actual usernames and passwords directly
+    over the command line.
 
+    '
+  type: token
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Basic/token authentication context for Graylog REST API clients
+  - type: environment
+    path: GRAYLOG_TOKEN, GRAYLOG_API_TOKEN
+  - type: config_file
+    detail: Graylog REST client/automation config
+    path: graylog.json, graylog.conf, server.conf
+  - type: secret_store
+    detail: CI/CD variables, cloud secret managers, and automation vault entries
+  - type: source_code
+    detail: Graylog REST scripts, tests, and committed clients
+  - type: logs
+    detail: API client traces and command-line history
+  notes: 'API token privileges correspond to the user and permissions that created
+    or own the token.
+
+    '
+- id: mongodb-uri-credential
+  name: MongoDB Backend Credential
+  description: 'Graylog stores cluster configuration metadata in MongoDB and documents
+    mongodb_uri as the MongoDB connection string. Authenticated MongoDB URIs can contain
+    usernames and passwords used by Graylog.
+
+    '
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: mongodb(?:\+srv)?://[^\s:@]+:[^\s@]+@[^\s/]+
+    detail: MongoDB URI with username and password used by Graylog mongodb_uri
+  location:
+  - type: config_file
+    path: server.conf, datanode.conf
+    detail: Graylog mongodb_uri setting
+  - type: secret_store
+    detail: cloud secret managers, Kubernetes Secrets, and database password vaults
+  - type: source_code
+    detail: Docker Compose files, Helm values, and committed Graylog configs
+  - type: logs
+    detail: startup logs and MongoDB connection troubleshooting output
+  notes: 'MongoDB credentials can expose Graylog configuration metadata, encrypted
+    values, access token records, and operational state.
+
+    '
 references:
-  - type: docs
-    url: https://go2docs.graylog.org/current/setting_up_graylog/server_configuration_settings_reference.htm
-  - type: docs
-    url: https://go2docs.graylog.org/current/setting_up_graylog/rest_api.html
-  - type: docs
-    url: https://go2docs.graylog.org/current/setting_up_graylog/initial_configuration_settings.html
+- type: docs
+  url: https://go2docs.graylog.org/current/setting_up_graylog/server_configuration_settings_reference.htm
+- type: docs
+  url: https://go2docs.graylog.org/current/setting_up_graylog/rest_api.html
+- type: docs
+  url: https://go2docs.graylog.org/current/setting_up_graylog/initial_configuration_settings.html

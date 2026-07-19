@@ -1,14 +1,14 @@
 id: sap-content-server
 name: SAP Content Server
-category: enterprise_app
+category: other
 vendor: SAP
 author: haxxm0nkey
 credentials:
 - id: admin-and-maintenance-password
   name: Administration / Maintenance Password
   description: SAP Content Server deployments use administrative and maintenance credentials
-    for repository setup, monitoring, and content server configuration depending on deployment
-    and web server integration.
+    for repository setup, monitoring, and content server configuration depending on
+    deployment and web server integration.
   type: username_password
   nature:
   - user_defined
@@ -16,41 +16,43 @@ credentials:
   sensitivity: secret
   location:
   - type: public_interface
-    path: Content Server administration URLs, HTTP content repository endpoints, and monitoring
-      pages
+    path: Content Server administration URLs, HTTP content repository endpoints, and
+      monitoring pages
   - type: config_file
-    detail: content server profile/configuration files, web server auth config, and repository
-      setup files
+    detail: content server profile/configuration files, web server auth config, and
+      repository setup files
+    path: ContentServer.ini, cs.conf, httpd.conf
   - type: secret_store
     detail: password managers and deployment vaults
   - type: logs
     detail: Content Server, web server, and repository setup logs
 - id: repository-certificate-and-signature-key
   name: Repository Certificate / Signature Key
-  description: SAP Content Server uses certificates/signatures and repository security settings
-    so SAP systems can authenticate repositories and verify requests.
+  description: SAP Content Server uses certificates/signatures and repository security
+    settings so SAP systems can authenticate repositories and verify requests.
   type: key_pair
   nature:
   - generated_on_install
   - user_defined
   sensitivity: secret
   looks_like:
-  - pattern: '-----BEGIN (RSA |EC |ENCRYPTED |)PRIVATE KEY-----'
+  - pattern: '-----BEGIN (RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----'
     detail: private key material used for repository certificate/signature operations
   - pattern: \.pse$
     detail: SAP PSE file used with Content Server or connected ABAP systems
   location:
   - type: config_file
-    detail: Content Server certificate/PSE files, repository certificate exports, and STRUST-related
-      files
+    detail: Content Server certificate/PSE files, repository certificate exports,
+      and STRUST-related files
+    path: SAPSSLS.pse, SAPSNCS.pse, sec.pse, ContentServer.pse, cs.pse
   - type: secret_store
     detail: SAP PSE stores, OS certificate stores, and recovery vaults
   - type: artifact
     detail: repository setup exports, backups, and support bundles
 - id: database-storage-secret
   name: Database / Storage Backend Secret
-  description: Content Server installations may use MaxDB or another storage/backend database
-    plus filesystem or object storage credentials for content repositories.
+  description: Content Server installations may use MaxDB or another storage/backend
+    database plus filesystem or object storage credentials for content repositories.
   type: secret_value
   nature:
   - user_defined
@@ -58,8 +60,9 @@ credentials:
   sensitivity: secret
   location:
   - type: config_file
-    detail: Content Server config, MaxDB/xuser references, datasource settings, and storage
-      configuration
+    detail: Content Server config, MaxDB/xuser references, datasource settings, and
+      storage configuration
+    path: ContentServer.ini, cs.conf, dbmcli.conf, hdbuserstore, storage.properties
   - type: secret_store
     detail: database secure stores, storage vaults, and password managers
   - type: source_code
@@ -68,8 +71,9 @@ credentials:
     detail: database connection, storage, and repository errors
 - id: http-basic-service-account
   name: HTTP Basic / Service Account Credential
-  description: Some Content Server landscapes protect administrative or repository endpoints
-    through web server authentication or service users configured in connected SAP systems.
+  description: Some Content Server landscapes protect administrative or repository
+    endpoints through web server authentication or service users configured in connected
+    SAP systems.
   type: username_password
   nature:
   - user_defined
@@ -80,6 +84,7 @@ credentials:
     detail: Basic authentication for Content Server or reverse-proxy protected endpoints
   - type: config_file
     detail: Apache/IIS/reverse-proxy auth config and SAP content repository configuration
+    path: httpd.conf, ContentServer.ini, reverse-proxy.conf
   - type: secret_store
     detail: web server password files and enterprise vaults
   - type: logs

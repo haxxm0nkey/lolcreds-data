@@ -6,8 +6,8 @@ author: haxxm0nkey
 credentials:
 - id: default-admin
   name: Default Administrator Login
-  description: Gitblit GO documentation describes an initial administrator account used to
-    sign in and configure the service.
+  description: Gitblit GO documentation describes an initial administrator account
+    used to sign in and configure the service.
   type: username_password
   nature:
   - static_default
@@ -21,20 +21,23 @@ credentials:
     path: Gitblit web UI, Git over HTTP, SSH, and RPC
   - type: config_file
     detail: users.conf, users.properties, or backing user service configuration
+    path: users.conf, users.properties
   - type: artifact
     detail: Gitblit data directory backups and support bundles
+    path: users.conf, users.properties, gitblit.properties, gitblit-data.zip
   notes: Change the default admin/admin credential during installation.
 - id: user-password-hash
   name: Local User Password Hash
-  description: Gitblit local user services store user credentials for web, Git, and RPC access.
+  description: Gitblit local user services store user credentials for web, Git, and
+    RPC access.
   type: username_password
   nature:
   - user_defined
   sensitivity: secret
   looks_like:
   - pattern: ^[^=\s]+\s*=\s*[^,\r\n]+,.*$
-    detail: Gitblit properties-style user entry; exact password/hash format depends on configured
-      user service
+    detail: Gitblit properties-style user entry; exact password/hash format depends
+      on configured user service
   location:
   - type: config_file
     path: users.conf, users.properties
@@ -47,18 +50,17 @@ credentials:
     detail: data directory backups
 - id: rpc-and-integration-secret
   name: RPC, Federation, and Mail/LDAP Secrets
-  description: Gitblit deployments may contain RPC credentials, federation tokens, SMTP passwords,
-    LDAP bind passwords, and Git hook integration secrets.
+  description: Gitblit deployments may contain RPC credentials, federation tokens,
+    SMTP passwords, LDAP bind passwords, and Git hook integration secrets.
   type: secret_value
   nature:
   - user_defined
   sensitivity: secret
   location:
   - type: config_file
-    path: gitblit.properties
-    detail: server, RPC, federation, mail, and authentication settings
-  - type: environment
-    path: GITBLIT_ADMIN_PASSWORD, GITBLIT_HOME
+    path: gitblit.properties, users.conf, users.properties
+    detail: Server, RPC, federation, mail, LDAP, and authentication settings; GITBLIT_HOME
+      is a path, not a credential value
   - type: source_code
     detail: Docker Compose files, provisioning scripts, and test configs
   - type: secret_store

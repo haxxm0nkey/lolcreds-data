@@ -3,225 +3,250 @@ name: Jenkins
 category: ci_cd
 vendor: Jenkins project
 author: haxxm0nkey
-
 credentials:
+- id: initial-admin-password
+  name: Initial Admin Password
+  description: 'New Jenkins controllers generate an administrator unlock password
+    during first startup. The setup wizard requires this password before plugin installation
+    and first-user creation can continue.
 
-  - id: initial-admin-password
-    name: Initial Admin Password
-    description: >
-      New Jenkins controllers generate an administrator unlock password
-      during first startup. The setup wizard requires this password before
-      plugin installation and first-user creation can continue.
-    type: password
-    nature: [generated_on_install]
-    sensitivity: secret
-    looks_like:
-      - example: 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
-        pattern: '[A-Za-z0-9]+'
-        detail: >
-          automatically generated alphanumeric setup password; the value is
-          printed in the console log and stored in initialAdminPassword
-    location:
-      - type: config_file
-        path: /var/lib/jenkins/secrets/initialAdminPassword
-        detail: default Linux package location documented by Jenkins
-      - type: config_file
-        path: /var/jenkins_home/secrets/initialAdminPassword
-        detail: official jenkins/jenkins Docker image home directory
-      - type: logs
-        detail: Jenkins startup console log, between separator lines
-      - type: public_interface
-        detail: Unlock Jenkins setup wizard administrator password field
-    notes: >
-      This is not a reusable default login. It is a per-controller bootstrap
-      secret used only to unlock the initial setup wizard, but leaked images,
-      console logs, and copied JENKINS_HOME directories can preserve it long
-      enough to matter during new deployments.
+    '
+  type: password
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - example: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    pattern: '[A-Za-z0-9]+'
+    detail: 'automatically generated alphanumeric setup password; the value is printed
+      in the console log and stored in initialAdminPassword
 
-  - id: local-user-admin-password
-    name: Local User / Administrator Password
-    description: >
-      Jenkins' own user database is the default security realm on modern
-      Jenkins installations. Users, including the first administrator created
-      during setup, authenticate with username/password credentials stored in
-      per-user configuration under JENKINS_HOME.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: '<passwordHash>[^<]+</passwordHash>'
-        detail: >
-          Jenkins private security realm password hash in a user config.xml;
-          the hash has no useful product-specific specimen beyond the XML
-          key name
-      - pattern: '[^\s:@]+:[^\s:]+'
-        detail: >
-          raw Basic-auth username:password form before Base64 encoding;
-          request context identifies Jenkins
-    location:
-      - type: config_file
-        path: $JENKINS_HOME/users/*/config.xml
-        detail: per-user configuration for Jenkins' own user database
-      - type: public_interface
-        path: /login
-        detail: Jenkins web login for local users and administrators
-      - type: public_interface
-        path: /job/*/build, /script, /computer/*
-        detail: HTTP Basic authentication in older scripted-client flows
-      - type: source_code
-        detail: legacy scripts and integrations that embed real Jenkins passwords
-    notes: >
-      There is no universal shipped Jenkins administrator login. The
-      initial-admin-password is a generated setup unlock secret, then the
-      first administrator account is created by the setup flow or by an
-      operator. Modern scripted clients should use API tokens instead of
-      real passwords, but real password Basic auth is still supported for
-      password-based security realms.
+      '
+  location:
+  - type: config_file
+    path: /var/lib/jenkins/secrets/initialAdminPassword
+    detail: default Linux package location documented by Jenkins
+    platform:
+    - linux
+  - type: config_file
+    path: /var/jenkins_home/secrets/initialAdminPassword
+    detail: official jenkins/jenkins Docker image home directory
+    platform:
+    - linux
+  - type: logs
+    detail: Jenkins startup console log, between separator lines
+  - type: public_interface
+    detail: Unlock Jenkins setup wizard administrator password field
+  notes: 'This is not a reusable default login. It is a per-controller bootstrap secret
+    used only to unlock the initial setup wizard, but leaked images, console logs,
+    and copied JENKINS_HOME directories can preserve it long enough to matter during
+    new deployments.
 
-  - id: system-credentials-store
-    name: System Credentials Store
-    description: >
-      Jenkins stores global credentials such as secret text, usernames and
-      passwords, secret files, and SSH private keys in the system credentials
-      provider. The credentials file is encrypted with Jenkins controller
-      secrets that also live under JENKINS_HOME.
-    type: secret_value
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: '<(secret|password|privateKey)>\\{?[A-Za-z0-9+/=]+\\}?</(secret|password|privateKey)>'
-        detail: >
-          encrypted credential value in Jenkins XML; key names identify the
-          credential, and the opaque value is only useful with the controller
-          secret material
-    location:
-      - type: config_file
-        path: $JENKINS_HOME/credentials.xml
-        detail: system credentials provider configuration file
-      - type: config_file
-        path: $JENKINS_HOME/secrets/master.key
-        detail: unencrypted master key used to protect Jenkins encryption keys
-      - type: config_file
-        path: $JENKINS_HOME/secrets/hudson.util.Secret
-        detail: common Jenkins secret key id used for generic secrets
-      - type: build_artifact
-        detail: controller backups, copied JENKINS_HOME directories, images
-    notes: >
-      credentials.xml by itself usually contains encrypted values. The
-      security boundary is the controller filesystem: if an attacker obtains
-      credentials.xml together with secrets/master.key and the relevant files
-      under $JENKINS_HOME/secrets, Jenkins' own APIs can decrypt stored
-      credentials offline or inside a copied controller home.
+    '
+- id: local-user-admin-password
+  name: Local User / Administrator Password
+  description: 'Jenkins'' own user database is the default security realm on modern
+    Jenkins installations. Users, including the first administrator created during
+    setup, authenticate with username/password credentials stored in per-user configuration
+    under JENKINS_HOME.
 
-  - id: user-api-token
-    name: User API Token
-    description: >
-      Jenkins users can create API tokens and use them with HTTP Basic
-      authentication for scripted clients. The token is supplied in place of
-      the user's password for operations that require authorization.
-    type: token
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: '[A-Za-z0-9]{20,}'
-        detail: >
-          no stable vendor prefix; identify Jenkins API tokens by context,
-          such as curl, wget, or library code using a Jenkins username with
-          an API token as the Basic-auth password
-    location:
-      - type: source_code
-        detail: scripts, Jenkins client configuration, curl/wget commands
-      - type: environment
-        path: JENKINS_USER, JENKINS_TOKEN, JENKINS_API_TOKEN
-      - type: config_file
-        detail: CI/CD tool configs and local credential helpers that call Jenkins
-    notes: >
-      Jenkins documentation explicitly recommends API tokens over real user
-      passwords for scripted clients. A leaked token has the permissions of
-      the user that created it, so administrator-owned automation tokens are
-      equivalent to administrative Jenkins access.
+    '
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: <passwordHash>[^<]+</passwordHash>
+    detail: 'Jenkins private security realm password hash in a user config.xml; the
+      hash has no useful product-specific specimen beyond the XML key name
 
-  - id: inbound-agent-secret
-    name: Inbound Agent Secret
-    description: >
-      Jenkins inbound agents authenticate to the controller with a generated
-      secret shown in the agent launch command. The secret is passed to
-      agent.jar with the -secret argument together with the controller URL
-      and agent name.
-    type: secret_value
-    nature: [generated_on_install]
-    sensitivity: secret
-    looks_like:
-      - pattern: '-secret\s+[A-Fa-f0-9]{32,}|-secret\s+[^\s]+'
-        detail: >
-          agent.jar launch command argument; the exact secret is generated
-          per agent and should be identified by the surrounding Jenkins
-          agent command context
-    location:
-      - type: public_interface
-        path: /computer/<agent-name>/
-        detail: agent page showing the inbound launch command to authorized users
-      - type: config_file
-        detail: service wrappers, scheduled tasks, systemd units, and launch scripts on agents
-      - type: source_code
-        detail: infrastructure-as-code or bootstrap scripts that start Jenkins agents
-      - type: logs
-        detail: process listings and command logs that capture the agent.jar invocation
-    notes: >
-      A leaked inbound-agent secret lets an attacker connect a process as
-      that Jenkins agent if the controller accepts inbound connections for
-      the node. The blast radius is the jobs and workspaces scheduled onto
-      that agent, including secrets exposed to builds running there.
+      '
+  - pattern: '[^\s:@]+:[^\s:]+'
+    detail: 'raw Basic-auth username:password form before Base64 encoding; request
+      context identifies Jenkins
 
-  - id: ssh-private-key-credential
-    name: SSH Private Key Credential
-    description: >
-      Jenkins credential stores commonly hold SSH private keys for Git,
-      deployment, agent launch, and infrastructure automation. The private
-      key can be stored directly in Jenkins credentials or loaded from a
-      file on the controller or agent.
-    type: key_pair
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: '-----BEGIN (OPENSSH|RSA|EC|DSA) PRIVATE KEY-----'
-        detail: >
-          identified by the PEM/OpenSSH header line; a full private-key
-          specimen would be multi-line and not useful as a compact example
-    location:
-      - type: config_file
-        path: $JENKINS_HOME/credentials.xml
-        detail: encrypted private key material in the Jenkins credentials store
-      - type: config_file
-        path: ~/.ssh/id_*
-        detail: controller or agent filesystem keys referenced by jobs
-      - type: secret_store
-        detail: Jenkins credential bindings and pipeline credentials
-      - type: source_code
-        detail: Jenkinsfiles and shared libraries that bind SSH credentials
-    notes: >
-      Scope is defined outside Jenkins by the systems that trust the key:
-      Git hosting, SSH targets, deployment bastions, or agent launchers.
-      The Jenkins credential record may look like an ordinary encrypted XML
-      value, but the decrypted private key often grants access beyond the
-      Jenkins controller itself.
+      '
+  location:
+  - type: config_file
+    detail: Jenkins user database per-user config.xml files; wildcard user directories
+      omitted from scanner path
+    path: /var/lib/jenkins/users/config.xml, /var/jenkins_home/users/config.xml, users-config.xml
+  - type: public_interface
+    path: /login
+    detail: Jenkins web login for local users and administrators
+  - type: public_interface
+    path: /job/*/build, /script, /computer/*
+    detail: HTTP Basic authentication in older scripted-client flows
+  - type: source_code
+    detail: legacy scripts and integrations that embed real Jenkins passwords
+  notes: 'There is no universal shipped Jenkins administrator login. The initial-admin-password
+    is a generated setup unlock secret, then the first administrator account is created
+    by the setup flow or by an operator. Modern scripted clients should use API tokens
+    instead of real passwords, but real password Basic auth is still supported for
+    password-based security realms.
 
+    '
+- id: system-credentials-store
+  name: System Credentials Store
+  description: 'Jenkins stores global credentials such as secret text, usernames and
+    passwords, secret files, and SSH private keys in the system credentials provider.
+    The credentials file is encrypted with Jenkins controller secrets that also live
+    under JENKINS_HOME.
+
+    '
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: <(secret|password|privateKey)>\\{?[A-Za-z0-9+/=]+\\}?</(secret|password|privateKey)>
+    detail: 'encrypted credential value in Jenkins XML; key names identify the credential,
+      and the opaque value is only useful with the controller secret material
+
+      '
+  location:
+  - type: config_file
+    path: /var/lib/jenkins/credentials.xml, /var/jenkins_home/credentials.xml
+    detail: System credentials provider configuration files
+    platform: linux
+  - type: config_file
+    path: /var/lib/jenkins/secrets/master.key, /var/jenkins_home/secrets/master.key
+    detail: Controller master key files
+    platform: linux
+  - type: config_file
+    path: /var/lib/jenkins/secrets/hudson.util.Secret, /var/jenkins_home/secrets/hudson.util.Secret
+    detail: Jenkins secret key files
+    platform: linux
+  - type: artifact
+    detail: controller backups, copied JENKINS_HOME directories, images
+  notes: 'credentials.xml by itself usually contains encrypted values. The security
+    boundary is the controller filesystem: if an attacker obtains credentials.xml
+    together with secrets/master.key and the relevant files under $JENKINS_HOME/secrets,
+    Jenkins'' own APIs can decrypt stored credentials offline or inside a copied controller
+    home.
+
+    '
+- id: user-api-token
+  name: User API Token
+  description: 'Jenkins users can create API tokens and use them with HTTP Basic authentication
+    for scripted clients. The token is supplied in place of the user''s password for
+    operations that require authorization.
+
+    '
+  type: token
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: '[A-Za-z0-9]{32,34}'
+    detail: Jenkins API token plaintext generated/displayed to user; no stable prefix,
+      use Jenkins Basic-auth/API context
+  location:
+  - type: source_code
+    detail: scripts, Jenkins client configuration, curl/wget commands
+  - type: environment
+    path: JENKINS_USER, JENKINS_TOKEN, JENKINS_API_TOKEN
+  - type: config_file
+    detail: Jenkins client/integration configs and token-bearing credential stores
+    path: jenkins-cli.xml, jenkins.json, credentials.xml
+  notes: 'Jenkins documentation explicitly recommends API tokens over real user passwords
+    for scripted clients. A leaked token has the permissions of the user that created
+    it, so administrator-owned automation tokens are equivalent to administrative
+    Jenkins access.
+
+    '
+- id: inbound-agent-secret
+  name: Inbound Agent Secret
+  description: 'Jenkins inbound agents authenticate to the controller with a generated
+    secret shown in the agent launch command. The secret is passed to agent.jar with
+    the -secret argument together with the controller URL and agent name.
+
+    '
+  type: secret_value
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - pattern: -secret\s+[A-Fa-f0-9]{32,}|-secret\s+[^\s]+
+    detail: 'agent.jar launch command argument; the exact secret is generated per
+      agent and should be identified by the surrounding Jenkins agent command context
+
+      '
+  location:
+  - type: public_interface
+    path: /computer/<agent-name>/
+    detail: agent page showing the inbound launch command to authorized users
+  - type: config_file
+    detail: service wrappers, scheduled tasks, systemd units, and launch scripts on
+      agents
+    path: jenkins-agent.service, jenkins-agent.xml, agent.jar.args, agent-secret.txt
+  - type: source_code
+    detail: infrastructure-as-code or bootstrap scripts that start Jenkins agents
+  - type: logs
+    detail: process listings and command logs that capture the agent.jar invocation
+  notes: 'A leaked inbound-agent secret lets an attacker connect a process as that
+    Jenkins agent if the controller accepts inbound connections for the node. The
+    blast radius is the jobs and workspaces scheduled onto that agent, including secrets
+    exposed to builds running there.
+
+    '
+- id: ssh-private-key-credential
+  name: SSH Private Key Credential
+  description: 'Jenkins credential stores commonly hold SSH private keys for Git,
+    deployment, agent launch, and infrastructure automation. The private key can be
+    stored directly in Jenkins credentials or loaded from a file on the controller
+    or agent.
+
+    '
+  type: key_pair
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: '-----BEGIN (RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----'
+    detail: 'identified by the PEM/OpenSSH header line; a full private-key specimen
+      would be multi-line and not useful as a compact example
+
+      '
+  location:
+  - type: config_file
+    path: /var/lib/jenkins/credentials.xml, /var/jenkins_home/credentials.xml
+    detail: Encrypted private-key material in Jenkins credentials store
+    platform:
+    - linux
+  - type: config_file
+    detail: 'controller or agent filesystem keys referenced by jobs; Removed unsupported
+      glob/placeholder path hints for CredsHound: ~/.ssh/id_*; Removed generic/common
+      scanner surface path(s) from product template: ~/.ssh/id_rsa, ~/.ssh/id_ed25519,
+      ~/.ssh/id_ecdsa'
+    platform:
+    - linux
+  - type: secret_store
+    detail: Jenkins credential bindings and pipeline credentials
+  - type: source_code
+    detail: Jenkinsfiles and shared libraries that bind SSH credentials
+  notes: 'Scope is defined outside Jenkins by the systems that trust the key: Git
+    hosting, SSH targets, deployment bastions, or agent launchers. The Jenkins credential
+    record may look like an ordinary encrypted XML value, but the decrypted private
+    key often grants access beyond the Jenkins controller itself.
+
+    '
 references:
-  - type: docs
-    url: https://www.jenkins.io/doc/book/installing/linux/
-  - type: docs
-    url: https://www.jenkins.io/doc/book/installing/docker/
-  - type: docs
-    url: https://www.jenkins.io/doc/book/using/using-credentials/
-  - type: docs
-    url: https://www.jenkins.io/doc/developer/security/secrets/
-  - type: docs
-    url: https://www.jenkins.io/doc/book/system-administration/authenticating-scripted-clients/
-  - type: docs
-    url: https://raw.githubusercontent.com/jenkinsci/credentials-plugin/master/src/main/java/com/cloudbees/plugins/credentials/SystemCredentialsProvider.java
-  - type: docs
-    url: https://www.jenkins.io/doc/book/security/managing-security/
-  - type: docs
-    url: https://raw.githubusercontent.com/jenkinsci/jenkins/master/core/src/main/java/hudson/security/HudsonPrivateSecurityRealm.java
-  - type: docs
-    url: https://www.jenkins.io/doc/book/managing/nodes/
+- type: docs
+  url: https://www.jenkins.io/doc/book/installing/linux/
+- type: docs
+  url: https://www.jenkins.io/doc/book/installing/docker/
+- type: docs
+  url: https://www.jenkins.io/doc/book/using/using-credentials/
+- type: docs
+  url: https://www.jenkins.io/doc/developer/security/secrets/
+- type: docs
+  url: https://www.jenkins.io/doc/book/system-administration/authenticating-scripted-clients/
+- type: docs
+  url: https://raw.githubusercontent.com/jenkinsci/credentials-plugin/master/src/main/java/com/cloudbees/plugins/credentials/SystemCredentialsProvider.java
+- type: docs
+  url: https://www.jenkins.io/doc/book/security/managing-security/
+- type: docs
+  url: https://raw.githubusercontent.com/jenkinsci/jenkins/master/core/src/main/java/hudson/security/HudsonPrivateSecurityRealm.java
+- type: docs
+  url: https://www.jenkins.io/doc/book/managing/nodes/

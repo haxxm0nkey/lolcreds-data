@@ -3,62 +3,175 @@ name: Vercel
 category: cloud
 vendor: Vercel
 author: haxxm0nkey
-
 credentials:
+- id: api-token
+  name: API Token
+  description: 'Vercel API and CLI automation use account tokens. Vercel documentation
+    includes token management and CLI commands that operate with tokens for deployments,
+    teams, projects, and environment variables.
 
-  - id: api-token
-    name: API Token
-    description: >
-      Vercel API and CLI automation use account tokens. Vercel documentation
-      includes token management and CLI commands that operate with tokens for
-      deployments, teams, projects, and environment variables.
-    type: token
-    nature: [user_defined]
-    sensitivity: secret
-    location:
-      - type: http_header
-        path: Authorization
-        detail: Bearer token used for Vercel API requests
-      - type: environment
-        path: VERCEL_TOKEN
-      - type: config_file
-        detail: Vercel CLI config, CI pipeline config, .env files, and deployment manifests
-      - type: secret_store
-        detail: GitHub Actions secrets, CI/CD variables, cloud secret managers, and password managers
-      - type: source_code
-        detail: deployment scripts, tests, and accidentally committed CLI configs
-      - type: logs
-        detail: CI logs, CLI traces, and API client debug output
-    notes: >
-      Token blast radius depends on account/team permissions and scopes selected
-      at token creation.
+    '
+  type: token
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Bearer token used for Vercel API requests
+  - type: environment
+    path: VERCEL_TOKEN
+  - type: config_file
+    detail: 'Vercel CLI config, CI pipeline config, .env files, and deployment manifests;
+      Removed generic/common scanner surface path(s) from product template: .env'
+    path: ~/.vercel/auth.json, .vercel/project.json, vercel.json, vercel.jsonc
+  - type: secret_store
+    detail: GitHub Actions secrets, CI/CD variables, cloud secret managers, and password
+      managers
+  - type: source_code
+    detail: deployment scripts, tests, and accidentally committed CLI configs
+  - type: logs
+    detail: CI logs, CLI traces, and API client debug output
+  notes: 'Token blast radius depends on account/team permissions and scopes selected
+    at token creation.
 
-  - id: project-environment-secret
-    name: Project Environment Variable Secret
-    description: >
-      Vercel projects store environment variables and secrets used by builds,
-      serverless functions, and deployments. Vercel CLI env commands manage
-      project environment variables.
-    type: secret_value
-    nature: [user_defined]
-    sensitivity: secret
-    location:
-      - type: secret_store
-        detail: Vercel project environment variables and encrypted deployment secrets
-      - type: environment
-        detail: runtime and build-time environment variables exposed to Vercel functions/builds
-      - type: config_file
-        detail: .env, .env.local, vercel.json, and CI pipeline configuration
-      - type: source_code
-        detail: accidentally committed .env files, tests, and examples
-      - type: logs
-        detail: build logs and runtime logs if applications print environment values
-    notes: >
-      Vercel environment secrets often contain downstream database URLs, API
-      tokens, OAuth secrets, and cloud credentials.
+    '
+  looks_like:
+  - example: vercel_abcdefghijklmnopqrstuvwxyzABCDEF0123456789
+    pattern: vercel_[A-Za-z0-9]{24,}
+    detail: Vercel API token prefix used by Vercel tokens
+- id: project-environment-secret
+  name: Project Environment Variable Secret
+  description: 'Vercel projects store environment variables and secrets used by builds,
+    serverless functions, and deployments. Vercel CLI env commands manage project
+    environment variables.
 
+    '
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: secret_store
+    detail: Vercel project environment variables and encrypted deployment secrets
+  - type: config_file
+    detail: '.env, .env.local, vercel.json, and CI pipeline configuration; Removed
+      generic/common scanner surface path(s) from product template: .env'
+    path: vercel.json, .vercel/project.json, .vercel/.env.preview.local, .vercel/.env.production.local
+  - type: source_code
+    detail: accidentally committed .env files, tests, and examples
+  - type: logs
+    detail: build logs and runtime logs if applications print environment values
+  notes: 'Vercel environment secrets often contain downstream database URLs, API tokens,
+    OAuth secrets, and cloud credentials. Environment variable storage noted but omitted
+    from CredsHound location data because no exact variable name is documented: runtime
+    and build-time environment variables exposed to Vercel functions/builds'
+- id: ai-gateway-key
+  name: Vercel AI Gateway API Key
+  description: Vercel AI Gateway uses API keys/tokens for model gateway requests and
+    provider routing. This is Vercel-specific AI credential behavior and belongs in
+    the Vercel product entry rather than a separate detector-named template.
+  type: api_key
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Bearer/API key used for Vercel AI Gateway requests
+  - type: environment
+    path: AI_GATEWAY_API_KEY, VERCEL_AI_GATEWAY_API_KEY
+  - type: config_file
+    detail: 'AI SDK configs, agent configs, .env files, Vercel project settings, integration
+      configs, and examples; Removed generic/common scanner surface path(s) from product
+      template: .env'
+    path: ai-gateway.json, vercel.json, vercel-ai.json
+  - type: secret_store
+    detail: Vercel project environment variables, CI/CD variables, cloud secret managers,
+      and developer vaults
+  - type: source_code
+    detail: AI app code, notebooks, examples, tests, and model routing configs
+  - type: logs
+    detail: AI SDK traces, gateway logs, runtime logs, and failed model request debug
+      output
+  notes: Covers Betterleaks rule vercel-ai-gateway-key without creating a separate
+    non-product template.
+  looks_like:
+  - example: vck_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123
+    pattern: vck_[A-Za-z0-9_\-]{56}
+    detail: Vercel AI Gateway API key shape from public scanner rules
+- id: integration-token
+  name: Vercel Integration Token
+  description: Vercel integrations and marketplace/app installations can issue integration
+    tokens, access tokens, and app credentials for project, team, deployment, or environment-variable
+    automation.
+  type: token
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Bearer token used by Vercel integrations and app-installation API calls
+  - type: http_response
+    detail: integration install, OAuth, or token creation responses containing access_token
+      or refresh_token fields
+  - type: config_file
+    detail: 'integration manifests, app backends, OAuth configs, .env files, and deployment
+      settings; Removed generic/common scanner surface path(s) from product template:
+      .env'
+    path: vercel-integration.json, integration-token.json, oauth-token.json
+  - type: environment
+    path: VERCEL_INTEGRATION_TOKEN, VERCEL_APP_ACCESS_TOKEN, VERCEL_APP_REFRESH_TOKEN
+  - type: secret_store
+    detail: Vercel integration secrets, Vercel project env vars, CI/CD variables,
+      and app secret stores
+  - type: source_code
+    detail: integration backends, marketplace apps, webhooks, tests, and examples
+  - type: logs
+    detail: OAuth exchange logs, webhook logs, integration logs, API traces, and failed
+      auth errors
+  notes: Covers Betterleaks rules vercel-integration-token, vercel-app-access-token,
+    and vercel-app-refresh-token inside the Vercel product template.
+- id: oauth-application-secret
+  name: Vercel OAuth Application Secret
+  description: Vercel integrations and applications can use OAuth client secrets,
+    webhook signing secrets, and callback credentials to authenticate app installs
+    and event delivery.
+  type: secret_value
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: http_header
+    detail: webhook signature, app secret, or OAuth authorization headers
+  - type: http_response
+    detail: OAuth token exchange responses and app-installation credential responses
+  - type: config_file
+    detail: 'OAuth app configs, integration manifests, webhook handlers, app settings,
+      and .env files; Removed generic/common scanner surface path(s) from product
+      template: .env'
+    path: vercel-oauth.json, integration.json, app.json, webhook.json
+  - type: environment
+    path: VERCEL_CLIENT_SECRET, VERCEL_WEBHOOK_SECRET, VERCEL_INTEGRATION_SECRET
+  - type: secret_store
+    detail: OAuth client secret stores, Vercel environment variables, CI/CD variables,
+      and cloud secret managers
+  - type: source_code
+    detail: integration source repos, callback handlers, webhook handlers, and tests
+  - type: logs
+    detail: OAuth callback logs, webhook delivery logs, and integration debug traces
 references:
-  - type: docs
-    url: https://vercel.com/docs/cli/env
-  - type: docs
-    url: https://vercel.com/docs/accounts/create-api-tokens
+- type: docs
+  url: https://vercel.com/docs/cli/env
+- type: docs
+  url: https://vercel.com/docs/accounts/create-api-tokens
+- type: docs
+  url: https://vercel.com/docs/ai-gateway
+- type: docs
+  url: https://vercel.com/docs/integrations
+- type: docs
+  url: https://raw.githubusercontent.com/betterleaks/betterleaks/main/config/betterleaks.toml

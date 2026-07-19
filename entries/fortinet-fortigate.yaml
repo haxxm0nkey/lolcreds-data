@@ -6,9 +6,9 @@ author: haxxm0nkey
 credentials:
 - id: initial-admin-login
   name: Initial Administrator Login
-  description: FortiGate appliances use a local admin account for first login and management.
-    Fortinet getting-started documentation describes signing in with username admin and no
-    password before the operator sets a password.
+  description: FortiGate appliances use a local admin account for first login and
+    management. Fortinet getting-started documentation describes signing in with username
+    admin and no password before the operator sets a password.
   type: username_password
   nature:
   - static_default
@@ -16,35 +16,39 @@ credentials:
   sensitivity: secret
   default:
     username: admin
-    password: ''
+    password: null
   location:
   - type: public_interface
     path: FortiGate GUI, console, SSH, and REST API
     detail: Initial and ongoing administrative login surfaces
   - type: config_file
-    detail: system admin configuration in FortiOS configuration exports
+    detail: System admin configuration in FortiOS configuration exports
+    path: fortigate.conf, fortios.conf, config.conf
   - type: artifact
-    detail: device backups and FortiManager/FortiGate configuration archives
-  notes: The blank-password initial state is only for first access/new deployments and should
-    be changed immediately; many appliances and managed deployments require or enforce a changed
-    password.
+    detail: FortiGate configuration backups and support bundles
+    path: fortigate.conf, fortios.conf, backup.conf, support.tgz
+  notes: The blank-password initial state is only for first access/new deployments
+    and should be changed immediately; many appliances and managed deployments require
+    or enforce a changed password.
 - id: local-admin-password
   name: Local Administrator Password
-  description: FortiOS local administrators are configured under config system admin. Passwords
-    may appear as encrypted set passwd or password material in configuration backups.
+  description: FortiOS local administrators are configured under config system admin.
+    Passwords may appear as encrypted set passwd or password material in configuration
+    backups.
   type: username_password
   nature:
   - user_defined
   sensitivity: secret
   looks_like:
   - pattern: ^\s*edit\s+"?[^"]+"?\s*$
-    detail: FortiOS table entry for a local admin; nearby set passwd line carries the password
-      hash/encoded value
+    detail: FortiOS table entry for a local admin; nearby set passwd line carries
+      the password hash/encoded value
   - pattern: ^\s*set\s+passwd\s+ENC\s+\S+
     detail: FortiOS encrypted administrator password line in config system admin
   location:
   - type: config_file
-    detail: config system admin in FortiOS configuration
+    detail: config system admin in FortiOS configuration exports
+    path: fortigate.conf, fortios.conf, config.conf
   - type: public_interface
     path: FortiGate GUI / SSH / CLI / API
     detail: Management surfaces accepting administrator credentials
@@ -52,10 +56,12 @@ credentials:
     detail: password managers, FortiManager managed secrets, and deployment vaults
   - type: artifact
     detail: configuration backups and support bundles
+    path: fortigate.conf, fortios.conf, backup.conf, support.tgz
 - id: rest-api-admin-token
   name: REST API Administrator Token
-  description: FortiGate REST API administrators use API keys/tokens for automation access.
-    Tokens are supplied to the FortiOS API and inherit the configured API administrator profile.
+  description: FortiGate REST API administrators use API keys/tokens for automation
+    access. Tokens are supplied to the FortiOS API and inherit the configured API
+    administrator profile.
   type: token
   nature:
   - generated_on_install
@@ -66,7 +72,9 @@ credentials:
     path: Authorization
     detail: Bearer token or API-token header material used by FortiOS REST API clients
   - type: config_file
-    detail: automation scripts, Ansible inventory, Terraform provider config, and .env files
+    detail: FortiOS REST API automation, Ansible inventory, and Terraform provider
+      config
+    path: fortigate.json, fortios.json, inventory.yml, terraform.tfvars, provider.tf
   - type: environment
     path: FORTIOS_ACCESS_TOKEN, FORTIGATE_TOKEN, FGT_TOKEN
   - type: secret_store
@@ -79,8 +87,8 @@ credentials:
     API administrator profile and trusthost restrictions.
 - id: vpn-psk
   name: IPsec VPN Pre-Shared Key
-  description: FortiGate phase1-interface and related VPN objects can contain IPsec pre-shared
-    keys used to authenticate VPN peers.
+  description: FortiGate phase1-interface and related VPN objects can contain IPsec
+    pre-shared keys used to authenticate VPN peers.
   type: secret_value
   nature:
   - user_defined
@@ -92,15 +100,16 @@ credentials:
     detail: plaintext or exported PSK line in a VPN phase1 context
   location:
   - type: config_file
-    detail: vpn ipsec phase1-interface / phase1 FortiOS configuration
+    detail: VPN IPsec phase1-interface / phase1 FortiOS configuration
+    path: fortigate.conf, fortios.conf, vpn.conf
   - type: artifact
     detail: configuration backups, support bundles, and migration exports
   - type: source_code
     detail: network-as-code and VPN provisioning templates
 - id: snmp-and-aaa-secrets
   name: SNMP / RADIUS / TACACS+ Shared Secrets
-  description: FortiOS stores SNMP community strings and AAA server shared secrets for monitoring
-    and centralized authentication.
+  description: FortiOS stores SNMP community strings and AAA server shared secrets
+    for monitoring and centralized authentication.
   type: secret_value
   nature:
   - user_defined
@@ -112,7 +121,8 @@ credentials:
     detail: encrypted RADIUS/TACACS+/LDAP-related shared secret in FortiOS config
   location:
   - type: config_file
-    detail: system snmp community and user radius/tacacs/ldap server configuration
+    detail: System SNMP and user RADIUS/TACACS/LDAP server configuration
+    path: fortigate.conf, fortios.conf, config.conf
   - type: artifact
     detail: FortiGate configuration backups and FortiManager exports
   - type: source_code

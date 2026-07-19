@@ -20,7 +20,8 @@ credentials:
     path: Authorization
     detail: Basic or token-based CircleCI API authentication
   - type: config_file
-    detail: CircleCI CLI config, .env files, scripts, and Terraform provider config
+    detail: CircleCI CLI config and pipeline config references
+    path: ~/.config/circleci/config.yml, .circleci/config.yml
   - type: environment
     path: CIRCLE_TOKEN, CIRCLECI_TOKEN
   - type: secret_store
@@ -29,40 +30,53 @@ credentials:
     detail: automation scripts and accidentally committed configs
   - type: logs
     detail: curl traces, CLI debug logs, and job output
+  looks_like:
+  - example: CCIPAT_ABCDEFGHIJKLMNOPQRSTUV_abcdef0123456789abcdef0123456789abcdef01
+    pattern: "\bCCIPAT_[A-Za-z0-9]{22}_[a-z0-9]{40}\b"
+    detail: CircleCI personal API token shape from public scanner rules
+  - pattern: "(?i)(?:circleci)(?:[ \t\\w.-]{0,20})[\\s'\"]{0,3}(?:=|>|:{1,3}=|\\|\\\
+      ||:|=>|\\?=|,)[`'\"\\s=]{0,5}([a-f0-9]{40})(?:\\?['\"`]|[\\s;]|\\[nr]|$)"
+    detail: Contextual CircleCI legacy/project token shape from Betterleaks
 - id: project-context-env-var
   name: Project / Context Environment Variable Secret
-  description: CircleCI projects and contexts store environment variables used by jobs, including
-    deploy keys, cloud tokens, package credentials, and passwords.
+  description: CircleCI projects and contexts store environment variables used by
+    jobs, including deploy keys, cloud tokens, package credentials, and passwords.
   type: secret_value
   nature:
   - user_defined
   sensitivity: secret
   location:
+  - type: config_file
+    path: .circleci/config.yml
+    detail: CircleCI pipeline config referencing contexts and environment variable
+      names
   - type: secret_store
     detail: CircleCI project environment variables and organization contexts
-  - type: environment
-    detail: runtime job environment variables injected by CircleCI
   - type: source_code
     detail: .circleci/config.yml references to secret variable names
   - type: logs
     detail: job output if commands print secret values or xtrace is enabled
+  notes: 'Environment variable storage noted but omitted from CredsHound location
+    data because no exact variable name is documented: runtime job environment variables
+    injected by CircleCI'
 - id: ssh-key-and-deploy-key
   name: SSH Key / Deploy Key
-  description: CircleCI can store SSH keys for checking out private repositories or deploying
-    from jobs.
+  description: CircleCI can store SSH keys for checking out private repositories or
+    deploying from jobs.
   type: key_pair
   nature:
   - user_defined
   - generated_on_install
   sensitivity: secret
   looks_like:
-  - pattern: '-----BEGIN (RSA |OPENSSH |EC |)PRIVATE KEY-----'
+  - pattern: '-----BEGIN (RSA |EC |OPENSSH |ENCRYPTED )?PRIVATE KEY-----'
     detail: private SSH key stored for CircleCI job use
   location:
   - type: secret_store
     detail: CircleCI project SSH keys and deploy key storage
   - type: config_file
-    detail: job config referencing add_ssh_keys fingerprints
+    detail: CircleCI job config referencing add_ssh_keys fingerprints
+    path: .circleci/config.yml
   - type: source_code
     detail: .circleci/config.yml and setup scripts
   - type: logs

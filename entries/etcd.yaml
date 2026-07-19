@@ -6,36 +6,41 @@ author: haxxm0nkey
 credentials:
 - id: unauthenticated-default
   name: Unauthenticated Default Client Access
-  description: etcd client authentication is disabled unless auth is explicitly enabled. In
-    an auth-disabled deployment, clients can read and write through exposed etcd client endpoints
-    without presenting a username, password, token, or client certificate, unless network
-    or TLS controls block them.
-  type: username_password
+  description: etcd client authentication is disabled unless auth is explicitly enabled.
+    In an auth-disabled deployment, clients can read and write through exposed etcd
+    client endpoints without presenting a username, password, token, or client certificate,
+    unless network or TLS controls block them.
+  type: other
   nature:
   - unauthenticated_default
-  sensitivity: secret
+  sensitivity: context_dependent
   default:
     username: null
     password: null
   location:
   - type: public_interface
     path: http://<host>:2379, https://<host>:2379
-    detail: etcd client API listener when auth is disabled or unauthenticated clients are
-      accepted
+    detail: etcd client API listener when auth is disabled or unauthenticated clients
+      are accepted
   - type: config_file
-    path: etcd flags/config, static pod manifest, systemd unit
-    detail: --auth-token, auth enable state, client-cert-auth, trusted-ca-file, and listen/advertise
-      client URLs determine whether credentials or mTLS are required
+    path: /etc/etcd/etcd.conf.yml, /etc/etcd/etcd.conf, /etc/kubernetes/manifests/etcd.yaml
+    detail: '--auth-token, auth enable state, client-cert-auth, trusted-ca-file, and
+      listen/advertise client URLs determine whether credentials or mTLS are required.
+      Previous non-machine-readable path context: etcd flags/config, static pod manifest,
+      systemd unit.'
+    platform:
+    - linux
   - type: logs
     detail: etcd startup logs and etcdctl auth status output showing auth disabled/enabled
       state
-  notes: This represents absence of etcd username/password authentication, not a blank password.
-    Exposure depends on listen URLs, firewalling, Kubernetes control-plane network isolation,
-    TLS client-auth settings, and whether `etcdctl auth enable` has been run.
+  notes: This represents absence of etcd username/password authentication, not a blank
+    password. Exposure depends on listen URLs, firewalling, Kubernetes control-plane
+    network isolation, TLS client-auth settings, and whether `etcdctl auth enable`
+    has been run.
 - id: client-user-password
   name: etcd User Password
-  description: etcd can enable username/password authentication for client access. Users and
-    roles control access to keys and ranges once auth is enabled.
+  description: etcd can enable username/password authentication for client access.
+    Users and roles control access to keys and ranges once auth is enabled.
   type: username_password
   nature:
   - user_defined
@@ -43,11 +48,15 @@ credentials:
   sensitivity: secret
   location:
   - type: public_interface
-    path: etcd client API, etcdctl, gRPC gateway, and Kubernetes apiserver-to-etcd access
+    path: etcd client API, etcdctl, gRPC gateway, and Kubernetes apiserver-to-etcd
+      access
   - type: database
     detail: etcd auth store containing users, roles, and password verifier state
   - type: config_file
-    detail: etcd static pod manifests, systemd units, etcdctl scripts, and deployment manifests
+    detail: etcd static pod manifests, systemd env files, etcdctl scripts, and deployment
+      manifests
+    path: /etc/etcd/etcd.conf.yml, /etc/etcd/etcd.conf, /etc/kubernetes/manifests/etcd.yaml,
+      etcd.env
   - type: environment
     path: ETCDCTL_USER, ETCDCTL_PASSWORD
   - type: secret_store
@@ -56,21 +65,25 @@ credentials:
     detail: etcd server logs, audit output, and etcdctl traces
 - id: client-peer-tls-key
   name: Client / Peer TLS Private Key
-  description: etcd commonly uses mutual TLS for client and peer authentication. Client, server,
-    and peer certificate private keys grant access to the cluster or quorum communication
-    path.
+  description: etcd commonly uses mutual TLS for client and peer authentication. Client,
+    server, and peer certificate private keys grant access to the cluster or quorum
+    communication path.
   type: key_pair
   nature:
   - generated_on_install
   - user_defined
   sensitivity: secret
   looks_like:
-  - pattern: '-----BEGIN (RSA |EC |OPENSSH |ENCRYPTED |)PRIVATE KEY-----'
+  - pattern: '-----BEGIN (RSA |EC |OPENSSH |ENCRYPTED )?PRIVATE KEY-----'
     detail: private key material for etcd client, server, or peer TLS authentication
   location:
   - type: config_file
-    path: /etc/kubernetes/pki/etcd/, /etc/etcd/
-    detail: etcd client, server, peer, and CA certificate/key files
+    path: /etc/kubernetes/pki/etcd/server.key, /etc/kubernetes/pki/etcd/peer.key,
+      /etc/kubernetes/pki/etcd/healthcheck-client.key, /etc/etcd/server.key, /etc/etcd/peer.key,
+      /etc/etcd/client.key
+    detail: Exact common etcd client, server, and peer private-key files
+    platform:
+    - linux
   - type: secret_store
     detail: Kubernetes Secrets, PKI vaults, and backup key stores
   - type: artifact
@@ -78,9 +91,9 @@ credentials:
       archives
 - id: bootstrap-token-and-snapshot-secret
   name: Bootstrap, Snapshot, and Encryption Secret
-  description: etcd deployments often store bootstrap credentials, backup/snapshot credentials,
-    and Kubernetes secrets data inside etcd. Exposure of snapshots can expose all Kubernetes
-    Secret values unless separately encrypted.
+  description: etcd deployments often store bootstrap credentials, backup/snapshot
+    credentials, and Kubernetes secrets data inside etcd. Exposure of snapshots can
+    expose all Kubernetes Secret values unless separately encrypted.
   type: secret_value
   nature:
   - generated_on_install
@@ -90,14 +103,16 @@ credentials:
   - type: artifact
     detail: etcd snapshots, disaster recovery backups, and copied data directories
   - type: config_file
-    detail: backup scripts, snapshot cron jobs, static pod manifests, and encryption provider
+    detail: Backup scripts, snapshot jobs, static pod manifests, and encryption provider
       configs
+    path: /etc/kubernetes/manifests/etcd.yaml, encryption-provider.yaml, etcd-backup.sh,
+      snapshot-cronjob.yaml
   - type: secret_store
     detail: backup vaults and cloud object storage credentials
   - type: database
     detail: etcd keyspace including Kubernetes Secret objects or application secrets
-  notes: An etcd snapshot is often credential-equivalent in Kubernetes environments because
-    it may contain all cluster Secret resources.
+  notes: An etcd snapshot is often credential-equivalent in Kubernetes environments
+    because it may contain all cluster Secret resources.
 references:
 - type: docs
   url: https://etcd.io/docs/v3.5/op-guide/authentication/

@@ -6,8 +6,9 @@ author: haxxm0nkey
 credentials:
 - id: sa-login-password
   name: sa Login Password
-  description: SAP ASE contains the sa system administrator login and other server logins
-    for database administration and application access. The sa password is set during installation/hardening.
+  description: SAP ASE contains the sa system administrator login and other server
+    logins for database administration and application access. The sa password is
+    set during installation/hardening.
   type: username_password
   nature:
   - generated_on_install
@@ -19,8 +20,9 @@ credentials:
   - type: database
     detail: master database system tables storing login/password verifier state
   - type: config_file
-    detail: interfaces/sql.ini files, application datasource configs, installer response files,
-      and scripts
+    detail: interfaces/sql.ini files, application datasource configs, installer response
+      files, and scripts
+    path: interfaces, sql.ini, RUN_server, RUN_backupserver
   - type: secret_store
     detail: password vaults and deployment secrets
   - type: logs
@@ -29,16 +31,17 @@ credentials:
     dependent and should be confirmed per source before cataloging as a literal default.
 - id: application-database-user
   name: Application Database User Password
-  description: ASE applications and SAP products store database usernames and passwords for
-    connecting to user databases.
+  description: ASE applications and SAP products store database usernames and passwords
+    for connecting to user databases.
   type: username_password
   nature:
   - user_defined
   sensitivity: secret
   location:
   - type: config_file
-    detail: application datasource files, JDBC properties, ODBC DSNs, SAP profiles, and batch
-      scripts
+    detail: application datasource files, JDBC properties, ODBC DSNs, SAP profiles,
+      and batch scripts
+    path: interfaces, sql.ini, application.properties, datasource.properties
   - type: secret_store
     detail: vault entries, CI/CD variables, and OS key stores
   - type: source_code
@@ -55,19 +58,21 @@ credentials:
   - user_defined
   sensitivity: secret
   looks_like:
-  - pattern: '-----BEGIN (RSA |EC |ENCRYPTED |)PRIVATE KEY-----'
+  - pattern: '-----BEGIN (RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----'
     detail: private key material used for ASE SSL/TLS
   location:
   - type: config_file
-    detail: ASE SSL certificate/key files, sql.ini/interfaces settings, and keystore configuration
+    detail: ASE SSL certificate/key files, sql.ini/interfaces settings, and keystore
+      configuration
+    path: sql.ini, interfaces, server.key, server.p12, SAPSSLS.pse
   - type: secret_store
     detail: certificate stores and backup vaults
   - type: artifact
     detail: database server backups and support bundles
 - id: replication-remote-login
   name: Replication / Remote Server Login Secret
-  description: ASE environments may store remote server, Replication Server, backup server,
-    and monitoring login credentials for cross-server operations.
+  description: ASE environments may store remote server, Replication Server, backup
+    server, and monitoring login credentials for cross-server operations.
   type: secret_value
   nature:
   - user_defined
@@ -77,6 +82,7 @@ credentials:
     detail: master database remote login and server configuration tables
   - type: config_file
     detail: replication, backup, monitoring, and batch job configuration
+    path: interfaces, sql.ini, rs_init.rs, replication.properties
   - type: secret_store
     detail: enterprise password vaults
   - type: logs

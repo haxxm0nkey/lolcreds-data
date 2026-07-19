@@ -3,82 +3,94 @@ name: Apache Superset
 category: other
 vendor: Apache Software Foundation
 author: haxxm0nkey
+
 credentials:
 - id: admin-user-password
   name: Superset Administrator/User Password
-  description: Apache Superset local users authenticate to the web UI and API through Flask
-    AppBuilder security. Administrators are created during initialization or provisioning.
+  description: >
+    Apache Superset local users authenticate to the web UI and API through
+    Flask AppBuilder security. Administrators are created during initialization
+    or provisioning.
   type: username_password
-  nature:
-  - generated_on_install
-  - user_defined
+  nature: [generated_on_install, user_defined]
   sensitivity: secret
   location:
   - type: public_interface
-    path: Superset web UI, REST API, SQL Lab, and embedded dashboard flows
+    path: /login/, /api/
+    detail: Superset web UI, REST API, SQL Lab, and embedded dashboard flows
   - type: database
     detail: Superset metadata database user/security tables and password hashes
   - type: config_file
     path: superset_config.py
-    detail: authentication, database, secret key, OAuth, LDAP, and feature configuration
+    detail: Authentication, database, secret key, OAuth, LDAP, and feature configuration
   - type: secret_store
     detail: Kubernetes Secrets, Docker secrets, vaults, and password managers
+  - type: source_code
+    detail: Deployment configs, tests, Helm chart values, and application repositories
   - type: logs
-    detail: webserver, worker, audit, and authentication logs
-  notes: No universal Superset admin password is modeled; it is created by superset fab/create-admin
-    or deployment automation.
+    detail: Webserver, worker, audit, and authentication logs
+  notes: >
+    No universal Superset admin password is modeled; it is created by superset
+    fab/create-admin or deployment automation.
+
 - id: secret-key-and-fernet-key
   name: SECRET_KEY / Encryption Secret
-  description: Superset relies on SECRET_KEY and related encryption material to sign sessions
-    and encrypt sensitive metadata such as database connection passwords.
+  description: >
+    Superset relies on SECRET_KEY and related encryption material to sign
+    sessions and encrypt sensitive metadata such as database connection
+    passwords.
   type: secret_value
-  nature:
-  - generated_on_install
-  - user_defined
+  nature: [generated_on_install, user_defined]
   sensitivity: secret
   looks_like:
-  - pattern: ^(SECRET_KEY|SUPERSET_SECRET_KEY)\s*=\s*[\'\"].+[\'\"]
-    detail: Superset Flask secret key assignment in Python/env configuration
+  - pattern: '(?m)^\s*(SECRET_KEY|SUPERSET_SECRET_KEY)\s*=\s*[''"][^''"\r\n]{16,255}[''"]'
+    detail: Superset Flask secret key assignment in Python or env-style configuration
   location:
+  - type: environment
+    path: SUPERSET_SECRET_KEY, SECRET_KEY
+    detail: Superset/Flask secret-key environment configuration
   - type: config_file
     path: superset_config.py
     detail: SECRET_KEY and security configuration
-  - type: environment
-    path: SUPERSET_SECRET_KEY, SECRET_KEY
   - type: secret_store
     detail: Kubernetes Secrets, Docker secrets, and external vaults
   - type: source_code
-    detail: committed config files, Helm values, and example deployments
+    detail: Committed config files, Helm values, and example deployments
   - type: artifact
-    detail: metadata database backups and deployment bundles
+    detail: Metadata database backups and deployment bundles
+
 - id: database-connection-secret
   name: Database Connection Password / SQLAlchemy URI
-  description: Superset stores database connection URIs and credentials for analytics databases
-    and the metadata database.
+  description: >
+    Superset stores database connection URIs and credentials for analytics
+    databases and the metadata database.
   type: username_password
-  nature:
-  - user_defined
+  nature: [user_defined]
   sensitivity: secret
+  looks_like:
+  - pattern: '(?m)^\s*(SQLALCHEMY_DATABASE_URI|SUPERSET_DATABASE_URI)\s*=\s*[''"][^''"\r\n]+://[^''"\r\n]+:[^''"\r\n@]+@[^''"\r\n]+[''"]'
+    detail: Superset SQLAlchemy URI containing an embedded password
   location:
+  - type: environment
+    path: SQLALCHEMY_DATABASE_URI, SUPERSET_DATABASE_URI
+    detail: Superset metadata database URI environment/config values
   - type: database
     detail: Superset metadata database encrypted DB connection records
   - type: config_file
-    path: superset_config.py, values.yaml
-    detail: SQLALCHEMY_DATABASE_URI, examples database config, and datasource settings
-  - type: environment
-    path: SQLALCHEMY_DATABASE_URI, DATABASE_URL, SUPERSET_DATABASE_PASSWORD
+    path: superset_config.py
+    detail: SQLALCHEMY_DATABASE_URI and datasource settings
   - type: secret_store
-    detail: Kubernetes Secrets, Airflow/CI secrets, and database vault entries
+    detail: Kubernetes Secrets, Docker secrets, deployment vaults, and database password stores
   - type: logs
     detail: SQLAlchemy errors, worker logs, and connection test traces
+
 - id: oauth-ldap-api-secret
   name: OAuth, LDAP, and API Integration Secret
-  description: Superset deployments may contain OAuth/OIDC client secrets, LDAP bind passwords,
-    guest token signing config, and embedded analytics secrets.
+  description: >
+    Superset deployments may contain OAuth/OIDC client secrets, LDAP bind
+    passwords, guest token signing configuration, and embedded analytics secrets.
   type: secret_value
-  nature:
-  - user_defined
-  - generated_on_install
+  nature: [user_defined, generated_on_install]
   sensitivity: secret
   location:
   - type: http_header
@@ -88,13 +100,22 @@ credentials:
     path: superset_config.py
     detail: AUTH_TYPE, OAuth providers, LDAP, guest token, and feature config
   - type: environment
-    path: OAUTH_CLIENT_SECRET, LDAP_BIND_PASSWORD, SUPERSET_OAUTH_SECRET
+    path: OAUTH_CLIENT_SECRET, LDAP_BIND_PASSWORD
+    detail: Common exact environment variable names used by Superset deployment configs for OAuth and LDAP secrets
   - type: secret_store
-    detail: vaults and deployment secret stores
+    detail: Vaults, Kubernetes Secrets, Docker secrets, and deployment secret stores
+  - type: source_code
+    detail: Committed deployment configs, tests, and integration examples
   - type: logs
     detail: OAuth, LDAP, and API debug logs
+  notes: >
+    SUPERSET_OAUTH_SECRET was not kept as an ASF Superset-owned exact env var;
+    deployments may define their own names in superset_config.py.
+
 references:
 - type: docs
   url: https://superset.apache.org/docs/security/
 - type: docs
   url: https://superset.apache.org/docs/configuration/configuring-superset/
+- type: source
+  url: https://github.com/apache/superset/blob/master/superset/config.py

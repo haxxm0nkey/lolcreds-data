@@ -3,92 +3,103 @@ name: Splunk
 category: monitoring
 vendor: Splunk
 author: haxxm0nkey
-
 credentials:
+- id: local-user-password
+  name: Local User Password
+  description: 'Splunk Enterprise supports local users and roles for Splunk Web and
+    REST API access. Local user credentials are stored in Splunk configuration and
+    authentication stores rather than being universal static defaults.
 
-  - id: local-user-password
-    name: Local User Password
-    description: >
-      Splunk Enterprise supports local users and roles for Splunk Web and REST
-      API access. Local user credentials are stored in Splunk configuration and
-      authentication stores rather than being universal static defaults.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: '^\s*password\s*=\s*[^\r\n]+$'
-        detail: Splunk configuration stanza containing a password or password hash; context identifies the Splunk app or user store
-    location:
-      - type: config_file
-        path: $SPLUNK_HOME/etc/passwd, authentication.conf, authorize.conf
-        detail: local user password hashes and authentication/role configuration
-      - type: public_interface
-        path: Splunk Web, /services
-        detail: Splunk Web login and management REST API endpoints
-      - type: secret_store
-        detail: deployment server secrets, app passwords, and infrastructure vault entries
-      - type: source_code
-        detail: deployment apps, Ansible roles, Docker Compose files, and committed Splunk configs
-      - type: logs
-        detail: splunkd logs, authentication logs, and setup output
-    notes: >
-      There is no universal Splunk admin password. The initial administrator
-      password is set during installation, image startup, or provisioning.
+    '
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: ^\s*password\s*=\s*[^\r\n]+$
+    detail: Splunk configuration stanza containing a password or password hash; context
+      identifies the Splunk app or user store
+  location:
+  - type: config_file
+    path: $SPLUNK_HOME/etc/passwd, authentication.conf, authorize.conf, user-seed.conf
+    detail: 'local user password hashes and authentication/role configuration. Additional
+      non-path context from previous path: $SPLUNK_HOME/etc/passwd.'
+  - type: public_interface
+    path: Splunk Web, /services
+    detail: Splunk Web login and management REST API endpoints
+  - type: secret_store
+    detail: deployment server secrets, app passwords, and infrastructure vault entries
+  - type: source_code
+    detail: deployment apps, Ansible roles, Docker Compose files, and committed Splunk
+      configs
+  - type: logs
+    detail: splunkd logs, authentication logs, and setup output
+  notes: 'There is no universal Splunk admin password. The initial administrator password
+    is set during installation, image startup, or provisioning.
 
-  - id: authentication-token
-    name: Authentication Token
-    description: >
-      Splunk Enterprise supports authentication tokens for REST API access.
-      Tokens are bearer-like secrets used by clients instead of repeatedly
-      sending interactive user credentials.
-    type: token
-    nature: [generated_on_install]
-    sensitivity: secret
-    location:
-      - type: http_header
-        path: Authorization
-        detail: Splunk token authorization header used for REST API requests
-      - type: config_file
-        detail: automation config, .env files, Splunk app config, and deployment manifests
-      - type: environment
-        path: SPLUNK_TOKEN, SPLUNK_AUTH_TOKEN
-      - type: secret_store
-        detail: CI/CD variables, deployment server secrets, and cloud secret managers
-      - type: source_code
-        detail: Splunk SDK scripts, tests, and committed REST clients
-      - type: logs
-        detail: REST client traces and automation logs
-    notes: >
-      Token blast radius depends on the Splunk user, role, audience, and token
-      settings configured by administrators.
+    '
+- id: authentication-token
+  name: Authentication Token
+  description: 'Splunk Enterprise supports authentication tokens for REST API access.
+    Tokens are bearer-like secrets used by clients instead of repeatedly sending interactive
+    user credentials.
 
-  - id: splunk-secret
-    name: splunk.secret Shared Secret
-    description: >
-      Splunk uses internal secret material such as splunk.secret to protect and
-      decrypt stored credentials in configuration files. Copying or leaking this
-      file can expose encrypted app credentials in Splunk configurations.
-    type: secret_value
-    nature: [generated_on_install]
-    sensitivity: secret
-    location:
-      - type: config_file
-        path: $SPLUNK_HOME/etc/auth/splunk.secret
-        detail: Splunk instance secret used to protect stored credentials
-      - type: secret_store
-        detail: Splunk backups, deployment artifacts, VM images, and vault entries
-      - type: image
-        detail: cloned Splunk images or containers containing splunk.secret
-      - type: source_code
-        detail: accidentally committed Splunk etc directories and deployment bundles
-    notes: >
-      splunk.secret is not a login password, but it can be required to decrypt
-      encrypted credentials stored in Splunk app configuration.
+    '
+  type: token
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Splunk token authorization header used for REST API requests
+  - type: config_file
+    detail: 'automation config, .env files, Splunk app config, and deployment manifests;
+      Removed generic/common scanner surface path(s) from product template: .env'
+    path: authentication.conf, authorize.conf, inputs.conf, outputs.conf, splunk-cli.json
+  - type: environment
+    path: SPLUNK_TOKEN, SPLUNK_AUTH_TOKEN
+  - type: secret_store
+    detail: CI/CD variables, deployment server secrets, and cloud secret managers
+  - type: source_code
+    detail: Splunk SDK scripts, tests, and committed REST clients
+  - type: logs
+    detail: REST client traces and automation logs
+  notes: 'Token blast radius depends on the Splunk user, role, audience, and token
+    settings configured by administrators.
 
+    '
+- id: splunk-secret
+  name: splunk.secret Shared Secret
+  description: 'Splunk uses internal secret material such as splunk.secret to protect
+    and decrypt stored credentials in configuration files. Copying or leaking this
+    file can expose encrypted app credentials in Splunk configurations.
+
+    '
+  type: secret_value
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: config_file
+    path: $SPLUNK_HOME/etc/auth/splunk.secret, splunk.secret, server.conf
+    detail: Splunk instance secret used to protect stored credentials
+    platform:
+    - linux
+  - type: secret_store
+    detail: Splunk backups, deployment artifacts, VM images, and vault entries
+  - type: image
+    detail: cloned Splunk images or containers containing splunk.secret
+  - type: source_code
+    detail: accidentally committed Splunk etc directories and deployment bundles
+  notes: 'splunk.secret is not a login password, but it can be required to decrypt
+    encrypted credentials stored in Splunk app configuration.
+
+    '
 references:
-  - type: docs
-    url: https://docs.splunk.com/Documentation/Splunk/latest/Security/Aboutusersandroles
-  - type: docs
-    url: https://docs.splunk.com/Documentation/Splunk/latest/Security/CreateAuthTokens
-  - type: docs
-    url: https://docs.splunk.com/Documentation/Splunk/latest/Admin/Serverconf
+- type: docs
+  url: https://docs.splunk.com/Documentation/Splunk/latest/Security/Aboutusersandroles
+- type: docs
+  url: https://docs.splunk.com/Documentation/Splunk/latest/Security/CreateAuthTokens
+- type: docs
+  url: https://docs.splunk.com/Documentation/Splunk/latest/Admin/Serverconf

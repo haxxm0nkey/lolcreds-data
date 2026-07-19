@@ -1,99 +1,104 @@
 id: wordpress
 name: WordPress
-category: cms
+category: other
 vendor: WordPress.org
 author: haxxm0nkey
-
 credentials:
+- id: database-credentials
+  name: Database Credentials
+  description: 'WordPress stores database connection settings in wp-config.php. WordPress
+    documents DB_NAME, DB_USER, DB_PASSWORD, and DB_HOST constants as the database
+    name, username, password, and host used by the application.
 
-  - id: database-credentials
-    name: Database Credentials
-    description: >
-      WordPress stores database connection settings in wp-config.php. WordPress
-      documents DB_NAME, DB_USER, DB_PASSWORD, and DB_HOST constants as the
-      database name, username, password, and host used by the application.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: >-
-          define\(\s*'DB_PASSWORD'\s*,\s*'[^'\r\n]+'\s*\)
-        detail: WordPress wp-config.php database password constant
-    location:
-      - type: config_file
-        path: wp-config.php
-        detail: WordPress site configuration containing database constants
-      - type: environment
-        path: WORDPRESS_DB_USER, WORDPRESS_DB_PASSWORD, WORDPRESS_DB_HOST, WORDPRESS_DB_NAME
-      - type: secret_store
-        detail: hosting control panels, Docker/Kubernetes secrets, cloud secret managers, and CI/CD variables
-      - type: source_code
-        detail: accidentally committed wp-config.php files, backups, and deployment scripts
-      - type: artifact
-        detail: webroot backups, tarballs, and container images containing wp-config.php
-      - type: logs
-        detail: setup output, debug traces, and support bundles containing configuration dumps
-    notes: >
-      Database credentials can expose WordPress content, users, password hashes,
-      plugin settings, and sensitive options stored in the database.
+    '
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: define\(\s*'DB_PASSWORD'\s*,\s*'[^'\r\n]+'\s*\)
+    detail: WordPress wp-config.php database password constant
+  location:
+  - type: config_file
+    path: wp-config.php
+    detail: WordPress site configuration containing database constants
+  - type: environment
+    path: WORDPRESS_DB_USER, WORDPRESS_DB_PASSWORD
+  - type: secret_store
+    detail: hosting control panels, Docker/Kubernetes secrets, cloud secret managers,
+      and CI/CD variables
+  - type: source_code
+    detail: accidentally committed wp-config.php files, backups, and deployment scripts
+  - type: artifact
+    detail: webroot backups, tarballs, and container images containing wp-config.php
+  - type: logs
+    detail: setup output, debug traces, and support bundles containing configuration
+      dumps
+  notes: 'Database credentials can expose WordPress content, users, password hashes,
+    plugin settings, and sensitive options stored in the database.
 
-  - id: auth-salts-and-keys
-    name: Authentication Unique Keys and Salts
-    description: >
-      WordPress uses secret keys and salts in wp-config.php to harden cookies and
-      authentication state. WordPress documents AUTH_KEY, SECURE_AUTH_KEY,
-      LOGGED_IN_KEY, NONCE_KEY, and matching SALT constants.
-    type: secret_value
-    nature: [generated_on_install]
-    sensitivity: secret
-    looks_like:
-      - pattern: >-
-          define\(\s*'(?:AUTH|SECURE_AUTH|LOGGED_IN|NONCE)_(?:KEY|SALT)'\s*,\s*'[^'\r\n]+'\s*\)
-        detail: WordPress authentication key or salt constant in wp-config.php
-    location:
-      - type: config_file
-        path: wp-config.php
-        detail: WordPress authentication keys and salts
-      - type: source_code
-        detail: committed wp-config.php files, examples, and backups
-      - type: artifact
-        detail: site backups, container images, and deployment bundles
-      - type: secret_store
-        detail: managed hosting secrets and deployment vault entries
-    notes: >
-      Rotating keys and salts invalidates existing authentication cookies and
-      reduces risk from stolen cookie/session material.
+    '
+- id: auth-salts-and-keys
+  name: Authentication Unique Keys and Salts
+  description: 'WordPress uses secret keys and salts in wp-config.php to harden cookies
+    and authentication state. WordPress documents AUTH_KEY, SECURE_AUTH_KEY, LOGGED_IN_KEY,
+    NONCE_KEY, and matching SALT constants.
 
-  - id: application-password
-    name: Application Password
-    description: >
-      WordPress REST API supports Application Passwords for authenticated remote
-      applications. WordPress documents Basic Authentication with Application
-      Passwords as preferred over sending the user's regular password.
-    type: token
-    nature: [user_defined]
-    sensitivity: secret
-    location:
-      - type: http_header
-        path: Authorization
-        detail: Basic authentication using WordPress username and application password
-      - type: database
-        detail: WordPress user metadata storing application password verifier material
-      - type: config_file
-        detail: API client config, .env files, and integration settings
-      - type: secret_store
-        detail: password managers, CI/CD variables, and cloud secret managers
-      - type: source_code
-        detail: REST API scripts, tests, and committed integration clients
-      - type: logs
-        detail: HTTP client traces and failed REST API request logs
-    notes: >
-      Application passwords are scoped to the user account that created them and
-      should be revoked if found outside the intended client.
+    '
+  type: secret_value
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - pattern: define\(\s*'(?:AUTH|SECURE_AUTH|LOGGED_IN|NONCE)_(?:KEY|SALT)'\s*,\s*'[^'\r\n]+'\s*\)
+    detail: WordPress authentication key or salt constant in wp-config.php
+  location:
+  - type: config_file
+    path: wp-config.php
+    detail: WordPress authentication keys and salts
+  - type: source_code
+    detail: committed wp-config.php files, examples, and backups
+  - type: artifact
+    detail: site backups, container images, and deployment bundles
+  - type: secret_store
+    detail: managed hosting secrets and deployment vault entries
+  notes: 'Rotating keys and salts invalidates existing authentication cookies and
+    reduces risk from stolen cookie/session material.
 
+    '
+- id: application-password
+  name: Application Password
+  description: 'WordPress REST API supports Application Passwords for authenticated
+    remote applications. WordPress documents Basic Authentication with Application
+    Passwords as preferred over sending the user''s regular password.
+
+    '
+  type: token
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Basic authentication using WordPress username and application password
+  - type: database
+    detail: WordPress user metadata storing application password verifier material
+  - type: config_file
+    detail: 'API client config, .env files, and integration settings; Removed generic/common
+      scanner surface path(s) from product template: .env'
+    path: wp-cli.yml, wordpress.json, application-passwords.json
+  - type: secret_store
+    detail: password managers, CI/CD variables, and cloud secret managers
+  - type: source_code
+    detail: REST API scripts, tests, and committed integration clients
+  - type: logs
+    detail: HTTP client traces and failed REST API request logs
+  notes: 'Application passwords are scoped to the user account that created them and
+    should be revoked if found outside the intended client.
+
+    '
 references:
-  - type: docs
-    url: https://developer.wordpress.org/apis/wp-config-php/
-  - type: docs
-    url: https://developer.wordpress.org/rest-api/using-the-rest-api/authentication/
-
+- type: docs
+  url: https://developer.wordpress.org/apis/wp-config-php/
+- type: docs
+  url: https://developer.wordpress.org/rest-api/using-the-rest-api/authentication/

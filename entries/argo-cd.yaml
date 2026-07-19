@@ -3,83 +3,102 @@ name: Argo CD
 category: ci_cd
 vendor: Argo Project
 author: haxxm0nkey
-
 credentials:
+- id: admin-password
+  name: Local Admin/User Password
+  description: 'Argo CD local users are defined in argocd-cm and password entries
+    are stored in argocd-secret. Argo CD docs recommend disabling the admin user after
+    additional users or SSO are configured.
 
-  - id: admin-password
-    name: Local Admin/User Password
-    description: >
-      Argo CD local users are defined in argocd-cm and password entries are
-      stored in argocd-secret. Argo CD docs recommend disabling the admin user
-      after additional users or SSO are configured.
-    type: username_password
-    nature: [generated_on_install, user_defined]
-    sensitivity: secret
-    location:
-      - type: secret_store
-        path: argocd-secret
-        detail: Kubernetes Secret containing admin password and local account password hashes
-      - type: config_file
-        path: argocd-cm, argocd-rbac-cm
-        detail: Argo CD local account and RBAC configuration
-      - type: public_interface
-        path: Argo CD UI, API server, CLI login
-      - type: source_code
-        detail: GitOps manifests, Helm values, and committed bootstrap secrets
-      - type: logs
-        detail: install output, kubectl commands, and authentication traces
-    notes: >
-      Initial admin password behavior varies by release/deployment; treat it as
-      generated-on-install rather than static.
+    '
+  type: username_password
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: config_file
+    path: argocd-secret.yaml, argocd-cm.yaml, argocd-rbac-cm.yaml
+    detail: Kubernetes manifests containing Argo CD Secret/ConfigMap account and password-hash
+      state
+  - type: secret_store
+    path: argocd-secret
+    detail: Kubernetes Secret containing admin password and local account password
+      hashes
+  - type: config_file
+    path: argocd-cm, argocd-rbac-cm
+    detail: Argo CD local account and RBAC configuration
+  - type: public_interface
+    path: Argo CD UI, API server, CLI login
+  - type: source_code
+    detail: GitOps manifests, Helm values, and committed bootstrap secrets
+  - type: logs
+    detail: install output, kubectl commands, and authentication traces
+  notes: 'Initial admin password behavior varies by release/deployment; treat it as
+    generated-on-install rather than static.
 
-  - id: api-token
-    name: API Token
-    description: >
-      Argo CD local accounts can have apiKey capability and issue tokens for API
-      and CLI automation. User-management docs show local account capabilities
-      such as apiKey and login.
-    type: token
-    nature: [generated_on_install]
-    sensitivity: secret
-    location:
-      - type: http_header
-        path: Authorization
-        detail: Bearer token used for Argo CD API requests
-      - type: secret_store
-        detail: Kubernetes Secrets, CI/CD variables, GitHub Actions secrets, and cloud secret managers
-      - type: config_file
-        detail: argocd CLI config, pipeline config, .env files, and deployment manifests
-      - type: source_code
-        detail: deployment scripts, tests, and accidentally committed automation tokens
-      - type: logs
-        detail: CI logs, CLI traces, and API client debug output
-    notes: >
-      Token privileges follow the Argo CD account and RBAC policy.
+    '
+- id: api-token
+  name: API Token
+  description: 'Argo CD local accounts can have apiKey capability and issue tokens
+    for API and CLI automation. User-management docs show local account capabilities
+    such as apiKey and login.
 
-  - id: repository-cluster-credentials
-    name: Repository / Cluster Credential
-    description: >
-      Argo CD stores Git repository, Helm repository, cluster, and plugin
-      credentials in Kubernetes Secrets. Secret-management docs cover handling
-      sensitive data and GitOps workflows.
-    type: secret_value
-    nature: [user_defined]
-    sensitivity: secret
-    location:
-      - type: secret_store
-        detail: Kubernetes Secrets labeled for Argo CD repositories, clusters, repo-creds, Dex/OIDC client secrets, and plugins
-      - type: config_file
-        detail: repository secret manifests, argocd-secret, argocd-cm, and Helm values
-      - type: source_code
-        detail: GitOps repos containing encrypted or plaintext Secret manifests
-      - type: logs
-        detail: repo-server sync errors, plugin logs, and CI output
-    notes: >
-      These secrets can grant Git, Helm registry, Kubernetes cluster, cloud, or
-      SSO provider access depending on the secret type.
+    '
+  type: token
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  location:
+  - type: config_file
+    path: ~/.config/argocd/config, %USERPROFILE%\.config\argocd\config
+    detail: Argo CD CLI local config can contain auth tokens
+  - type: environment
+    path: ARGOCD_AUTH_TOKEN
+    detail: Argo CD CLI/API bearer token environment variable
+  - type: http_header
+    path: Authorization
+    detail: Bearer token used for Argo CD API requests
+  - type: secret_store
+    detail: Kubernetes Secrets, CI/CD variables, GitHub Actions secrets, and cloud
+      secret managers
+  - type: source_code
+    detail: deployment scripts, tests, and accidentally committed automation tokens
+  - type: logs
+    detail: CI logs, CLI traces, and API client debug output
+  notes: 'Token privileges follow the Argo CD account and RBAC policy.
 
+    '
+- id: repository-cluster-credentials
+  name: Repository / Cluster Credential
+  description: 'Argo CD stores Git repository, Helm repository, cluster, and plugin
+    credentials in Kubernetes Secrets. Secret-management docs cover handling sensitive
+    data and GitOps workflows.
+
+    '
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: config_file
+    path: repository.yaml, repo-creds.yaml, cluster-secret.yaml, argocd-secret.yaml,
+      values.yaml
+    detail: Argo CD repository, cluster, Dex/OIDC, Helm, and bootstrap secret manifests;
+      names vary by deployment but these are common exact manifest filenames
+  - type: secret_store
+    detail: Kubernetes Secrets labeled for Argo CD repositories, clusters, repo-creds,
+      Dex/OIDC client secrets, and plugins
+  - type: source_code
+    detail: GitOps repos containing encrypted or plaintext Secret manifests
+  - type: logs
+    detail: repo-server sync errors, plugin logs, and CI output
+  notes: 'These secrets can grant Git, Helm registry, Kubernetes cluster, cloud, or
+    SSO provider access depending on the secret type.
+
+    '
 references:
-  - type: docs
-    url: https://argo-cd.readthedocs.io/en/stable/operator-manual/user-management/
-  - type: docs
-    url: https://argo-cd.readthedocs.io/en/stable/operator-manual/secret-management/
+- type: docs
+  url: https://argo-cd.readthedocs.io/en/stable/operator-manual/user-management/
+- type: docs
+  url: https://argo-cd.readthedocs.io/en/stable/operator-manual/secret-management/

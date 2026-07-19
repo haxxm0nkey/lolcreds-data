@@ -6,8 +6,9 @@ author: haxxm0nkey
 credentials:
 - id: default-admin
   name: Default admin Account
-  description: Brocade Fabric OS switches historically include an admin account with a default
-    password for initial setup; hardening procedures require changing default account passwords.
+  description: Brocade Fabric OS switches historically include an admin account with
+    a default password for initial setup; hardening procedures require changing default
+    account passwords.
   type: username_password
   nature:
   - static_default
@@ -18,17 +19,19 @@ credentials:
     password: password
   location:
   - type: public_interface
-    path: Fabric OS CLI over console/SSH, Web Tools, REST API, and SANnav-managed access
-  - type: config_file
-    detail: Fabric OS configuration backups, supportsave, and user configuration
+    path: Fabric OS CLI over console/SSH, Web Tools, REST API, and SANnav-managed
+      access
   - type: artifact
     detail: supportsave bundles, switch config backups, and deployment notes
-  notes: admin/password is modeled as a historical/default initial credential; verify switch
-    generation and organization hardening state.
+  - type: artifact
+    path: supportsave.txt, configupload.txt, switchshow.txt
+    detail: Commonly exported support/config text artifacts from Fabric OS/SAN operations
+  notes: admin/password is modeled as a historical/default initial credential; verify
+    switch generation and organization hardening state.
 - id: local-user-password
   name: Local Fabric OS User Password
-  description: Fabric OS local users and role-based accounts authenticate to CLI, Web Tools,
-    REST, and management integrations.
+  description: Fabric OS local users and role-based accounts authenticate to CLI,
+    Web Tools, REST, and management integrations.
   type: username_password
   nature:
   - user_defined
@@ -36,16 +39,17 @@ credentials:
   location:
   - type: public_interface
     path: SSH/CLI, serial console, Web Tools, REST API, and SANnav
-  - type: config_file
-    detail: switch configuration, userconfig output, and exported backups
   - type: secret_store
     detail: SAN admin password vaults and management platforms
   - type: logs
     detail: RASlog, audit logs, supportsave, and management traces
+  - type: artifact
+    path: supportsave.txt, configupload.txt, switchshow.txt
+    detail: Commonly exported support/config text artifacts from Fabric OS/SAN operations
 - id: rest-session-token
   name: Fabric OS REST Session Token
-  description: Fabric OS REST API and management clients can use session or bearer tokens/cookies
-    for authenticated operations.
+  description: Fabric OS REST API and management clients can use session or bearer
+    tokens/cookies for authenticated operations.
   type: token
   nature:
   - generated_on_install
@@ -57,31 +61,30 @@ credentials:
   - type: http_header
     path: Cookie
     detail: Fabric OS/Web Tools session cookie
-  - type: config_file
-    detail: automation client caches, SAN scripts, and .env files
   - type: logs
     detail: REST traces and management tool debug logs
 - id: snmp-radius-ldap-fcsp-secrets
   name: SNMP, AAA, LDAP, and FCSP Secrets
-  description: Brocade SAN fabrics store SNMP communities/users, RADIUS/TACACS+/LDAP secrets,
-    HTTPS certificates, and FC-SP/DH-CHAP secrets for fabric authentication.
+  description: Brocade SAN fabrics store SNMP communities/users, RADIUS/TACACS+/LDAP
+    secrets, HTTPS certificates, and FC-SP/DH-CHAP secrets for fabric authentication.
   type: secret_value
   nature:
   - user_defined
   - generated_on_install
   sensitivity: secret
   looks_like:
-  - pattern: '-----BEGIN (RSA |EC |ENCRYPTED |)PRIVATE KEY-----'
+  - pattern: '-----BEGIN (RSA |EC |OPENSSH |ENCRYPTED )?PRIVATE KEY-----'
     detail: private key material for HTTPS or fabric service certificates
   location:
-  - type: config_file
-    detail: Fabric OS AAA, SNMP, LDAP, certificate, FC-SP, and DH-CHAP configuration
   - type: artifact
     detail: supportsave bundles and configuration backups
   - type: secret_store
     detail: SAN management vaults, SANnav secrets, and certificate stores
   - type: logs
     detail: auth, RASlog, and fabric security logs
+  - type: artifact
+    path: supportsave.txt, configupload.txt, switchshow.txt
+    detail: Commonly exported support/config text artifacts from Fabric OS/SAN operations
 references:
 - type: docs
   url: https://techdocs.broadcom.com/us/en/fibre-channel-networking/fabric-os/fabric-os-administration/9-2-x.html

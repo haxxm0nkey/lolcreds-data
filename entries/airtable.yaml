@@ -1,0 +1,166 @@
+id: airtable
+name: Airtable
+category: database
+vendor: Airtable
+author: haxxm0nkey
+credentials:
+- id: user-password
+  name: Airtable User / Administrator Password
+  description: 'Airtable users and administrators authenticate to the Airtable web app, enterprise admin surfaces, SSO flows, and OAuth authorization flows with user-defined or federated credentials.
+
+    '
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: public_interface
+    path: /login, /authorize, /admin
+    detail: Airtable web sign-in, OAuth authorization, and enterprise administration contexts
+  - type: secret_store
+    detail: Password managers, enterprise identity providers, break-glass admin vaults, and managed credential stores
+  - type: logs
+    detail: Sign-in logs, audit events, OAuth authorization events, browser exports, and support traces
+  notes: 'Catalogs ordinary operational credential locations; this is not a claim of a static Airtable default password.
+
+    '
+- id: personal-access-token
+  name: Personal Access Token
+  description: 'Airtable personal access tokens authorize Web API requests. Airtable.js documents using a secret API token/personal access token as apiKey and using AIRTABLE_API_KEY for 12-factor environment configuration. Gitleaks and Betterleaks detect Airtable PATs with a pat-prefixed token shape.
+
+    '
+  type: token
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - example: patAAAAAAAAAAAAAA.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    pattern: \bpat[A-Za-z0-9]{14}\.[a-f0-9]{64}\b
+    detail: Airtable personal access token pattern compatible with Gitleaks/Betterleaks airtable-personnal-access-token rule
+  location:
+  - type: environment
+    path: AIRTABLE_API_KEY
+    detail: Airtable.js and pyairtable examples use AIRTABLE_API_KEY for the secret API token / personal access token
+  - type: http_header
+    path: Authorization
+    detail: Bearer token used for Airtable Web API requests
+  - type: public_interface
+    path: /create/tokens, /developers/web/api
+    detail: Airtable token creation and Web API documentation contexts
+  - type: config_file
+    path: .env, .env.local, .env.production, airtable.js, airtable.config.js, config.js, config.ts, settings.py, pyproject.toml
+    detail: Project-local SDK/application files where AIRTABLE_API_KEY or Airtable PATs are commonly configured
+  - type: secret_store
+    detail: CI/CD variables, cloud secret managers, platform secret stores, password vaults, and integration vaults
+  - type: source_code
+    detail: Application code, automation scripts, notebooks, tests, examples, infrastructure-as-code, and committed config files
+  - type: logs
+    detail: API debug logs, SDK traces, CI output, exception traces, HTTP request captures, and support bundles
+  notes: 'Airtable base IDs, table IDs, record IDs, endpoint URLs, and pagination tokens are API context, not credential values. AIRTABLE_ENDPOINT_URL is intentionally not listed as a credential env var.
+
+    '
+- id: legacy-api-key
+  name: Legacy API Key
+  description: 'Older Airtable integrations and detector rules modeled legacy Airtable API keys as 17-character lower-case alphanumeric values near Airtable-specific context. Airtable now directs developers to create personal access tokens, but legacy keys may still appear in old code, examples, and configuration.
+
+    '
+  type: api_key
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: (?i)(?:airtable)(?:[ \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([a-z0-9]{17})(?:\\?['"\x60]|[\s;]|\\[nr]|$)
+    detail: Contextual Airtable legacy API-key pattern compatible with Betterleaks airtable-api-key rule
+  location:
+  - type: environment
+    path: AIRTABLE_API_KEY
+    detail: Airtable SDK examples use this env var for the secret API token/API key value
+  - type: http_header
+    path: Authorization
+    detail: Bearer token/API key used for Airtable Web API requests
+  - type: config_file
+    path: .env, .env.local, airtable.js, config.js, config.ts, settings.py, test/test_files/index.html
+    detail: Legacy SDK examples, browser demos, and local app configuration files that may contain legacy API keys
+  - type: source_code
+    detail: Older Airtable.js integrations, browser demos, tests, notebooks, scripts, and automation repos
+  - type: logs
+    detail: API debug logs, HTTP traces, browser demos, CI output, and support bundles
+  notes: 'The 17-character pattern is noisy without Airtable-specific context and should not be used as a generic standalone token detector.
+
+    '
+- id: oauth-access-token
+  name: OAuth Access Token
+  description: 'Airtable OAuth integrations receive bearer access tokens for API calls. Betterleaks models Airtable OAuth tokens with a versioned dot-separated token format and validates candidate tokens against the /v0/meta/whoami endpoint.
+
+    '
+  type: token
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - example: AIRTABLE.v1.ABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    pattern: \b[A-Z0-9]+\.v1\.[A-Z0-9_-]+\.[a-f0-9]+\b
+    detail: Airtable OAuth token value shape from Betterleaks airtable-oauth-token rule; use with Airtable-specific context
+  - pattern: (?i)(?:airtable)(?:[ \t\w.-]{0,20})[\s'"]{0,3}(?:=|>|:{1,3}=|\|\||:|=>|\?=|,)[\x60'"\s=]{0,5}([A-Z0-9]+\.v1\.[A-Z0-9_-]+\.[a-f0-9]+)(?:\\?['"\x60]|[\s;]|\\[nr]|$)
+    detail: Contextual Airtable OAuth token pattern compatible with Betterleaks airtable-oauth-token rule
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Bearer OAuth access token used for Airtable Web API requests
+  - type: http_response
+    detail: OAuth token responses containing access_token, refresh_token, token_type, scope, and expiry fields
+  - type: config_file
+    path: .env, oauth.json, airtable-oauth.json, config.json, config.js, settings.py
+    detail: OAuth callback handlers, app configs, token stores, SDK settings, and local development files
+  - type: secret_store
+    detail: OAuth client secret stores, CI/CD variables, cloud secret managers, enterprise vaults, and app-installation secret stores
+  - type: source_code
+    detail: OAuth callback code, app manifests, automation scripts, tests, and examples
+  - type: logs
+    detail: OAuth exchange logs, callback logs, API traces, failed auth errors, and support bundles
+  notes: 'No exact official Airtable environment variable for OAuth access or refresh tokens was found in the checked sources, so none is listed.
+
+    '
+- id: oauth-client-secret
+  name: OAuth Client Secret / Refresh Token
+  description: 'Airtable OAuth integrations can use client secrets and refresh tokens as part of token exchange and token refresh flows. These values are usually stored in application configuration or secret stores rather than an Airtable-owned local CLI file.
+
+    '
+  type: secret_value
+  nature:
+  - generated_on_install
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Basic client authentication or bearer token during OAuth token exchange and API calls
+  - type: http_response
+    detail: OAuth token responses can contain refresh_token and access_token fields
+  - type: config_file
+    path: .env, oauth.json, airtable-oauth.json, config.json, config.js, settings.py
+    detail: OAuth application configs, callback handlers, SDK settings, and local development files
+  - type: secret_store
+    detail: OAuth client secret stores, CI/CD variables, cloud secret managers, enterprise vaults, and app-installation secret stores
+  - type: source_code
+    detail: OAuth callback code, app manifests, automation scripts, tests, and examples
+  - type: logs
+    detail: OAuth exchange logs, callback logs, API traces, failed auth errors, and support bundles
+  notes: 'Generic names such as AIRTABLE_CLIENT_SECRET and AIRTABLE_REFRESH_TOKEN were not listed as environment locations because the checked official SDK/docs did not establish them as Airtable-owned credential-value env vars.
+
+    '
+references:
+- type: docs
+  url: https://airtable.com/developers/web/api/authentication
+- type: docs
+  url: https://airtable.com/developers/web/api/oauth-reference
+- type: docs
+  url: https://github.com/Airtable/airtable.js/blob/master/README.md
+- type: docs
+  url: https://github.com/gtalarico/pyairtable/blob/master/docs/source/getting-started.rst
+- type: docs
+  url: https://raw.githubusercontent.com/betterleaks/betterleaks/main/config/betterleaks.toml
+- type: docs
+  url: https://raw.githubusercontent.com/gitleaks/gitleaks/master/config/gitleaks.toml

@@ -6,9 +6,9 @@ author: haxxm0nkey
 credentials:
 - id: database-user-password
   name: Database User Password
-  description: Db2 authenticates users through the operating system, LDAP, Kerberos, or external
-    security plugins; database and instance administration uses OS or directory identities
-    such as the instance owner and application users.
+  description: Db2 authenticates users through the operating system, LDAP, Kerberos,
+    or external security plugins; database and instance administration uses OS or
+    directory identities such as the instance owner and application users.
   type: username_password
   nature:
   - user_defined
@@ -18,30 +18,35 @@ credentials:
   - type: public_interface
     path: Db2 CLP, JDBC/ODBC, DRDA, Data Server Manager, and administrative tools
   - type: database
-    detail: catalog grants, roles, trusted contexts, and auth metadata tied to external user
-      identities
+    detail: catalog grants, roles, trusted contexts, and auth metadata tied to external
+      user identities
   - type: config_file
-    detail: db2dsdriver.cfg, JDBC properties, ODBC DSNs, app server data sources, and scripts
+    detail: Db2 client and driver configuration files; passwords usually delegate
+      to OS/LDAP/Kerberos but app client config may contain credentials
+    path: db2dsdriver.cfg, db2cli.ini, db2cli.ini.sample
   - type: secret_store
     detail: keystores, password vaults, Kubernetes Secrets, and OS credential stores
   - type: logs
     detail: db2diag.log, audit logs, client traces, and application connection errors
-  notes: Db2 normally delegates password verification to OS/LDAP/Kerberos rather than storing
-    a universal database password.
+  notes: Db2 normally delegates password verification to OS/LDAP/Kerberos rather than
+    storing a universal database password.
 - id: application-datasource-secret
   name: Application Data Source Secret
-  description: Applications and middleware store Db2 usernames/passwords or Kerberos keytab
-    references for database access.
+  description: Applications and middleware store Db2 usernames/passwords or Kerberos
+    keytab references for database access.
   type: username_password
   nature:
   - user_defined
   sensitivity: secret
   location:
   - type: config_file
-    detail: application properties, WebSphere/JBoss data sources, db2cli.ini, db2dsdriver.cfg,
-      and connection profiles
+    detail: Db2 driver, JDBC/ODBC, application, and middleware datasource configs
+    path: db2cli.ini, db2dsdriver.cfg, db2jcc.properties, application.properties,
+      datasource.xml
   - type: environment
     path: DB2_USER, DB2_PASSWORD, DATABASE_URL
+    detail: Deployment env vars carrying Db2 username/password or connection string
+      material in apps/containers
   - type: secret_store
     detail: CI/CD variables, vaults, and cloud secret managers
   - type: source_code
@@ -50,19 +55,21 @@ credentials:
     detail: JDBC/ODBC debug output and application error logs
 - id: ssl-keystore-and-private-key
   name: SSL Keystore / Private Key
-  description: Db2 supports SSL/TLS and certificate-based authentication that rely on server/client
-    keystores, private keys, and keystore passwords.
+  description: Db2 supports SSL/TLS and certificate-based authentication that rely
+    on server/client keystores, private keys, and keystore passwords.
   type: key_pair
   nature:
   - generated_on_install
   - user_defined
   sensitivity: secret
   looks_like:
-  - pattern: '-----BEGIN (RSA |EC |ENCRYPTED |)PRIVATE KEY-----'
+  - pattern: '-----BEGIN (RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----'
     detail: private key material used by Db2 SSL/TLS clients or servers
   location:
   - type: config_file
-    detail: Db2 SSL_SVR_KEYDB, SSL_SVR_STASH, client keystores, and TLS configuration
+    detail: Db2 SSL_SVR_KEYDB/SSL_SVR_STASH, client GSKit key databases, stash files,
+      and TLS config
+    path: db2dsdriver.cfg, db2cli.ini, server.kdb, server.sth, client.kdb, client.sth
   - type: secret_store
     detail: GSKit key databases, stash files, certificate vaults, and HSMs
   - type: artifact
@@ -80,8 +87,9 @@ credentials:
   - type: database
     detail: federated server/user mappings and catalog metadata
   - type: config_file
-    detail: replication configs, backup scripts, encryption key manager config, and storage
-      profiles
+    detail: Federation/replication/backup scripts, encryption key manager config,
+      and storage profiles
+    path: db2dsdriver.cfg, db2cli.ini, db2look.sql, backup.env, restore.env
   - type: secret_store
     detail: backup vaults, key managers, and cloud secret stores
   - type: logs

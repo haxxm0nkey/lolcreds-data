@@ -1,97 +1,110 @@
 id: mattermost
 name: Mattermost
-category: collaboration
+category: other
 vendor: Mattermost
 author: haxxm0nkey
-
 credentials:
+- id: database-credentials
+  name: Database Credentials
+  description: 'Mattermost server configuration can be supplied through config.json,
+    database-backed configuration, or environment variables. Database connection strings
+    are explicitly called out in Mattermost configuration documentation.
 
-  - id: database-credentials
-    name: Database Credentials
-    description: >
-      Mattermost server configuration can be supplied through config.json,
-      database-backed configuration, or environment variables. Database
-      connection strings are explicitly called out in Mattermost configuration
-      documentation.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: '(?:postgres|mysql)://[^\s:@]+:[^\s@]+@[^\s/]+'
-        detail: Mattermost SQL data source connection string containing username and password
-    location:
-      - type: config_file
-        path: config.json
-        detail: Mattermost SqlSettings DataSource and related database settings
-      - type: environment
-        path: MM_SQLSETTINGS_DATASOURCE, MM_SQLSETTINGS_DRIVERNAME
-      - type: secret_store
-        detail: Kubernetes Secrets, cloud secret managers, CI/CD variables, and database password vaults
-      - type: source_code
-        detail: committed config.json, Helm values, Docker Compose files, and tests
-      - type: logs
-        detail: startup logs and database connection troubleshooting output
-    notes: >
-      Database access can expose users, sessions, personal access tokens,
-      channels, files metadata, and plugin configuration.
+    '
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: (?:postgres|mysql)://[^\s:@]+:[^\s@]+@[^\s/]+
+    detail: Mattermost SQL data source connection string containing username and password
+  location:
+  - type: config_file
+    path: config.json, mattermost-config.json
+    detail: Mattermost SqlSettings DataSource and related database settings
+  - type: environment
+    path: MM_SQLSETTINGS_DATASOURCE
+  - type: secret_store
+    detail: Kubernetes Secrets, cloud secret managers, CI/CD variables, and database
+      password vaults
+  - type: source_code
+    detail: committed config.json, Helm values, Docker Compose files, and tests
+  - type: logs
+    detail: startup logs and database connection troubleshooting output
+  notes: 'Database access can expose users, sessions, personal access tokens, channels,
+    files metadata, and plugin configuration.
 
-  - id: personal-access-token
-    name: Personal Access Token
-    description: >
-      Mattermost personal access tokens authenticate against the API and are
-      equivalent to regular session tokens for many purposes. Mattermost
-      documents that personal access tokens are cryptic random IDs and can be
-      used with AD/LDAP and SAML accounts.
-    type: token
-    nature: [user_defined]
-    sensitivity: secret
-    location:
-      - type: http_header
-        path: Authorization
-        detail: Bearer token used for Mattermost API requests
-      - type: database
-        detail: Mattermost database token/session tables storing token state
-      - type: environment
-        path: MATTERMOST_TOKEN, MM_ACCESS_TOKEN
-      - type: config_file
-        detail: bot config, integration config, .env files, and deployment manifests
-      - type: secret_store
-        detail: CI/CD variables, bot secret stores, and cloud secret managers
-      - type: source_code
-        detail: bot scripts, tests, and committed integration clients
-      - type: logs
-        detail: API client traces and automation logs
-    notes: >
-      Token blast radius depends on the creating user's permissions and any
-      additional roles granted for token use.
+    '
+- id: personal-access-token
+  name: Personal Access Token
+  description: 'Mattermost personal access tokens authenticate against the API and
+    are equivalent to regular session tokens for many purposes. Mattermost documents
+    that personal access tokens are cryptic random IDs and can be used with AD/LDAP
+    and SAML accounts.
 
-  - id: user-password
-    name: User Password
-    description: >
-      Mattermost users authenticate with local, LDAP, SAML, or other configured
-      authentication backends. Local passwords and sessions are stored in the
-      Mattermost database.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    location:
-      - type: database
-        detail: Mattermost database storing user account and password/session verifier data
-      - type: public_interface
-        path: /login, Mattermost API
-        detail: Mattermost web login and API endpoints
-      - type: config_file
-        detail: local dev config, test fixtures, and LDAP bind settings
-      - type: secret_store
-        detail: password vaults and identity provider secrets
-      - type: logs
-        detail: authentication logs and web server traces
-    notes: >
-      Login credentials may live in Mattermost itself or in connected LDAP/SAML
-      identity providers depending on site configuration.
+    '
+  type: token
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: http_header
+    path: Authorization
+    detail: Bearer token used for Mattermost API requests
+  - type: database
+    detail: Mattermost database token/session tables storing token state
+  - type: environment
+    path: MATTERMOST_TOKEN, MM_ACCESS_TOKEN
+  - type: config_file
+    detail: 'bot config, integration config, .env files, and deployment manifests;
+      Removed generic/common scanner surface path(s) from product template: .env'
+    path: mattermost.json, mattermost-cli.json, bot-config.json
+  - type: secret_store
+    detail: CI/CD variables, bot secret stores, and cloud secret managers
+  - type: source_code
+    detail: bot scripts, tests, and committed integration clients
+  - type: logs
+    detail: API client traces and automation logs
+  notes: 'Token blast radius depends on the creating user''s permissions and any additional
+    roles granted for token use.
 
+    '
+  looks_like:
+  - example: 0123456789abcdefghijklmnop
+    pattern: '[a-z0-9]{26}'
+    detail: Mattermost access token shape from public scanner rules; use with Mattermost
+      context
+- id: user-password
+  name: User Password
+  description: 'Mattermost users authenticate with local, LDAP, SAML, or other configured
+    authentication backends. Local passwords and sessions are stored in the Mattermost
+    database.
+
+    '
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: database
+    detail: Mattermost database storing user account and password/session verifier
+      data
+  - type: public_interface
+    path: /login, Mattermost API
+    detail: Mattermost web login and API endpoints
+  - type: config_file
+    detail: local dev config, test fixtures, and LDAP bind settings
+    path: config.json, mattermost-config.json
+  - type: secret_store
+    detail: password vaults and identity provider secrets
+  - type: logs
+    detail: authentication logs and web server traces
+  notes: 'Login credentials may live in Mattermost itself or in connected LDAP/SAML
+    identity providers depending on site configuration.
+
+    '
 references:
-  - type: docs
-    url: https://docs.mattermost.com/administration-guide/configure/environment-variables.html
-  - type: docs
-    url: https://developers.mattermost.com/integrate/reference/personal-access-token/
+- type: docs
+  url: https://docs.mattermost.com/administration-guide/configure/environment-variables.html
+- type: docs
+  url: https://developers.mattermost.com/integrate/reference/personal-access-token/

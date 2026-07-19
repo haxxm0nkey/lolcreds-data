@@ -1,121 +1,129 @@
 id: nextcloud
 name: Nextcloud
-category: collaboration
+category: other
 vendor: Nextcloud
 author: haxxm0nkey
-
 credentials:
+- id: config-secret-and-salt
+  name: Instance Secret / Password Salt
+  description: 'Nextcloud config.php contains instance-specific values including passwordsalt
+    and secret. Nextcloud documents these configuration parameters alongside database
+    and server settings.
 
-  - id: config-secret-and-salt
-    name: Instance Secret / Password Salt
-    description: >
-      Nextcloud config.php contains instance-specific values including
-      passwordsalt and secret. Nextcloud documents these configuration parameters
-      alongside database and server settings.
-    type: secret_value
-    nature: [generated_on_install]
-    sensitivity: secret
-    looks_like:
-      - pattern: >-
-          '(?:passwordsalt|secret)'\s*=>\s*'[^']+'\s*[,;]
-        detail: Nextcloud config.php passwordsalt or secret entry
-    location:
-      - type: config_file
-        path: config/config.php
-        detail: Nextcloud instance configuration containing secret and passwordsalt
-      - type: secret_store
-        detail: deployment vaults, Kubernetes Secrets, and cloud secret managers
-      - type: source_code
-        detail: committed config.php files, Helm values, and backups
-      - type: artifact
-        detail: instance backups and container images containing config.php
-    notes: >
-      These values are not user passwords, but they are instance secret material
-      used by Nextcloud security mechanisms.
+    '
+  type: secret_value
+  nature:
+  - generated_on_install
+  sensitivity: secret
+  looks_like:
+  - pattern: '''(?:passwordsalt|secret)''\s*=>\s*''[^'']+''\s*[,;]'
+    detail: Nextcloud config.php passwordsalt or secret entry
+  location:
+  - type: config_file
+    path: config/config.php
+    detail: Nextcloud instance configuration containing secret and passwordsalt
+  - type: secret_store
+    detail: deployment vaults, Kubernetes Secrets, and cloud secret managers
+  - type: source_code
+    detail: committed config.php files, Helm values, and backups
+  - type: artifact
+    detail: instance backups and container images containing config.php
+  notes: 'These values are not user passwords, but they are instance secret material
+    used by Nextcloud security mechanisms.
 
-  - id: database-credentials
-    name: Database Credentials
-    description: >
-      Nextcloud config.php stores database settings such as dbtype, dbhost,
-      dbname, dbuser, and dbpassword. These credentials connect the application
-      to its database.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    looks_like:
-      - pattern: >-
-          'dbpassword'\s*=>\s*'[^']+'\s*[,;]
-        detail: Nextcloud config.php database password entry
-    location:
-      - type: config_file
-        path: config/config.php
-        detail: Nextcloud database connection configuration
-      - type: environment
-        path: MYSQL_PASSWORD, POSTGRES_PASSWORD, NEXTCLOUD_DB_PASSWORD, DATABASE_URL
-      - type: secret_store
-        detail: Docker/Kubernetes secrets, cloud secret managers, and database password vaults
-      - type: source_code
-        detail: committed config.php files, Docker Compose files, Helm values, and tests
-      - type: artifact
-        detail: backups and container images containing config.php
-      - type: logs
-        detail: installer logs and database connection troubleshooting output
-    notes: >
-      Database access can expose files metadata, user records, app passwords,
-      shares, tokens, and application configuration.
+    '
+- id: database-credentials
+  name: Database Credentials
+  description: 'Nextcloud config.php stores database settings such as dbtype, dbhost,
+    dbname, dbuser, and dbpassword. These credentials connect the application to its
+    database.
 
-  - id: user-password-app-password
-    name: User Password / App Password
-    description: >
-      Nextcloud users authenticate to the web UI and can use app passwords for
-      clients. Nextcloud user management documentation covers creating users,
-      resetting passwords, and resetting a lost admin password.
-    type: username_password
-    nature: [user_defined]
-    sensitivity: secret
-    location:
-      - type: database
-        detail: Nextcloud database tables storing user, session, and app-password verifier data
-      - type: public_interface
-        path: /login, WebDAV, OCS APIs
-        detail: Nextcloud login, sync, and API endpoints
-      - type: config_file
-        detail: client sync config, app integration config, and local credential caches
-      - type: secret_store
-        detail: password managers, CI/CD variables, and cloud secret managers
-      - type: source_code
-        detail: integration scripts, tests, and accidentally committed client configs
-      - type: logs
-        detail: web server logs, sync client logs, and authentication troubleshooting output
-    notes: >
-      App passwords should be revoked independently from the user's main
-      password if exposed.
+    '
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  looks_like:
+  - pattern: '''dbpassword''\s*=>\s*''[^'']+''\s*[,;]'
+    detail: Nextcloud config.php database password entry
+  location:
+  - type: config_file
+    path: config/config.php
+    detail: Nextcloud database connection configuration
+  - type: environment
+    path: MYSQL_PASSWORD, POSTGRES_PASSWORD, NEXTCLOUD_DB_PASSWORD, DATABASE_URL
+  - type: secret_store
+    detail: Docker/Kubernetes secrets, cloud secret managers, and database password
+      vaults
+  - type: source_code
+    detail: committed config.php files, Docker Compose files, Helm values, and tests
+  - type: artifact
+    detail: backups and container images containing config.php
+  - type: logs
+    detail: installer logs and database connection troubleshooting output
+  notes: 'Database access can expose files metadata, user records, app passwords,
+    shares, tokens, and application configuration.
 
-  - id: external-service-secret
-    name: External Service / Preview API Secret
-    description: >
-      Nextcloud configuration can contain additional service secrets such as
-      preview_imaginary_key and Redis credentials. These protect integrations
-      used by the server.
-    type: secret_value
-    nature: [user_defined]
-    sensitivity: secret
-    location:
-      - type: config_file
-        path: config/config.php
-        detail: Nextcloud external service credentials and integration keys
-      - type: environment
-        path: REDIS_HOST_PASSWORD, NEXTCLOUD_IMAGINARY_KEY
-      - type: secret_store
-        detail: deployment vaults, Kubernetes Secrets, and cloud secret managers
-      - type: source_code
-        detail: committed config files and deployment manifests
-    notes: >
-      External service secrets may grant access to cache, preview, mail, object
-      storage, or directory services connected to Nextcloud.
+    '
+- id: user-password-app-password
+  name: User Password / App Password
+  description: 'Nextcloud users authenticate to the web UI and can use app passwords
+    for clients. Nextcloud user management documentation covers creating users, resetting
+    passwords, and resetting a lost admin password.
 
+    '
+  type: username_password
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: database
+    detail: Nextcloud database tables storing user, session, and app-password verifier
+      data
+  - type: public_interface
+    path: /login, WebDAV, OCS APIs
+    detail: Nextcloud login, sync, and API endpoints
+  - type: config_file
+    detail: client sync config, app integration config, and local credential caches
+    path: nextcloud.cfg, nextcloud-client.cfg, accounts.json
+  - type: secret_store
+    detail: password managers, CI/CD variables, and cloud secret managers
+  - type: source_code
+    detail: integration scripts, tests, and accidentally committed client configs
+  - type: logs
+    detail: web server logs, sync client logs, and authentication troubleshooting
+      output
+  notes: 'App passwords should be revoked independently from the user''s main password
+    if exposed.
+
+    '
+- id: external-service-secret
+  name: External Service / Preview API Secret
+  description: 'Nextcloud configuration can contain additional service secrets such
+    as preview_imaginary_key and Redis credentials. These protect integrations used
+    by the server.
+
+    '
+  type: secret_value
+  nature:
+  - user_defined
+  sensitivity: secret
+  location:
+  - type: config_file
+    path: config/config.php
+    detail: Nextcloud external service credentials and integration keys
+  - type: environment
+    path: REDIS_HOST_PASSWORD, NEXTCLOUD_IMAGINARY_KEY
+  - type: secret_store
+    detail: deployment vaults, Kubernetes Secrets, and cloud secret managers
+  - type: source_code
+    detail: committed config files and deployment manifests
+  notes: 'External service secrets may grant access to cache, preview, mail, object
+    storage, or directory services connected to Nextcloud.
+
+    '
 references:
-  - type: docs
-    url: https://docs.nextcloud.com/server/latest/admin_manual/configuration_server/config_sample_php_parameters.html
-  - type: docs
-    url: https://docs.nextcloud.com/server/latest/admin_manual/configuration_user/user_configuration.html
+- type: docs
+  url: https://docs.nextcloud.com/server/latest/admin_manual/configuration_server/config_sample_php_parameters.html
+- type: docs
+  url: https://docs.nextcloud.com/server/latest/admin_manual/configuration_user/user_configuration.html
